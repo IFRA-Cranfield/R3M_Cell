@@ -1,0 +1,4 @@
+std_msgs/String[] objectlist
+---
+std_msgs/String result
+bool success

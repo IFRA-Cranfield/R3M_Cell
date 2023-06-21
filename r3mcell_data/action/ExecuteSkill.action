@@ -1,0 +1,5 @@
+Int64 id
+---
+Skillresult result
+---
+std_msgs/String feedback
