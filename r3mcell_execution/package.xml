@@ -1,14 +1,11 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>r3mcell_data</name>
+  <name>r3mcell_execution</name>
   <version>0.0.0</version>
-  <description>IFRA-Cranfield (Cranfield University, UK). Package: R3M Cell (Humble) - DATA</description>
-
-  <author>Mikel Bueno Viso</author>
-  <maintainer email="Mikel.Bueno-Viso@cranfield.ac.uk">Mikel Bueno Viso</maintainer>
-  
-  <license>Apache-2.0</license>
+  <description>IFRA-Cranfield (Cranfield University, UK). Package: R3M Cell (Humble) - Execution</description>
+  <maintainer email="Mikel.Bueno-Viso@cranfield.ac.uk">mikel</maintainer>
+  <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
@@ -23,6 +20,12 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_action</depend>
   <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>yaml-cpp</depend>
+  <depend>ament_index_cpp</depend>
+
+  <depend>r3mcell_data</depend>
+  <build_depend>linkattacher_msgs</build_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

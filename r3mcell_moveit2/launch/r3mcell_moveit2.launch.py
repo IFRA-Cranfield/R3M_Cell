@@ -289,19 +289,12 @@ def generate_launch_description():
         condition=UnlessCondition(load_RVIZfile),
     )
 
-    MoveInterface = Node(
-        name="move",
-        package="ros2srrc_execution",
-        executable="move",
+    R3MWrapper = Node(
+        name="R3MWrapper",
+        package="r3mcell_execution",
+        executable="r3m_wrapper",
         output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"ENV_PARAM": "gazebo"}],
-    )
-    SequenceInterface = Node(
-        name="sequence",
-        package="ros2srrc_execution",
-        executable="sequence",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"ENV_PARAM": "gazebo"}],
+        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}],
     )
     
     return LaunchDescription(
@@ -366,8 +359,7 @@ def generate_launch_description():
                         TimerAction(
                             period=5.0,
                             actions=[
-                                MoveInterface,
-                                SequenceInterface,
+                                R3MWrapper
                             ]
                         ),
 

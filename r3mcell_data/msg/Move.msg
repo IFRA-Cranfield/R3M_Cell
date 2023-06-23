@@ -1,4 +1,4 @@
-Int64 id
-std_msgs/String type
-geometry_msgs/Pose pose
+int32 id
+string type
+Pose pose
 float64 speed

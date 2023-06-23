@@ -1,4 +1,4 @@
-Int64 id
-Float64 exectime
-Float64 accuracy
+int32 id
+float64 exectime
+float64 accuracy
 Product[] product 

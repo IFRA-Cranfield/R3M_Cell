@@ -1,4 +1,4 @@
-std_msgs/String[] objectlist
+string[] objectlist
 ---
-std_msgs/String result
+string result
 bool success

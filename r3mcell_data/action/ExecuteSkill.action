@@ -1,5 +1,5 @@
-Int64 id
+string id
 ---
 Skillresult result
 ---
-std_msgs/String feedback
+string feedback
