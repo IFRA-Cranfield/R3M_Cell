@@ -580,5 +580,12 @@
     
     <!-- === SCHUNK EGP-64 GRIPPER === -->
 
+    <!-- LOAD LinkPose Gazebo (ROS2) PLUGIN: -->
+    <gazebo>
+      <plugin name="ros2_linkpose_plugin" filename="libros2_linkpose_plugin.so" >
+        <link>EE_egp64</link>
+      </plugin>
+    </gazebo>
+
   </xacro:macro>
 </robot>
