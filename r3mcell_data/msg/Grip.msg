@@ -1,3 +1,3 @@
-int32 id
+string id
 string action
 float64 speed

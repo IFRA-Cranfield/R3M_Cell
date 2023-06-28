@@ -17,6 +17,9 @@
 #include <yaml-cpp/yaml.h>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
+// Include to calculate execution time:
+#include <chrono>
+
 // Include RCLCPP and RCLCPP_ACTION:
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
@@ -141,6 +144,44 @@ moveit::planning_interface::MoveGroupInterface::Plan plan_EE() {
     }
     
 };
+
+// ========================================================================================= //
+// Calculate ACCURACY:
+
+// ROBOT:
+(double, double) ERROR_ROB(geometry_msgs::msg::Pose TARGET_POSE){
+
+    auto CURRENT_POSE = move_group_interface_ROB.getCurrentPose();
+
+    // POSITION ERROR -> Norm of the (p1-p0) difference vector:
+    double ACC_x = abs(CURRENT_POSE.pose.position.x - TARGET_POSE.position.x);
+    double ACC_y = abs(CURRENT_POSE.pose.position.y - TARGET_POSE.position.y);
+    double ACC_z = abs(CURRENT_POSE.pose.position.z - TARGET_POSE.position.z);
+    
+    // ROTATION ERROR -> Norm of the (q1-q0) difference quaternion:
+    double ACC_qx = abs(CURRENT_POSE.pose.orientation.x - TARGET_POSE.orientation.x);
+    double ACC_qy = abs(CURRENT_POSE.pose.orientation.y - TARGET_POSE.orientation.y);
+    double ACC_qz = abs(CURRENT_POSE.pose.orientation.z - TARGET_POSE.orientation.z);
+    double ACC_qw = abs(CURRENT_POSE.pose.orientation.w - TARGET_POSE.orientation.w);
+
+    return(ERROR_POS, ERROR_ROT);
+
+}
+
+// END-EFFECTOR:
+double ERROR_EE(std::vector<double> TARGET_JP){
+
+    std::vector<double> JP;
+    moveit::core::RobotStatePtr current_state = move_group_interface_EE.getCurrentState(10);
+    current_state->copyJointGroupPositions(joint_model_group_EE, JP);
+
+    double DIF_00 = abs(JP[0] - TARGET_JP[0]);
+    double DIF_01 = abs(JP[1] - TARGET_JP[1]);
+
+    double ERROR = (DIF_00 + DIF_01) / 2;
+    return(ERROR);
+
+}
 
 // ========================================================================================= //
 // ExecuteSkill ACTION SERVER:
@@ -270,7 +311,15 @@ private:
     void execute(const std::shared_ptr<GoalHandle> goal_handle)
     {
 
+        // EXECUTION TIME -> START:
+        auto t_start = std::chrono::high_resolution_clock::now();
+
+        // 0. DECLARE -> GOAL + RESULT + TARGET POSE+JP:
         const auto goal = goal_handle->get_goal();
+        auto result = std::make_shared<ExecuteSkill::Result>();
+
+        geometry_msgs::msg::Pose TR_POSE;
+        std::vector<double> JP;
 
         // 1. Obtain RECIPE ID + PATH:
         std::string ID = goal->id;
@@ -285,22 +334,174 @@ private:
         auto TYPE = config["type"].as<std::string>();
         auto SPEED = config["speed"].as<double>();
 
+        // Declare PLAN:
+        moveit::planning_interface::MoveGroupInterface::Plan MyPlan;
+
         if (TYPE == "GRIP"){
 
             auto ACTION = config["action"].as<std::string>();
+            move_group_interface_EE.setPlannerId("PTP");
 
-        } else {
+            moveit::core::RobotStatePtr current_state = move_group_interface_EE.getCurrentState(10);
+            current_state->copyJointGroupPositions(joint_model_group_EE, JP);
+
+            if (ACTION == "CLOSE"){
+                JP[0] = 0.008;
+                JP[1] = 0.008;
+            } else if (ACTION == "OPEN"){
+                JP[0] = 0.0;
+                JP[1] = 0.0;
+            }
+
+            move_group_interface_EE.setJointValueTarget(JP);
+            move_group_interface_EE.setMaxVelocityScalingFactor(SPEED);
+
+            MyPlan = plan_EE();
+
+        } else if (TYPE == "PTP" || TYPE == "LIN"){
+
+            auto CURRENT_POSE = move_group_interface_ROB.getCurrentPose();
+            RCLCPP_INFO(this->get_logger(), "CURRENT POSE:");
+            RCLCPP_INFO(this->get_logger(), "x: %.2f", CURRENT_POSE.pose.position.x);
+            RCLCPP_INFO(this->get_logger(), "y: %.2f", CURRENT_POSE.pose.position.y);
+            RCLCPP_INFO(this->get_logger(), "z: %.2f", CURRENT_POSE.pose.position.z);
+            RCLCPP_INFO(this->get_logger(), "qx: %.2f", CURRENT_POSE.pose.orientation.x);
+            RCLCPP_INFO(this->get_logger(), "qy: %.2f", CURRENT_POSE.pose.orientation.y);
+            RCLCPP_INFO(this->get_logger(), "qz: %.2f", CURRENT_POSE.pose.orientation.z);
+            RCLCPP_INFO(this->get_logger(), "qw: %.2f", CURRENT_POSE.pose.orientation.w);
             
-            geometry_msgs::msg::Pose POSE;
-            POSE.position.x = config["pose"]["x"].as<double>();
-            POSE.position.y = config["pose"]["x"].as<double>();
-            POSE.position.z = config["pose"]["x"].as<double>();
-            POSE.orientation.x = config["pose"]["qx"].as<double>();
-            POSE.orientation.y = config["pose"]["qy"].as<double>();
-            POSE.orientation.z = config["pose"]["qz"].as<double>();
-            POSE.orientation.w = config["pose"]["qw"].as<double>();
+            move_group_interface_ROB.setPlannerId(TYPE);
+
+            geometry_msgs::msg::Pose TARGET_POSE;
+            TARGET_POSE.position.x = config["pose"]["x"].as<double>();
+            TARGET_POSE.position.y = config["pose"]["y"].as<double>();
+            TARGET_POSE.position.z = config["pose"]["z"].as<double>();
+            TARGET_POSE.orientation.x = config["pose"]["qx"].as<double>();
+            TARGET_POSE.orientation.y = config["pose"]["qy"].as<double>();
+            TARGET_POSE.orientation.z = config["pose"]["qz"].as<double>();
+            TARGET_POSE.orientation.w = config["pose"]["qw"].as<double>();
+
+            // Convert from EE_FRAME to tool0:
+            TR_POSE.orientation = TARGET_POSE.orientation;
+
+            // 1. Obtain ROTATION MATRIX of TARGET_POSE (quaternion) -> R():
+            // 1.1 QUATERNION:
+            double Ax = TARGET_POSE.orientation.x;
+            double Ay = TARGET_POSE.orientation.y;
+            double Az = TARGET_POSE.orientation.z;
+            double Aw = TARGET_POSE.orientation.w;
+            // 1.2 NORMALISE:
+            double norm = sqrt((Ax*Ax)+(Ay*Ay)+(Az*Az)+(Aw*Aw));
+            double Qx = Ax/norm;
+            double Qy = Ay/norm;
+            double Qz = Az/norm;
+            double Qw = Aw/norm;
+            // 1.3 ROTATION MATRIX:
+            double R_00 = 1 - 2*(Qy*Qy) - 2*(Qz*Qz);
+            double R_01 = 2*(Qx*Qy) - 2*(Qw*Qz);
+            double R_02 = 2*(Qx*Qz) + 2*(Qw*Qy);
+            double R_10 = 2*(Qx*Qy) + 2*(Qw*Qz);
+            double R_11 = 1 - 2*(Qx*Qx) - 2*(Qz*Qz);
+            double R_12 = 2*(Qy*Qz) - 2*(Qw*Qx);
+            double R_20 = 2*(Qx*Qz) - 2*(Qw*Qy);
+            double R_21 = 2*(Qy*Qz) + 2*(Qw*Qx);
+            double R_22 = 1 - 2*(Qx*Qx) - 2*(Qy*Qy);
+            // 2. TRANSLATION: From EE_FRAME to tool0:
+            double Tx = 0.0;
+            double Ty = 0.0;
+            double Tz = -0.17; // Difference between tool0 and EE_FRAME in LOCAL COORDINATES.
+            TR_POSE.position.x = TARGET_POSE.position.x + R_00*Tx + R_01*Ty + R_02*Tz;
+            TR_POSE.position.y = TARGET_POSE.position.y + R_10*Tx + R_11*Ty + R_12*Tz;
+            TR_POSE.position.z = TARGET_POSE.position.z + R_20*Tx + R_21*Ty + R_22*Tz;
+
+            move_group_interface_ROB.setPoseTarget(TR_POSE);
+            move_group_interface_ROB.setMaxVelocityScalingFactor(SPEED);
+
+            MyPlan = plan_ROB();
 
         }
+
+        if (RES == "PLANNING: OK"){
+
+            bool ExecSUCCESS = (move_group_interface_ROB.execute(MyPlan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+
+            // EXECUTION TIME -> END:
+            auto t_end = std::chrono::high_resolution_clock::now();
+            auto ms_duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
+            auto s_duration = ms_duration.count() / 1000000.0;
+            result->result.exectime = s_duration;
+
+            if (goal_handle->is_canceling()) {
+                RCLCPP_INFO(this->get_logger(), "Goal canceled.");
+                result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":CANCELED";
+                result->result.success = false;
+                result->result.id = ID;
+                result->result.accuracy = -1.0;
+                goal_handle->canceled(result);
+                return;
+            } 
+            
+            if (ExecSUCCESS){
+                RCLCPP_INFO(this->get_logger(), "RECIPE ID: %s -> %s - %s: Movement executed!", ID.c_str(), param_ROB.c_str(), TYPE.c_str());
+                result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":SUCCESS";
+                result->result.success = true;
+                result->result.id = ID;
+                result->result.accuracy = ACCURACY_ROB(TR_POSE);
+                goal_handle->succeed(result);
+            } else {
+                RCLCPP_INFO(this->get_logger(), "RECIPE ID: %s -> %s - %s: Movement execution failed!", ID.c_str(), param_ROB.c_str(), TYPE.c_str());
+                result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":FAILED. Reason -> Execution error.";
+                result->result.success = false;
+                result->result.id = ID;
+                result->result.accuracy = -1.0;
+                goal_handle->succeed(result);
+            }
+
+        } else if (RES == "PLANNING: OK (EE)"){
+            
+            move_group_interface_EE.execute(MyPlan);
+
+            // EXECUTION TIME -> END:
+            auto t_end = std::chrono::high_resolution_clock::now();
+            auto ms_duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
+            auto s_duration = ms_duration.count() / 1000000.0;
+            result->result.exectime = s_duration;
+
+            if (goal_handle->is_canceling()) {
+                RCLCPP_INFO(this->get_logger(), "Goal canceled.");
+                result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":CANCELED";
+                result->result.success = false;
+                result->result.id = ID;
+                result->result.accuracy = -1.0;
+                goal_handle->canceled(result);
+                return;
+            } else {
+                RCLCPP_INFO(this->get_logger(), "RECIPE ID: %s -> %s - %s: Movement executed!", ID.c_str(), param_EE.c_str(), TYPE.c_str());
+                result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":SUCCESS";
+                result->result.success = true;
+                result->result.id = ID;
+                result->result.accuracy = ACCURACY_EE(JP);
+                goal_handle->succeed(result);
+            }
+            
+        } else if (RES == "PLANNING: ERROR"){
+            RCLCPP_INFO(this->get_logger(), "RECIPE ID: %s -> %s - %s: Planning failed!", ID.c_str(), param_ROB.c_str(), TYPE.c_str());
+            result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":FAILED. Reason -> Planning failed.";
+            result->result.success = false;
+            result->result.id = ID;
+            result->result.accuracy = -1.0;
+            goal_handle->succeed(result);
+        } else if (RES == "PLANNING: ERROR (EE)"){
+            RCLCPP_INFO(this->get_logger(), "RECIPE ID: %s -> %s - %s: Planning failed!", ID.c_str(), param_EE.c_str(), TYPE.c_str());
+            result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":FAILED. Reason -> Planning failed.";
+            result->result.success = false;
+            result->result.id = ID;
+            result->result.accuracy = -1.0;
+            goal_handle->succeed(result);
+        } 
+
+        // RE-INITIALISE RES variable:
+        RES = "none";
 
     }
 
