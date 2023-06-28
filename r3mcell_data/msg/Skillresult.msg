@@ -1,6 +1,6 @@
 string id
 float64 exectime
-float64 accuracy
+float64[] error
 Product[] product 
 string message
 bool success

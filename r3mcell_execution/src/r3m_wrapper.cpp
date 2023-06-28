@@ -60,6 +60,9 @@ const moveit::core::JointModelGroup* joint_model_group_EE;
 // Declaration of GLOBAL VARIABLE --> RES:
 std::string RES = "none";
 
+// DECLARE GLOBAL --> LOGGER;
+auto const GLOBAL_LOG = rclcpp::get_logger("r3m_wrapper");
+
 // ========================================================================================= //
 // ROBOT + END-EFFECTOR -> Input parameters:
 
@@ -134,7 +137,7 @@ moveit::planning_interface::MoveGroupInterface::Plan plan_EE() {
     // Execute the plan
     if (success)
     {
-        RES = "PLANNING: OK";
+        RES = "PLANNING: OK (EE)";
         return(my_plan);
     }
     else
@@ -149,28 +152,46 @@ moveit::planning_interface::MoveGroupInterface::Plan plan_EE() {
 // Calculate ACCURACY:
 
 // ROBOT:
-(double, double) ERROR_ROB(geometry_msgs::msg::Pose TARGET_POSE){
+std::vector<double> ERROR_ROB(geometry_msgs::msg::Pose TARGET_POSE){
+
+    std::vector<double> ERROR_ROB = {-1.0, -1.0};
 
     auto CURRENT_POSE = move_group_interface_ROB.getCurrentPose();
 
     // POSITION ERROR -> Norm of the (p1-p0) difference vector:
-    double ACC_x = abs(CURRENT_POSE.pose.position.x - TARGET_POSE.position.x);
-    double ACC_y = abs(CURRENT_POSE.pose.position.y - TARGET_POSE.position.y);
-    double ACC_z = abs(CURRENT_POSE.pose.position.z - TARGET_POSE.position.z);
-    
-    // ROTATION ERROR -> Norm of the (q1-q0) difference quaternion:
-    double ACC_qx = abs(CURRENT_POSE.pose.orientation.x - TARGET_POSE.orientation.x);
-    double ACC_qy = abs(CURRENT_POSE.pose.orientation.y - TARGET_POSE.orientation.y);
-    double ACC_qz = abs(CURRENT_POSE.pose.orientation.z - TARGET_POSE.orientation.z);
-    double ACC_qw = abs(CURRENT_POSE.pose.orientation.w - TARGET_POSE.orientation.w);
+    double DIF_x = abs(CURRENT_POSE.pose.position.x - TARGET_POSE.position.x);
+    double DIF_y = abs(CURRENT_POSE.pose.position.y - TARGET_POSE.position.y);
+    double DIF_z = abs(CURRENT_POSE.pose.position.z - TARGET_POSE.position.z);
 
-    return(ERROR_POS, ERROR_ROT);
+    ERROR_ROB[0] = sqrt(DIF_x*DIF_x + DIF_y*DIF_y + DIF_z*DIF_z);
+    
+    // ROTATION ERROR -> Norm of the (C = A*inv(B)) difference quaternion:
+    double Ax = CURRENT_POSE.pose.orientation.x;
+    double Ay = CURRENT_POSE.pose.orientation.y;
+    double Az = CURRENT_POSE.pose.orientation.z;
+    double Aw = CURRENT_POSE.pose.orientation.w;
+
+    double Bx = -TARGET_POSE.orientation.x;
+    double By = -TARGET_POSE.orientation.y;
+    double Bz = -TARGET_POSE.orientation.z;
+    double Bw = TARGET_POSE.orientation.w;
+
+    double qw = Aw*Bw - Ax*Bx - Ay*By - Az*Bz;
+    double qx = Aw*Bx + Ax*Bw + Ay*Bz - Az*By;
+    double qy = Aw*By - Ax*Bz + Ay*Bw + Az*Bx;
+    double qz = Aw*Bz + Ax*By - Ay*Bx + Az*Bw; 
+
+    ERROR_ROB[1] = sqrt((qx*qx)+(qy*qy)+(qz*qz));
+
+    return(ERROR_ROB);
 
 }
 
 // END-EFFECTOR:
-double ERROR_EE(std::vector<double> TARGET_JP){
+std::vector<double> ERROR_EE(std::vector<double> TARGET_JP){
 
+    std::vector<double> ERROR_EE = {-1.0};
+    
     std::vector<double> JP;
     moveit::core::RobotStatePtr current_state = move_group_interface_EE.getCurrentState(10);
     current_state->copyJointGroupPositions(joint_model_group_EE, JP);
@@ -178,8 +199,8 @@ double ERROR_EE(std::vector<double> TARGET_JP){
     double DIF_00 = abs(JP[0] - TARGET_JP[0]);
     double DIF_01 = abs(JP[1] - TARGET_JP[1]);
 
-    double ERROR = (DIF_00 + DIF_01) / 2;
-    return(ERROR);
+    ERROR_EE[0] = (DIF_00 + DIF_01) / 2;
+    return(ERROR_EE);
 
 }
 
@@ -245,8 +266,8 @@ private:
                 
                 geometry_msgs::msg::Pose POSE;
                 POSE.position.x = config["pose"]["x"].as<double>();
-                POSE.position.y = config["pose"]["x"].as<double>();
-                POSE.position.z = config["pose"]["x"].as<double>();
+                POSE.position.y = config["pose"]["y"].as<double>();
+                POSE.position.z = config["pose"]["z"].as<double>();
                 POSE.orientation.x = config["pose"]["qx"].as<double>();
                 POSE.orientation.y = config["pose"]["qy"].as<double>();
                 POSE.orientation.z = config["pose"]["qz"].as<double>();
@@ -320,6 +341,7 @@ private:
 
         geometry_msgs::msg::Pose TR_POSE;
         std::vector<double> JP;
+        std::vector<double> ERROR = {-1.0};
 
         // 1. Obtain RECIPE ID + PATH:
         std::string ID = goal->id;
@@ -436,7 +458,7 @@ private:
                 result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":CANCELED";
                 result->result.success = false;
                 result->result.id = ID;
-                result->result.accuracy = -1.0;
+                result->result.error = ERROR;
                 goal_handle->canceled(result);
                 return;
             } 
@@ -446,14 +468,14 @@ private:
                 result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":SUCCESS";
                 result->result.success = true;
                 result->result.id = ID;
-                result->result.accuracy = ACCURACY_ROB(TR_POSE);
+                result->result.error = ERROR_ROB(TR_POSE);
                 goal_handle->succeed(result);
             } else {
                 RCLCPP_INFO(this->get_logger(), "RECIPE ID: %s -> %s - %s: Movement execution failed!", ID.c_str(), param_ROB.c_str(), TYPE.c_str());
                 result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":FAILED. Reason -> Execution error.";
                 result->result.success = false;
                 result->result.id = ID;
-                result->result.accuracy = -1.0;
+                result->result.error = ERROR;
                 goal_handle->succeed(result);
             }
 
@@ -472,7 +494,7 @@ private:
                 result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":CANCELED";
                 result->result.success = false;
                 result->result.id = ID;
-                result->result.accuracy = -1.0;
+                result->result.error = ERROR;
                 goal_handle->canceled(result);
                 return;
             } else {
@@ -480,7 +502,7 @@ private:
                 result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":SUCCESS";
                 result->result.success = true;
                 result->result.id = ID;
-                result->result.accuracy = ACCURACY_EE(JP);
+                result->result.error = ERROR_EE(JP);
                 goal_handle->succeed(result);
             }
             
@@ -489,14 +511,14 @@ private:
             result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":FAILED. Reason -> Planning failed.";
             result->result.success = false;
             result->result.id = ID;
-            result->result.accuracy = -1.0;
+            result->result.error = ERROR;
             goal_handle->succeed(result);
         } else if (RES == "PLANNING: ERROR (EE)"){
             RCLCPP_INFO(this->get_logger(), "RECIPE ID: %s -> %s - %s: Planning failed!", ID.c_str(), param_EE.c_str(), TYPE.c_str());
             result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":FAILED. Reason -> Planning failed.";
             result->result.success = false;
             result->result.id = ID;
-            result->result.accuracy = -1.0;
+            result->result.error = ERROR;
             goal_handle->succeed(result);
         } 
 
