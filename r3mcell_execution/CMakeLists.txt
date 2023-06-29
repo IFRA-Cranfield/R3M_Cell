@@ -36,6 +36,9 @@ find_package(r3mcell_data REQUIRED)
 # REQUIRED to -> Include linkattacher_msgs package:
 find_package(linkattacher_msgs REQUIRED)
 
+# REQUIRED to -> Include objectpose_msgs package:
+find_package(objectpose_msgs REQUIRED)
+
 # REQUIRED to -> Execute ACTIONS:
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -69,6 +72,7 @@ ament_target_dependencies(
   rclcpp_action
   r3mcell_data
   linkattacher_msgs
+  objectpose_msgs
   yaml-cpp
   ament_index_cpp
 )
@@ -82,17 +86,15 @@ install(
 
 # =========================================================== #
 # REQUIRED TO EXECUTE .py scripts:
-#install(
-#  DIRECTORY 
-#    python
-#  DESTINATION 
-#    share/${PROJECT_NAME}
-#)
-#install(PROGRAMS
-#  python/r3m_status.py
-#  python/RobotState.py
-#  python/SpawnObject.py
-#  DESTINATION lib/${PROJECT_NAME} 
-#)
+install(
+  DIRECTORY 
+    python
+  DESTINATION 
+    share/${PROJECT_NAME}
+)
+install(PROGRAMS
+  python/SpawnObject.py
+  DESTINATION lib/${PROJECT_NAME} 
+)
 
 ament_package()

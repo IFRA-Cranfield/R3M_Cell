@@ -42,12 +42,16 @@
 #include "r3mcell_data/msg/product.hpp"
 #include "r3mcell_data/msg/skillresult.hpp"
 #include "geometry_msgs/msg/pose.hpp"
+#include "objectpose_msgs/msg/object_pose.hpp"
 
 // Declaration of GLOBAL VARIABLES --> INPUT PARAMETERS:
-std::string param_ObjectList[100];
 std::string param_ROB = "none";
 std::string param_EE = "none";
-std::string param_OL = "none";
+std::vector<std::string> param_OL(100);
+
+// Declaration of GLOBAL VARIABLE --> ObjectPoseVECTOR:
+using DataType = objectpose_msgs::msg::ObjectPose;
+std::vector<DataType> ObjectPoseVECTOR;
 
 // Declaration of GLOBAL VARIABLES --> MoveIt!2 Interface:
 moveit::planning_interface::MoveGroupInterface move_group_interface_ROB;
@@ -98,9 +102,16 @@ class ros2_ObjectListParam : public rclcpp::Node
 public:
     ros2_ObjectListParam() : Node("ros2_ObjectListParam") 
     {
-        this->declare_parameter("OL_PARAM", "none");
-        param_OL = this->get_parameter("OL_PARAM").get_parameter_value().get<std::string>();
-        RCLCPP_INFO(this->get_logger(), "OL_PARAM received -> %s", param_OL.c_str());
+        this->declare_parameter("OL_PARAM", param_OL);
+        param_OL = this->get_parameter("OL_PARAM").get_parameter_value().get<std::vector<std::string>>();
+        RCLCPP_INFO(this->get_logger(), "OL_PARAM received:");
+
+        int i = 1;
+        for (std::string &obj: param_OL){
+            RCLCPP_INFO(this->get_logger(), "OBJECT N%i: %s", i, obj.c_str());
+            i = i+1;
+        }
+
     }
 private:
 };
@@ -203,6 +214,39 @@ std::vector<double> ERROR_EE(std::vector<double> TARGET_JP){
     return(ERROR_EE);
 
 }
+
+// ========================================================================================= //
+// Subscribe to ObjectPose:
+
+class ObjectPose_Subscriber : public rclcpp::Node
+{
+    public:
+
+        ObjectPose_Subscriber() : Node("ObjectPose_Subscriber"){
+
+            int N = param_OL.size();
+            for (int i=0; i<N; i++){
+
+                std::string TopicName = param_OL[i] + "/ObjectPose";
+                SubscriberVECTOR.push_back(this->create_subscription<objectpose_msgs::msg::ObjectPose>(TopicName, 10, std::bind(&ObjectPose_Subscriber::CALLBACK_FN, this, std::placeholders::_1)));
+
+            }
+
+        }
+
+    private:
+
+        void CALLBACK_FN(const objectpose_msgs::msg::ObjectPose msg) const
+        {
+            ObjectPoseVECTOR.push_back(msg);
+        }
+
+        std::vector<rclcpp::Subscription<objectpose_msgs::msg::ObjectPose>::SharedPtr> SubscriberVECTOR;
+};
+
+// Obtain POSE of ALL OBJECTS in environment:
+
+
 
 // ========================================================================================= //
 // ExecuteSkill ACTION SERVER:
@@ -544,6 +588,9 @@ int main(int argc, char ** argv)
     rclcpp::spin_some(node_PARAM_EE);
     auto node_PARAM_OL = std::make_shared<ros2_ObjectListParam>();
     rclcpp::spin_some(node_PARAM_OL);
+
+    // Launch ObjectPose subscriber ROS2 Node:
+    auto node_ObjectPoseSUB = std::make_shared<ObjectPose_Subscriber>();
 
     // Launch and spin (EXECUTOR) MoveIt!2 Interface node:
     auto name = "R3MCell_WRAPPER";
