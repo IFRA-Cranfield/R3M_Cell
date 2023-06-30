@@ -37,12 +37,11 @@
 #include <linkattacher_msgs/srv/detach_link.hpp>
 
 // Include -> ROS2 Messages:
-#include "r3mcell_data/msg/grip.hpp"
-#include "r3mcell_data/msg/move.hpp"
 #include "r3mcell_data/msg/product.hpp"
 #include "r3mcell_data/msg/skillresult.hpp"
-#include "geometry_msgs/msg/pose.hpp"
+#include "r3mcell_data/msg/pose.hpp"
 #include "objectpose_msgs/msg/object_pose.hpp"
+#include "linkpose_msgs/msg/link_pose.hpp"
 
 // Declaration of GLOBAL VARIABLES --> INPUT PARAMETERS:
 std::string param_ROB = "none";
@@ -52,6 +51,14 @@ std::vector<std::string> param_OL(100);
 // Declaration of GLOBAL VARIABLE --> ObjectPoseVECTOR:
 using DataType = objectpose_msgs::msg::ObjectPose;
 std::vector<DataType> ObjectPoseVECTOR;
+std::vector<DataType> PreviousPoseVECTOR;
+// Declaration of GLOBAL VARIABLE --> ObjectPoseSUB NODE:
+std::shared_ptr<rclcpp::Node> node_ObjectPoseSUB;
+
+// Declaration of GLOBAL VARIABLE --> EEPose:
+linkpose_msgs::msg::LinkPose EEPose;
+// Declaration of GLOBAL VARIABLE --> EEPoseSUB NODE:
+std::shared_ptr<rclcpp::Node> node_EEPoseSUB;
 
 // Declaration of GLOBAL VARIABLES --> MoveIt!2 Interface:
 moveit::planning_interface::MoveGroupInterface move_group_interface_ROB;
@@ -60,6 +67,10 @@ moveit::planning_interface::MoveGroupInterface move_group_interface_EE;
 // Declaration of GLOBAL VARIABLES --> JointModelGroup:
 const moveit::core::JointModelGroup* joint_model_group_ROB;
 const moveit::core::JointModelGroup* joint_model_group_EE;
+
+// Declaration of GLOBAL VARIABLES --> Attacher & Detacher:
+std::shared_ptr<rclcpp::Node> AttacherNode;
+std::shared_ptr<rclcpp::Node> DetacherNode;
 
 // Declaration of GLOBAL VARIABLE --> RES:
 std::string RES = "none";
@@ -106,10 +117,10 @@ public:
         param_OL = this->get_parameter("OL_PARAM").get_parameter_value().get<std::vector<std::string>>();
         RCLCPP_INFO(this->get_logger(), "OL_PARAM received:");
 
-        int i = 1;
-        for (std::string &obj: param_OL){
-            RCLCPP_INFO(this->get_logger(), "OBJECT N%i: %s", i, obj.c_str());
-            i = i+1;
+        int N = param_OL.size()/2;
+        for (int i=1; i<=N; i++){
+            int k = (i-1)*2;
+            RCLCPP_INFO(this->get_logger(), "OBJECT N%i -> MODEL: %s, LINK: %s", i, param_OL[k].c_str(), param_OL[k+1].c_str());
         }
 
     }
@@ -224,11 +235,26 @@ class ObjectPose_Subscriber : public rclcpp::Node
 
         ObjectPose_Subscriber() : Node("ObjectPose_Subscriber"){
 
-            int N = param_OL.size();
-            for (int i=0; i<N; i++){
+            objectpose_msgs::msg::ObjectPose EmptyPose;
 
-                std::string TopicName = param_OL[i] + "/ObjectPose";
+            int N = param_OL.size()/2;
+            for (int i=1; i<=N; i++){
+                int k = (i-1)*2;
+
+                std::string TopicName = param_OL[k] + "/ObjectPose";
                 SubscriberVECTOR.push_back(this->create_subscription<objectpose_msgs::msg::ObjectPose>(TopicName, 10, std::bind(&ObjectPose_Subscriber::CALLBACK_FN, this, std::placeholders::_1)));
+
+                EmptyPose.objectname = param_OL[k];
+                EmptyPose.x = 0.0;
+                EmptyPose.y = 0.0;
+                EmptyPose.z = 0.0;
+                EmptyPose.qx = 0.0;
+                EmptyPose.qy = 0.0;
+                EmptyPose.qz = 0.0;
+                EmptyPose.qw = 0.0;
+
+                PreviousPoseVECTOR.push_back(EmptyPose);
+                ObjectPoseVECTOR.push_back(EmptyPose);
 
             }
 
@@ -238,14 +264,184 @@ class ObjectPose_Subscriber : public rclcpp::Node
 
         void CALLBACK_FN(const objectpose_msgs::msg::ObjectPose msg) const
         {
-            ObjectPoseVECTOR.push_back(msg);
+
+            int N = param_OL.size()/2;
+            for (int i=0; i<N; i++){
+
+                if (msg.objectname == ObjectPoseVECTOR[i].objectname){
+                    PreviousPoseVECTOR[i] = ObjectPoseVECTOR[i];
+                    ObjectPoseVECTOR[i] = msg;
+                }
+
+            }
         }
 
         std::vector<rclcpp::Subscription<objectpose_msgs::msg::ObjectPose>::SharedPtr> SubscriberVECTOR;
 };
 
-// Obtain POSE of ALL OBJECTS in environment:
+// ========================================================================================= //
+// End-Effector POSE:
 
+class EEPose_Subscriber : public rclcpp::Node
+{
+    public:
+
+        EEPose_Subscriber() : Node("EEPose_Subscriber"){
+            Subscriber = this->create_subscription<linkpose_msgs::msg::LinkPose>("/LinkPose_irb120_EE_egp64", 10, std::bind(&EEPose_Subscriber::CALLBACK_FN, this, std::placeholders::_1));
+        }
+
+    private:
+
+        void CALLBACK_FN(const linkpose_msgs::msg::LinkPose msg) const
+        {
+            EEPose = msg;
+        }
+
+        rclcpp::Subscription<linkpose_msgs::msg::LinkPose>::SharedPtr Subscriber;
+};
+
+// ========================================================================================= //
+// ATTACH/DETACH:
+
+struct ATTACH_ST{             
+  bool success;        
+  std::string model;
+  std::string link;  
+};     
+
+ATTACH_ST AttachedOBJ;
+
+void AttachDetach_NODE(){
+
+    AttacherNode = rclcpp::Node::make_shared("ATTACHER_SC_node");
+    DetacherNode = rclcpp::Node::make_shared("DETACHER_SC_node");
+
+}
+
+ATTACH_ST CHECK_ATTACH(){
+
+    // EE POSE:
+    rclcpp::spin_some(node_EEPoseSUB);
+
+    ATTACH_ST RESULT;
+    bool CHECK = true;
+    
+    // Iterate and compare:
+    int N = param_OL.size()/2;
+    for (int i=1; i<=N; i++){
+
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "EEPose.x -> %.4f / ObjectPose.x -> %.4f", EEPose.x, ObjectPoseVECTOR[i-1].x);
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "EEPose.y -> %.4f / ObjectPose.y -> %.4f", EEPose.y, ObjectPoseVECTOR[i-1].y);
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "EEPose.z -> %.4f / ObjectPose.z -> %.4f", EEPose.z, ObjectPoseVECTOR[i-1].z);
+
+        if ((EEPose.x - 0.01 > ObjectPoseVECTOR[i-1].x) || ((EEPose.x + 0.01 < ObjectPoseVECTOR[i-1].x))){
+            CHECK = false;
+        }  
+
+        if ((EEPose.y - 0.01 > ObjectPoseVECTOR[i-1].y) || ((EEPose.y + 0.01 < ObjectPoseVECTOR[i-1].y))){
+            CHECK = false;
+        } 
+
+        if ((EEPose.z - 0.01 > ObjectPoseVECTOR[i-1].z) || ((EEPose.z + 0.01 < ObjectPoseVECTOR[i-1].z))){
+            CHECK = false;
+        } 
+
+        if (CHECK == true){
+
+            RESULT.success = true;
+            RESULT.model = ObjectPoseVECTOR[i-1].objectname;
+            RESULT.link = param_OL[(2*i)-1];
+
+            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "ATTACH CHECK: Successful.");
+            break;
+
+        }
+
+    }
+
+    if (CHECK == false){
+        RESULT.success = false;
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "ATTACH CHECK: Unsuccessful.");
+    }
+
+    return(RESULT);
+}
+
+bool ATTACH(){
+
+    ATTACH_ST CHECK = CHECK_ATTACH();
+
+    if (CHECK.success == true){
+
+        auto ATTACHER_SC = AttacherNode->create_client<linkattacher_msgs::srv::AttachLink>("ATTACHLINK");
+        auto request = std::make_shared<linkattacher_msgs::srv::AttachLink::Request>();
+
+        request->model1_name = "irb120";
+        request->link1_name = "EE_egp64";
+        request->model2_name = CHECK.model;
+        request->link2_name = CHECK.link;
+
+        auto result = ATTACHER_SC->async_send_request(request);
+
+        if (rclcpp::spin_until_future_complete(AttacherNode, result) == rclcpp::FutureReturnCode::SUCCESS)
+        {
+            auto RES = result.get();
+            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "MSG: %s", RES->message.c_str());
+            if (bool attachOK = RES->success) {
+                AttachedOBJ.success = true;
+                AttachedOBJ.model = CHECK.model;
+                AttachedOBJ.link = CHECK.link;
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service /ATTACHLINK");
+            return false;
+        }
+    
+    } else {
+        return false;
+    }
+
+}
+
+bool DETACH(){
+    
+    if (AttachedOBJ.success == true){
+
+        auto DETACHER_SC = DetacherNode->create_client<linkattacher_msgs::srv::DetachLink>("DETACHLINK");
+        auto request = std::make_shared<linkattacher_msgs::srv::DetachLink::Request>();
+
+        request->model1_name = "irb120";
+        request->link1_name = "EE_egp64";
+        request->model2_name = AttachedOBJ.model;
+        request->link2_name = AttachedOBJ.link;
+
+        auto result = DETACHER_SC->async_send_request(request);
+
+        if (rclcpp::spin_until_future_complete(DetacherNode, result) == rclcpp::FutureReturnCode::SUCCESS)
+        {
+            auto RES = result.get();
+            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "MSG: %s", RES->message.c_str());
+            if (bool detachOK = RES->success) {
+                AttachedOBJ.success = true;
+                AttachedOBJ.model = "";
+                AttachedOBJ.link = "";
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service /DETACHLINK");
+            return false;
+        }
+    
+    } else {
+        return false;
+    }
+    
+}
 
 
 // ========================================================================================= //
@@ -412,11 +608,13 @@ private:
             current_state->copyJointGroupPositions(joint_model_group_EE, JP);
 
             if (ACTION == "CLOSE"){
-                JP[0] = 0.008;
-                JP[1] = 0.008;
+                JP[0] = 0.006;
+                JP[1] = 0.006;
+                ATTACH();
             } else if (ACTION == "OPEN"){
                 JP[0] = 0.0;
                 JP[1] = 0.0;
+                DETACH();
             }
 
             move_group_interface_EE.setJointValueTarget(JP);
@@ -475,7 +673,7 @@ private:
             // 2. TRANSLATION: From EE_FRAME to tool0:
             double Tx = 0.0;
             double Ty = 0.0;
-            double Tz = -0.17; // Difference between tool0 and EE_FRAME in LOCAL COORDINATES.
+            double Tz = -0.19; // Difference between tool0 and EE_FRAME in LOCAL COORDINATES.
             TR_POSE.position.x = TARGET_POSE.position.x + R_00*Tx + R_01*Ty + R_02*Tz;
             TR_POSE.position.y = TARGET_POSE.position.y + R_10*Tx + R_11*Ty + R_12*Tz;
             TR_POSE.position.z = TARGET_POSE.position.z + R_20*Tx + R_21*Ty + R_22*Tz;
@@ -496,6 +694,41 @@ private:
             auto ms_duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
             auto s_duration = ms_duration.count() / 1000000.0;
             result->result.exectime = s_duration;
+
+            // OBJECT POSE:
+            rclcpp::spin_some(node_ObjectPoseSUB);
+            
+            int N = param_OL.size()/2;
+            for (int i=0; i<N; i++){
+
+                RCLCPP_INFO(this->get_logger(), "OBJECT: %s", ObjectPoseVECTOR[i].objectname.c_str());
+                RCLCPP_INFO(this->get_logger(), "POS: (x: %.3f , Y: %.3f , z: %.3f)", ObjectPoseVECTOR[i].x, ObjectPoseVECTOR[i].y, ObjectPoseVECTOR[i].z);
+                RCLCPP_INFO(this->get_logger(), "ROT: (qx: %.3f , qy: %.3f , qz: %.3f , w: %.3f)", ObjectPoseVECTOR[i].qx, ObjectPoseVECTOR[i].qy, ObjectPoseVECTOR[i].qz, ObjectPoseVECTOR[i].qw);
+
+                // PRODUCT INFORMATION:
+                r3mcell_data::msg::Product PROD;
+
+                PROD.name = ObjectPoseVECTOR[i].objectname;
+                PROD.error = 0.0;
+                // CurrentPose:
+                PROD.currentpose.x = ObjectPoseVECTOR[i].x;
+                PROD.currentpose.y = ObjectPoseVECTOR[i].y;
+                PROD.currentpose.z = ObjectPoseVECTOR[i].z;
+                PROD.currentpose.qx = ObjectPoseVECTOR[i].qx;
+                PROD.currentpose.qy = ObjectPoseVECTOR[i].qy;
+                PROD.currentpose.qz = ObjectPoseVECTOR[i].qz;
+                PROD.currentpose.qw = ObjectPoseVECTOR[i].qw;
+                // PreviousPose:
+                PROD.previouspose.x = PreviousPoseVECTOR[i].x;
+                PROD.previouspose.y = PreviousPoseVECTOR[i].y;
+                PROD.previouspose.z = PreviousPoseVECTOR[i].z;
+                PROD.previouspose.qx = PreviousPoseVECTOR[i].qx;
+                PROD.previouspose.qy = PreviousPoseVECTOR[i].qy;
+                PROD.previouspose.qz = PreviousPoseVECTOR[i].qz;
+                PROD.previouspose.qw = PreviousPoseVECTOR[i].qw;
+
+                result->result.product.push_back(PROD);
+            }
 
             if (goal_handle->is_canceling()) {
                 RCLCPP_INFO(this->get_logger(), "Goal canceled.");
@@ -532,6 +765,41 @@ private:
             auto ms_duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
             auto s_duration = ms_duration.count() / 1000000.0;
             result->result.exectime = s_duration;
+
+            // OBJECT POSE:
+            rclcpp::spin_some(node_ObjectPoseSUB);
+            
+            int N = param_OL.size()/2;
+            for (int i=0; i<N; i++){
+
+                RCLCPP_INFO(this->get_logger(), "OBJECT: %s", ObjectPoseVECTOR[i].objectname.c_str());
+                RCLCPP_INFO(this->get_logger(), "POS: (x: %.3f , Y: %.3f , z: %.3f)", ObjectPoseVECTOR[i].x, ObjectPoseVECTOR[i].y, ObjectPoseVECTOR[i].z);
+                RCLCPP_INFO(this->get_logger(), "ROT: (qx: %.3f , qy: %.3f , qz: %.3f , w: %.3f)", ObjectPoseVECTOR[i].qx, ObjectPoseVECTOR[i].qy, ObjectPoseVECTOR[i].qz, ObjectPoseVECTOR[i].qw);
+
+                // PRODUCT INFORMATION:
+                r3mcell_data::msg::Product PROD;
+
+                PROD.name = ObjectPoseVECTOR[i].objectname;
+                PROD.error = 0.0;
+                // CurrentPose:
+                PROD.currentpose.x = ObjectPoseVECTOR[i].x;
+                PROD.currentpose.y = ObjectPoseVECTOR[i].y;
+                PROD.currentpose.z = ObjectPoseVECTOR[i].z;
+                PROD.currentpose.qx = ObjectPoseVECTOR[i].qx;
+                PROD.currentpose.qy = ObjectPoseVECTOR[i].qy;
+                PROD.currentpose.qz = ObjectPoseVECTOR[i].qz;
+                PROD.currentpose.qw = ObjectPoseVECTOR[i].qw;
+                // PreviousPose:
+                PROD.previouspose.x = PreviousPoseVECTOR[i].x;
+                PROD.previouspose.y = PreviousPoseVECTOR[i].y;
+                PROD.previouspose.z = PreviousPoseVECTOR[i].z;
+                PROD.previouspose.qx = PreviousPoseVECTOR[i].qx;
+                PROD.previouspose.qy = PreviousPoseVECTOR[i].qy;
+                PROD.previouspose.qz = PreviousPoseVECTOR[i].qz;
+                PROD.previouspose.qw = PreviousPoseVECTOR[i].qw;
+
+                result->result.product.push_back(PROD);
+            }
 
             if (goal_handle->is_canceling()) {
                 RCLCPP_INFO(this->get_logger(), "Goal canceled.");
@@ -590,7 +858,11 @@ int main(int argc, char ** argv)
     rclcpp::spin_some(node_PARAM_OL);
 
     // Launch ObjectPose subscriber ROS2 Node:
-    auto node_ObjectPoseSUB = std::make_shared<ObjectPose_Subscriber>();
+    node_ObjectPoseSUB = std::make_shared<ObjectPose_Subscriber>();
+    node_EEPoseSUB = std::make_shared<EEPose_Subscriber>();
+
+    // AttachDetach NODE -> declare:
+    AttachDetach_NODE();
 
     // Launch and spin (EXECUTOR) MoveIt!2 Interface node:
     auto name = "R3MCell_WRAPPER";

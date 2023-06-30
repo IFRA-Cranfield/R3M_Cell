@@ -26,7 +26,8 @@
 
   <depend>r3mcell_data</depend>
   <build_depend>linkattacher_msgs</build_depend>
-    <build_depend>objectpose_msgs</build_depend>
+  <build_depend>objectpose_msgs</build_depend>
+  <build_depend>linkpose_msgs</build_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

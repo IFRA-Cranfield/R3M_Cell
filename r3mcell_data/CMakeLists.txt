@@ -47,8 +47,6 @@ install(
 find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Pose.msg"
-  "msg/Grip.msg"
-  "msg/Move.msg"
   "msg/Product.msg"
   "msg/Skillresult.msg"
   "srv/ObjectList.srv"

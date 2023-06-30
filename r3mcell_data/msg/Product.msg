@@ -1,5 +1,5 @@
 string name
 Pose currentpose
 Pose previouspose
-float64 accuracy
+float64 error
 string[] integratedparts

@@ -39,6 +39,9 @@ find_package(linkattacher_msgs REQUIRED)
 # REQUIRED to -> Include objectpose_msgs package:
 find_package(objectpose_msgs REQUIRED)
 
+# REQUIRED to -> Include objectpose_msgs package:
+find_package(linkpose_msgs REQUIRED)
+
 # REQUIRED to -> Execute ACTIONS:
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -73,6 +76,7 @@ ament_target_dependencies(
   r3mcell_data
   linkattacher_msgs
   objectpose_msgs
+  linkpose_msgs
   yaml-cpp
   ament_index_cpp
 )

@@ -1,5 +1,12 @@
 # R3M Project - Recipe for Automatic Program Generation.
 id: 003
-type: "GRIP"
-action: "OPEN"
-speed: 1.0
+type: "LIN"
+pose:
+  x: -0.45
+  y: 0.85
+  z: 0.875
+  qx: 0.0
+  qy: 1.0
+  qz: 0.0
+  qw: 0.0
+speed: 0.1

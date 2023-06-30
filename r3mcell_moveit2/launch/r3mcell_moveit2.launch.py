@@ -294,7 +294,7 @@ def generate_launch_description():
         package="r3mcell_execution",
         executable="r3m_wrapper",
         output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"OL_PARAM": ["box", "box1"]}],
+        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"OL_PARAM": ["box", "box"]}],
     )
     
     return LaunchDescription(
