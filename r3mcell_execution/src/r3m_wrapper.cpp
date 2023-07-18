@@ -387,7 +387,7 @@ bool ATTACH(){
         {
             auto RES = result.get();
             RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "MSG: %s", RES->message.c_str());
-            if (bool attachOK = RES->success) {
+            if (RES->success) {
                 AttachedOBJ.success = true;
                 AttachedOBJ.model = CHECK.model;
                 AttachedOBJ.link = CHECK.link;
@@ -424,7 +424,7 @@ bool DETACH(){
         {
             auto RES = result.get();
             RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "MSG: %s", RES->message.c_str());
-            if (bool detachOK = RES->success) {
+            if (RES->success) {
                 AttachedOBJ.success = true;
                 AttachedOBJ.model = "";
                 AttachedOBJ.link = "";
