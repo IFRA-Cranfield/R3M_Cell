@@ -1,5 +1,5 @@
 # R3M Project - Recipe for Automatic Program Generation.
-id: 006
+id: 7
 type: "GRIP"
-action: "CLOSE"
+action: "OPEN"
 speed: 1.0

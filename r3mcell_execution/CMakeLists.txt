@@ -98,6 +98,7 @@ install(
 )
 install(PROGRAMS
   python/SpawnObject.py
+  python/r3m_matlab.py
   DESTINATION lib/${PROJECT_NAME} 
 )
 

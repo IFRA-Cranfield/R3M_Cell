@@ -476,8 +476,8 @@ private:
         std::shared_ptr<const ExecuteSkill::Goal> goal)
     {
         // 1. Obtain RECIPE ID + PATH:
-        std::string ID = goal->id;
-        std::string FilePath = "/recipes/" + ID + ".yaml";
+        int ID = goal->id;
+        std::string FilePath = "/recipes/" + std::to_string(ID) + ".yaml";
         std::string PackagePath = ament_index_cpp::get_package_share_directory("r3mcell_execution");
         std::string yamlPath = PackagePath + FilePath;
 
@@ -522,7 +522,7 @@ private:
 
             // LOG and ACCEPT:
             RCLCPP_INFO(this->get_logger(), "ExecuteSkill ACTION: GOAL REQUEST received!");
-            RCLCPP_INFO(this->get_logger(), "   - Recipe ID: %s", ID.c_str());
+            RCLCPP_INFO(this->get_logger(), "   - Recipe ID: %i", ID);
             RCLCPP_INFO(this->get_logger(), "   - Skill type: %s", TYPE.c_str());
             RCLCPP_INFO(this->get_logger(), "   - Input: %s, Speed: %.2f", ACTION.c_str(), SPEED);
 
@@ -531,7 +531,7 @@ private:
         } else {
 
             // REJECT, since file (RECIPE) does not exist:
-            RCLCPP_INFO(this->get_logger(), "ExecuteSkill ACTION: ERROR -> Recipe (ID: %s) does not exist!", ID.c_str());
+            RCLCPP_INFO(this->get_logger(), "ExecuteSkill ACTION: ERROR -> Recipe (ID: %i) does not exist!", ID);
             return rclcpp_action::GoalResponse::REJECT;
 
         }
@@ -584,8 +584,8 @@ private:
         std::vector<double> ERROR = {-1.0};
 
         // 1. Obtain RECIPE ID + PATH:
-        std::string ID = goal->id;
-        std::string FilePath = "/recipes/" + ID + ".yaml";
+        int ID = goal->id;
+        std::string FilePath = "/recipes/" + std::to_string(ID) + ".yaml";
         std::string PackagePath = ament_index_cpp::get_package_share_directory("r3mcell_execution");
         std::string yamlPath = PackagePath + FilePath;
 
@@ -732,7 +732,7 @@ private:
 
             if (goal_handle->is_canceling()) {
                 RCLCPP_INFO(this->get_logger(), "Goal canceled.");
-                result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":CANCELED";
+                result->result.message = "RECIPE N-" + std::to_string(ID) + " (" + TYPE + ")" + ":CANCELED";
                 result->result.success = false;
                 result->result.id = ID;
                 result->result.error = ERROR;
@@ -741,15 +741,15 @@ private:
             } 
             
             if (ExecSUCCESS){
-                RCLCPP_INFO(this->get_logger(), "RECIPE ID: %s -> %s - %s: Movement executed!", ID.c_str(), param_ROB.c_str(), TYPE.c_str());
-                result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":SUCCESS";
+                RCLCPP_INFO(this->get_logger(), "RECIPE ID: %i -> %s - %s: Movement executed!", ID, param_ROB.c_str(), TYPE.c_str());
+                result->result.message = "RECIPE N-" + std::to_string(ID) + " (" + TYPE + ")" + ":SUCCESS";
                 result->result.success = true;
                 result->result.id = ID;
                 result->result.error = ERROR_ROB(TR_POSE);
                 goal_handle->succeed(result);
             } else {
-                RCLCPP_INFO(this->get_logger(), "RECIPE ID: %s -> %s - %s: Movement execution failed!", ID.c_str(), param_ROB.c_str(), TYPE.c_str());
-                result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":FAILED. Reason -> Execution error.";
+                RCLCPP_INFO(this->get_logger(), "RECIPE ID: %i -> %s - %s: Movement execution failed!", ID, param_ROB.c_str(), TYPE.c_str());
+                result->result.message = "RECIPE N-" + std::to_string(ID) + " (" + TYPE + ")" + ":FAILED. Reason -> Execution error.";
                 result->result.success = false;
                 result->result.id = ID;
                 result->result.error = ERROR;
@@ -803,15 +803,15 @@ private:
 
             if (goal_handle->is_canceling()) {
                 RCLCPP_INFO(this->get_logger(), "Goal canceled.");
-                result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":CANCELED";
+                result->result.message = "RECIPE N-" + std::to_string(ID) + " (" + TYPE + ")" + ":CANCELED";
                 result->result.success = false;
                 result->result.id = ID;
                 result->result.error = ERROR;
                 goal_handle->canceled(result);
                 return;
             } else {
-                RCLCPP_INFO(this->get_logger(), "RECIPE ID: %s -> %s - %s: Movement executed!", ID.c_str(), param_EE.c_str(), TYPE.c_str());
-                result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":SUCCESS";
+                RCLCPP_INFO(this->get_logger(), "RECIPE ID: %i -> %s - %s: Movement executed!", ID, param_EE.c_str(), TYPE.c_str());
+                result->result.message = "RECIPE N-" + std::to_string(ID) + " (" + TYPE + ")" + ":SUCCESS";
                 result->result.success = true;
                 result->result.id = ID;
                 result->result.error = ERROR_EE(JP);
@@ -819,15 +819,15 @@ private:
             }
             
         } else if (RES == "PLANNING: ERROR"){
-            RCLCPP_INFO(this->get_logger(), "RECIPE ID: %s -> %s - %s: Planning failed!", ID.c_str(), param_ROB.c_str(), TYPE.c_str());
-            result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":FAILED. Reason -> Planning failed.";
+            RCLCPP_INFO(this->get_logger(), "RECIPE ID: %i -> %s - %s: Planning failed!", ID, param_ROB.c_str(), TYPE.c_str());
+            result->result.message = "RECIPE N-" + std::to_string(ID) + " (" + TYPE + ")" + ":FAILED. Reason -> Planning failed.";
             result->result.success = false;
             result->result.id = ID;
             result->result.error = ERROR;
             goal_handle->succeed(result);
         } else if (RES == "PLANNING: ERROR (EE)"){
-            RCLCPP_INFO(this->get_logger(), "RECIPE ID: %s -> %s - %s: Planning failed!", ID.c_str(), param_EE.c_str(), TYPE.c_str());
-            result->result.message = "RECIPE N-" + ID + " (" + TYPE + ")" + ":FAILED. Reason -> Planning failed.";
+            RCLCPP_INFO(this->get_logger(), "RECIPE ID: %i -> %s - %s: Planning failed!", ID, param_EE.c_str(), TYPE.c_str());
+            result->result.message = "RECIPE N-" + std::to_string(ID) + " (" + TYPE + ")" + ":FAILED. Reason -> Planning failed.";
             result->result.success = false;
             result->result.id = ID;
             result->result.error = ERROR;
