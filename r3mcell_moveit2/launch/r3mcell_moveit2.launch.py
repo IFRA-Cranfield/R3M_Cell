@@ -296,6 +296,14 @@ def generate_launch_description():
         output="screen",
         parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"OL_PARAM": ["box", "box"]}],
     )
+
+    R3MBridge = Node(
+        name="R3MBridge",
+        package="r3mcell_execution",
+        executable="r3m_matlab.py",
+        output="screen",
+        parameters=[],
+    )
     
     return LaunchDescription(
         [
@@ -359,7 +367,8 @@ def generate_launch_description():
                         TimerAction(
                             period=5.0,
                             actions=[
-                                R3MWrapper
+                                R3MWrapper,
+                                R3MBridge
                             ]
                         ),
 
