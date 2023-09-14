@@ -12,11 +12,14 @@
 import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
-from std_msgs.msg import String
 from rclpy.executors import MultiThreadedExecutor
 import os
 import ast
 import time
+
+# Std_msgs:
+from std_msgs.msg import String
+from std_msgs.msg import Int32 as Int
 
 # IMPORT /ExecuteSkill ROS2 Action:
 from r3mcell_data.action import ExecuteSkill
@@ -76,7 +79,7 @@ class SkillClient(Node):
 class ResultPublisher(Node):
     def __init__(self):
         super().__init__("r3m_MATLAB_ResultPublisher")
-        self.publisher_ = self.create_publisher(String, "r3m_MATLAB", 10)
+        self.publisher_ = self.create_publisher(String, "r3m_MATLAB_RES", 10)
 
 # ========================================================================================= #
 # PUBLISHER (FEEDBACK):
@@ -94,7 +97,7 @@ class RecipeSubscriber(Node):
     def __init__(self):
 
         super().__init__("r3m_MATLAB_RecipeSubscriber")
-        self.subscription_ = self.create_subscription(String, "r3m_MATLAB", self.listener_callback, 10)
+        self.subscription_ = self.create_subscription(Int, "r3m_MATLAB", self.listener_callback, 10)
 
         # INITIALISE:
         self.SKILL_CLIENT = SkillClient()
@@ -105,9 +108,9 @@ class RecipeSubscriber(Node):
 
         global SkillResult
 
-        if (RECIPE.data != "SUCCESS" and RECIPE.data != "ERROR"):
+        if (RECIPE.data != 0):
         
-            self.SKILL_CLIENT.send_goal(int(RECIPE.data))
+            self.SKILL_CLIENT.send_goal(RECIPE.data)
             while rclpy.ok():
                 rclpy.spin_once(self.SKILL_CLIENT)
                 if (SkillResult.message != "none"):
@@ -124,6 +127,11 @@ class RecipeSubscriber(Node):
 
             self.FEEDBACK_PUBLISHER.publisher_.publish(SkillResult)
             SkillResult.message = "none"
+
+        if (RECIPE.data == 0):
+            
+            # RESET Gz Environment:
+            None
 
 # ========================================================================================= #
 # ========================================================================================= #
