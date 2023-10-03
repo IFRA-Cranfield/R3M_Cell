@@ -13,6 +13,8 @@ import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
+from ament_index_python.packages import get_package_share_directory
+import xacro
 import os
 import ast
 import time
@@ -23,6 +25,15 @@ from std_msgs.msg import Int32 as Int
 
 # IMPORT /ExecuteSkill ROS2 Action:
 from r3mcell_data.action import ExecuteSkill
+
+# IMPORT /SpawnEntity and /DeleteEntity ROS2 Services:
+from gazebo_msgs.srv import SpawnEntity
+from gazebo_msgs.srv import DeleteEntity
+
+# IMPORT /controller_manager ROS2 Services:
+from controller_manager_msgs.srv import LoadController
+from controller_manager_msgs.srv import ConfigureController
+from controller_manager_msgs.srv import SwitchController
 
 # IMPORT /Pose, /Product and /Skillresult ROS2 Messages:
 from r3mcell_data.msg import Pose
@@ -72,6 +83,73 @@ class SkillClient(Node):
         result = future.result().result
         SkillResult = result.result
 
+# ========================================================================================= #
+# ServiceClient (SPAWN/DELETE ROBOT + CUBE):
+
+class EntityClient(Node):
+
+    def __init__(self):
+
+        # Initialise ROS2 Node:
+        super().__init__('r3m_MATLAB_EntityClient')
+
+        # Create ROS2 Service Clients:
+        self.cli_SPAWN = self.create_client(SpawnEntity, "/spawn_entity")  
+        self.cli_DELETE = self.create_client(DeleteEntity, "/delete_entity") 
+
+        # Declare REQUEST variable (of CUSTOM DATA type):
+        self.req_SPAWN = SpawnEntity.Request()  
+        self.req_DELETE = DeleteEntity.Request()
+
+    def spawn_REQUEST(self, ELEMENT):
+        
+        ## 1. SPAWN ROBOT:
+
+        if ELEMENT == "ROBOT":
+        
+            # LOAD URDF of ROBOT:
+            urdf_file_path = os.path.join(get_package_share_directory('r3mcell_gazebo'), 'urdf', 'irb120.urdf.xacro')
+            xacro_file = xacro.process_file(urdf_file_path, mappings={})
+            
+            # ARGUMENTS:
+            self.req_SPAWN.name = "irb120"
+            self.req_SPAWN.xml = xacro_file.toxml()
+            self.req_SPAWN.initial_pose.position.x = 0.0
+            self.req_SPAWN.initial_pose.position.y = 0.0
+            self.req_SPAWN.initial_pose.position.z = 0.0
+
+            # Assign RESULT value (future):
+            self.future_SPAWN = self.cli_SPAWN.call_async(self.req_SPAWN)
+
+        ## 2. SPAWN CUBE:
+
+        elif ELEMENT == "CUBE":
+
+            # LOAD URDF of CUBE:
+            urdf_file_path = os.path.join(get_package_share_directory('r3mcell_gazebo'), 'urdf', 'box.urdf')
+            xacro_file = xacro.process_file(urdf_file_path, mappings={})
+            
+            # ARGUMENTS:
+            self.req_SPAWN.name = "box"
+            self.req_SPAWN.xml = xacro_file.toxml()
+            self.req_SPAWN.initial_pose.position.x = -0.45
+            self.req_SPAWN.initial_pose.position.y = 0.85
+            self.req_SPAWN.initial_pose.position.z = 0.88
+
+            # Assign RESULT value (future):
+            self.future_SPAWN = self.cli_SPAWN.call_async(self.req_SPAWN)
+
+    def delete_REQUEST(self, ELEMENT):
+
+        ## 1. DELETE ROBOT:
+        if ELEMENT == "ROBOT":
+            self.req_DELETE.name = "irb120"
+            self.future_DELETE = self.cli_DELETE.call_async(self.req_DELETE)
+        
+        ## 2. DELETE CUBE:
+        elif ELEMENT == "CUBE":
+            self.req_DELETE.name = "box"
+            self.future_DELETE = self.cli_DELETE.call_async(self.req_DELETE)
 
 # ========================================================================================= #
 # PUBLISHER (RESULT):
@@ -103,6 +181,20 @@ class RecipeSubscriber(Node):
         self.SKILL_CLIENT = SkillClient()
         self.RESULT_PUBLISHER = ResultPublisher()
         self.FEEDBACK_PUBLISHER = FeedbackPublisher()
+        self.ENTITY_CLIENT = EntityClient()
+
+        ## INIT: Spawn cube!
+        self.ENTITY_CLIENT.spawn_REQUEST("CUBE")
+        while rclpy.ok():
+            rclpy.spin_once(self.ENTITY_CLIENT)
+            if self.ENTITY_CLIENT.future_SPAWN.done():
+                try:
+                    spawnRES = self.ENTITY_CLIENT.future_SPAWN.result()
+                except Exception as exc:
+                    print("/SpawnEntity ROS2 Service call failed. ERROR: " + str(exc))
+                else:
+                    print("RESULT: " + str(spawnRES.status_message))
+                break
 
     def listener_callback(self, RECIPE):
 
@@ -130,8 +222,56 @@ class RecipeSubscriber(Node):
 
         if (RECIPE.data == 0):
             
-            # RESET Gz Environment:
-            None
+            # === RESET Gz Environment === #
+            
+            # DELETE ROBOT and CUBE:
+            self.ENTITY_CLIENT.delete_REQUEST("CUBE")
+            while rclpy.ok():
+                rclpy.spin_once(self.ENTITY_CLIENT)
+                if self.ENTITY_CLIENT.future_DELETE.done():
+                    try:
+                        deleteRES = self.ENTITY_CLIENT.future_DELETE.result()
+                    except Exception as exc:
+                        print("/DeleteEntity ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: " + str(deleteRES.status_message))
+                    break
+            self.ENTITY_CLIENT.delete_REQUEST("ROBOT")
+            while rclpy.ok():
+                rclpy.spin_once(self.ENTITY_CLIENT)
+                if self.ENTITY_CLIENT.future_DELETE.done():
+                    try:
+                        deleteRES = self.ENTITY_CLIENT.future_DELETE.result()
+                    except Exception as exc:
+                        print("/DeleteEntity ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: " + str(deleteRES.status_message))
+                    break
+
+            # SPAWN ROBOT and CUBE:
+            self.ENTITY_CLIENT.spawn_REQUEST("ROBOT")
+            while rclpy.ok():
+                rclpy.spin_once(self.ENTITY_CLIENT)
+                if self.ENTITY_CLIENT.future_SPAWN.done():
+                    try:
+                        spawnRES = self.ENTITY_CLIENT.future_SPAWN.result()
+                    except Exception as exc:
+                        print("/SpawnEntity ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: " + str(spawnRES.status_message))
+                    break
+            self.ENTITY_CLIENT.spawn_REQUEST("CUBE")
+            while rclpy.ok():
+                rclpy.spin_once(self.ENTITY_CLIENT)
+                if self.ENTITY_CLIENT.future_SPAWN.done():
+                    try:
+                        spawnRES = self.ENTITY_CLIENT.future_SPAWN.result()
+                    except Exception as exc:
+                        print("/SpawnEntity ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: " + str(spawnRES.status_message))
+                    break
+
 
 # ========================================================================================= #
 # ========================================================================================= #
