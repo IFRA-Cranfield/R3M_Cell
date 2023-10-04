@@ -23,6 +23,9 @@ import time
 from std_msgs.msg import String
 from std_msgs.msg import Int32 as Int
 
+# Std_srvs:
+from std_srvs.srv import Empty
+
 # IMPORT /ExecuteSkill ROS2 Action:
 from r3mcell_data.action import ExecuteSkill
 
@@ -109,7 +112,7 @@ class EntityClient(Node):
         
             # LOAD URDF of ROBOT:
             urdf_file_path = os.path.join(get_package_share_directory('r3mcell_gazebo'), 'urdf', 'irb120.urdf.xacro')
-            xacro_file = xacro.process_file(urdf_file_path, mappings={})
+            xacro_file = xacro.process_file(urdf_file_path, mappings={"name": "irb120"})
             
             # ARGUMENTS:
             self.req_SPAWN.name = "irb120"
@@ -127,7 +130,7 @@ class EntityClient(Node):
 
             # LOAD URDF of CUBE:
             urdf_file_path = os.path.join(get_package_share_directory('r3mcell_gazebo'), 'urdf', 'box.urdf')
-            xacro_file = xacro.process_file(urdf_file_path, mappings={})
+            xacro_file = xacro.process_file(urdf_file_path, mappings={"name": "box"})
             
             # ARGUMENTS:
             self.req_SPAWN.name = "box"
@@ -150,6 +153,68 @@ class EntityClient(Node):
         elif ELEMENT == "CUBE":
             self.req_DELETE.name = "box"
             self.future_DELETE = self.cli_DELETE.call_async(self.req_DELETE)
+
+# ========================================================================================= #
+# ServiceClient (CONTROLLER MANAGER):
+
+class ControllerClient(Node):
+
+    def __init__(self):
+
+        # Initialise ROS2 Node:
+        super().__init__('r3m_MATLAB_ControllerClient')
+
+        # Create ROS2 Service Clients:
+        self.cli_LOAD = self.create_client(LoadController, "/controller_manager/load_controller")  
+        self.cli_CONFIGURE = self.create_client(ConfigureController, "/controller_manager/configure_controller")
+        self.cli_SWITCH = self.create_client(SwitchController, "/controller_manager/switch_controller") 
+
+        # Declare REQUEST variable (of CUSTOM DATA type):
+        self.req_LOAD = LoadController.Request()  
+        self.req_CONFIGURE = ConfigureController.Request()
+        self.req_SWITCH = SwitchController.Request()
+
+    def load_REQUEST(self, CONTROLLER):
+        
+        self.req_LOAD.name = CONTROLLER
+        self.future_LOAD = self.cli_LOAD.call_async(self.req_LOAD)
+
+    def configure_REQUEST(self, CONTROLLER):
+        
+        self.req_CONFIGURE.name = CONTROLLER
+        self.future_CONFIGURE = self.cli_CONFIGURE.call_async(self.req_CONFIGURE)
+
+    # All controllers can be activated at once:
+    def switch_REQUEST(self, CONTROLLERS):
+        
+        self.req_SWITCH.activate_controllers = CONTROLLERS
+        self.future_SWITCH = self.cli_SWITCH.call_async(self.req_SWITCH)
+
+# ========================================================================================= #
+# ServiceClient (Reset Gazebo):
+
+class GazeboClient(Node):
+
+    def __init__(self):
+
+        # Initialise ROS2 Node:
+        super().__init__('r3m_MATLAB_GazeboClient')
+
+        # Create ROS2 Service Clients:
+        self.cli_RESETWorld = self.create_client(Empty, "/reset_world")  
+        self.cli_RESETSim = self.create_client(Empty, "/reset_simulation")
+
+        # Declare REQUEST variable (of CUSTOM DATA type):
+        self.req_RESETWorld = Empty.Request()  
+        self.req_RESETSim = Empty.Request()
+
+    def resetWORLD_REQUEST(self):
+        
+        self.future_RESETWorld = self.cli_RESETWorld.call_async(self.req_RESETWorld)
+
+    def resetSIM_REQUEST(self):
+
+        self.future_RESETSim = self.cli_RESETSim.call_async(self.req_RESETSim)
 
 # ========================================================================================= #
 # PUBLISHER (RESULT):
@@ -182,6 +247,8 @@ class RecipeSubscriber(Node):
         self.RESULT_PUBLISHER = ResultPublisher()
         self.FEEDBACK_PUBLISHER = FeedbackPublisher()
         self.ENTITY_CLIENT = EntityClient()
+        self.CONTROLLER_CLIENT = ControllerClient()
+        self.GAZEBO_CLIENT = GazeboClient()
 
         ## INIT: Spawn cube!
         self.ENTITY_CLIENT.spawn_REQUEST("CUBE")
@@ -223,6 +290,25 @@ class RecipeSubscriber(Node):
         if (RECIPE.data == 0):
             
             # === RESET Gz Environment === #
+
+            # 1. CUBE MUST BE DETACHED -> Otherwise Gazebo breaks!
+            self.SKILL_CLIENT.send_goal(7)
+            while rclpy.ok():
+                rclpy.spin_once(self.SKILL_CLIENT)
+                if (SkillResult.message != "none"):
+                    break
+
+            MSG = String()
+
+            if (SkillResult.success == True):
+                MSG.data = "SUCCESS"
+                self.RESULT_PUBLISHER.publisher_.publish(MSG)
+            elif (SkillResult.success == False):
+                MSG.data = "ERROR"
+                self.RESULT_PUBLISHER.publisher_.publish(MSG)
+
+            self.FEEDBACK_PUBLISHER.publisher_.publish(SkillResult)
+            SkillResult.message = "none"
             
             # DELETE ROBOT and CUBE:
             self.ENTITY_CLIENT.delete_REQUEST("CUBE")
@@ -246,6 +332,30 @@ class RecipeSubscriber(Node):
                         print("/DeleteEntity ROS2 Service call failed. ERROR: " + str(exc))
                     else:
                         print("RESULT: " + str(deleteRES.status_message))
+                    break
+
+            # RESET WORLD AND SIMULATION:
+            self.GAZEBO_CLIENT.resetWORLD_REQUEST()
+            while rclpy.ok():
+                rclpy.spin_once(self.GAZEBO_CLIENT)
+                if self.GAZEBO_CLIENT.future_RESETWorld.done():
+                    try:
+                        resetRES = self.GAZEBO_CLIENT.future_RESETWorld.result()
+                    except Exception as exc:
+                        print("/reset_world ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: RESET COMPLETE.")
+                    break
+            self.GAZEBO_CLIENT.resetSIM_REQUEST()
+            while rclpy.ok():
+                rclpy.spin_once(self.GAZEBO_CLIENT)
+                if self.GAZEBO_CLIENT.future_RESETSim.done():
+                    try:
+                        resetRES = self.GAZEBO_CLIENT.future_RESETSim.result()
+                    except Exception as exc:
+                        print("/reset_simulation ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: RESET COMPLETE.")
                     break
 
             # SPAWN ROBOT and CUBE:
@@ -272,6 +382,109 @@ class RecipeSubscriber(Node):
                         print("RESULT: " + str(spawnRES.status_message))
                     break
 
+            # LOAD CONTROLLERS:
+            self.CONTROLLER_CLIENT.load_REQUEST("joint_state_broadcaster")
+            while rclpy.ok():
+                rclpy.spin_once(self.CONTROLLER_CLIENT)
+                if self.CONTROLLER_CLIENT.future_LOAD.done():
+                    try:
+                        loadRES = self.CONTROLLER_CLIENT.future_LOAD.result()
+                    except Exception as exc:
+                        print("Load Controller ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: " + str(loadRES.ok))
+                    break
+            self.CONTROLLER_CLIENT.load_REQUEST("irb120_controller")
+            while rclpy.ok():
+                rclpy.spin_once(self.CONTROLLER_CLIENT)
+                if self.CONTROLLER_CLIENT.future_LOAD.done():
+                    try:
+                        loadRES = self.CONTROLLER_CLIENT.future_LOAD.result()
+                    except Exception as exc:
+                        print("Load Controller ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: " + str(loadRES.ok))
+                    break
+            self.CONTROLLER_CLIENT.load_REQUEST("egp64_finger_right_controller")
+            while rclpy.ok():
+                rclpy.spin_once(self.CONTROLLER_CLIENT)
+                if self.CONTROLLER_CLIENT.future_LOAD.done():
+                    try:
+                        loadRES = self.CONTROLLER_CLIENT.future_LOAD.result()
+                    except Exception as exc:
+                        print("Load Controller ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: " + str(loadRES.ok))
+                    break
+            self.CONTROLLER_CLIENT.load_REQUEST("egp64_finger_left_controller")
+            while rclpy.ok():
+                rclpy.spin_once(self.CONTROLLER_CLIENT)
+                if self.CONTROLLER_CLIENT.future_LOAD.done():
+                    try:
+                        loadRES = self.CONTROLLER_CLIENT.future_LOAD.result()
+                    except Exception as exc:
+                        print("Load Controller ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: " + str(loadRES.ok))
+                    break   
+            # CONFIGURE CONTROLLERS:
+            self.CONTROLLER_CLIENT.configure_REQUEST("joint_state_broadcaster")
+            while rclpy.ok():
+                rclpy.spin_once(self.CONTROLLER_CLIENT)
+                if self.CONTROLLER_CLIENT.future_CONFIGURE.done():
+                    try:
+                        configureRES = self.CONTROLLER_CLIENT.future_CONFIGURE.result()
+                    except Exception as exc:
+                        print("Configure Controller ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: " + str(configureRES.ok))
+                    break
+            self.CONTROLLER_CLIENT.configure_REQUEST("irb120_controller")
+            while rclpy.ok():
+                rclpy.spin_once(self.CONTROLLER_CLIENT)
+                if self.CONTROLLER_CLIENT.future_CONFIGURE.done():
+                    try:
+                        configureRES = self.CONTROLLER_CLIENT.future_CONFIGURE.result()
+                    except Exception as exc:
+                        print("Configure Controller ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: " + str(configureRES.ok))
+                    break   
+            self.CONTROLLER_CLIENT.configure_REQUEST("egp64_finger_right_controller") 
+            while rclpy.ok():
+                rclpy.spin_once(self.CONTROLLER_CLIENT)
+                if self.CONTROLLER_CLIENT.future_CONFIGURE.done():
+                    try:
+                        configureRES = self.CONTROLLER_CLIENT.future_CONFIGURE.result()
+                    except Exception as exc:
+                        print("Configure Controller ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: " + str(configureRES.ok))
+                    break 
+            self.CONTROLLER_CLIENT.configure_REQUEST("egp64_finger_left_controller")   
+            while rclpy.ok():
+                rclpy.spin_once(self.CONTROLLER_CLIENT)
+                if self.CONTROLLER_CLIENT.future_CONFIGURE.done():
+                    try:
+                        configureRES = self.CONTROLLER_CLIENT.future_CONFIGURE.result()
+                    except Exception as exc:
+                        print("Configure Controller ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: " + str(configureRES.ok))
+                    break
+            # ACTIVATE CONTROLLERS: 
+            ControllerList = ["joint_state_broadcaster", "irb120_controller", "egp64_finger_right_controller", "egp64_finger_left_controller"] 
+            self.CONTROLLER_CLIENT.switch_REQUEST(ControllerList)   
+            while rclpy.ok():
+                rclpy.spin_once(self.CONTROLLER_CLIENT)
+                if self.CONTROLLER_CLIENT.future_SWITCH.done():
+                    try:
+                        switchRES = self.CONTROLLER_CLIENT.future_SWITCH.result()
+                    except Exception as exc:
+                        print("Switch Controller ROS2 Service call failed. ERROR: " + str(exc))
+                    else:
+                        print("RESULT: " + str(switchRES.ok))
+                    break          
 
 # ========================================================================================= #
 # ========================================================================================= #
