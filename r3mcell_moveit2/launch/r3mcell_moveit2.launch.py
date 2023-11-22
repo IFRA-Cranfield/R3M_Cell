@@ -304,6 +304,14 @@ def generate_launch_description():
         output="screen",
         parameters=[],
     )
+
+    R3MService = Node(
+        name="R3MService",
+        package="r3mcell_execution",
+        executable="SkillExecution.py",
+        output="screen",
+        parameters=[],
+    )
     
     return LaunchDescription(
         [
@@ -368,7 +376,8 @@ def generate_launch_description():
                             period=5.0,
                             actions=[
                                 R3MWrapper,
-                                R3MBridge
+                                R3MBridge,
+                                R3MService
                             ]
                         ),
 

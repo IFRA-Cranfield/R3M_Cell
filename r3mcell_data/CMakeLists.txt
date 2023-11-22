@@ -50,6 +50,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Product.msg"
   "msg/Skillresult.msg"
   "srv/ObjectList.srv"
+  "srv/SkillExecution.srv"
   "action/ExecuteSkill.action"
 )
 
