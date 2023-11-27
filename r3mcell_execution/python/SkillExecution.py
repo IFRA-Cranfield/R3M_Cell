@@ -252,7 +252,13 @@ class serviceServer(Node):
         ID = request.id
 
         # CALL ROS2 ACTION:
-        if (ID != 0):
+        if (ID==999):
+            response.result.id = 999
+            response.result.message = "999 received. Do nothing."
+            response.result.success = True
+            return(response)
+        
+        if (ID != 0 and ID!=999):
         
             self.SKILL_CLIENT.send_goal(ID)
             while rclpy.ok():
