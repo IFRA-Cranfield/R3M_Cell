@@ -156,6 +156,7 @@ class CubePose_LOG():
 
         f = open(self.FilePath, "a")
         f.write(str(POSE))
+        f.write("\n")
         f.close()
 
         print("CubePose logged -> " + str(POSE))
