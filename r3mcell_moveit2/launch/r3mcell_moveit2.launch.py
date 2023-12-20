@@ -375,9 +375,9 @@ def generate_launch_description():
                         TimerAction(
                             period=5.0,
                             actions=[
-                                R3MWrapper,
-                                R3MBridge,
-                                R3MService
+                                #R3MWrapper,
+                                #R3MBridge,
+                                #R3MService
                             ]
                         ),
 

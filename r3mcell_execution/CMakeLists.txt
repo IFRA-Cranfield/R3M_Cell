@@ -100,6 +100,7 @@ install(PROGRAMS
   python/SpawnObject.py
   python/r3m_matlab.py
   python/SkillExecution.py
+  python/m6d_test.py
   DESTINATION lib/${PROJECT_NAME} 
 )
 
