@@ -70,6 +70,7 @@ class EntityClient(Node):
         self.req_SPAWN.initial_pose.position.x = random.uniform(0.40, 0.75)
         self.req_SPAWN.initial_pose.position.y = random.uniform(0.0, 1.05)
         self.req_SPAWN.initial_pose.position.z = 0.88
+        # Add here -> Random orientation.
 
         # Assign RESULT value (future):
         self.future_SPAWN = self.cli_SPAWN.call_async(self.req_SPAWN)
@@ -225,8 +226,14 @@ def main(args=None):
 
         # 4. MEGAPOSE:
         # TBD.
+        
+        # 5. Calculate TRANSFORM and COMPARE values:
+        # TBD.
+        
+        # 6. LOG MEGAPOSE VALUES + ACCURACY:
+        # TBD.
 
-        # 5. DELETE CUBE:
+        # 7. DELETE CUBE:
         ENTITY_CLIENT.delete_REQUEST()
 
         print("")
