@@ -101,6 +101,7 @@ install(PROGRAMS
   python/r3m_matlab.py
   python/SkillExecution.py
   python/m6d_test.py
+  python/GzSim_Test.py
   DESTINATION lib/${PROJECT_NAME} 
 )
 

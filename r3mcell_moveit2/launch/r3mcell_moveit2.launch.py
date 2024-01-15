@@ -312,6 +312,22 @@ def generate_launch_description():
         output="screen",
         parameters=[],
     )
+
+    RobPoseInterface = Node(
+        name="robpose",
+        package="ros2srrc_execution",
+        executable="robpose",
+        output="screen",
+        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}],
+    )
+
+    RobMoveInterface = Node(
+        name="robmove",
+        package="ros2srrc_execution",
+        executable="robmove",
+        output="screen",
+        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"ENV_PARAM": "gazebo"}],
+    )
     
     return LaunchDescription(
         [
@@ -375,9 +391,11 @@ def generate_launch_description():
                         TimerAction(
                             period=5.0,
                             actions=[
-                                #R3MWrapper,
-                                #R3MBridge,
-                                #R3MService
+                                R3MWrapper,
+                                R3MBridge,
+                                R3MService,
+                                RobPoseInterface,
+                                RobMoveInterface
                             ]
                         ),
 

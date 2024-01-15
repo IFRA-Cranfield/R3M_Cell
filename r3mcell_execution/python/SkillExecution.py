@@ -94,8 +94,8 @@ class EntityClient(Node):
             # ARGUMENTS:
             self.req_SPAWN.name = "box"
             self.req_SPAWN.xml = xacro_file.toxml()
-            self.req_SPAWN.initial_pose.position.x = -0.45
-            self.req_SPAWN.initial_pose.position.y = 0.85
+            self.req_SPAWN.initial_pose.position.x = 0.6
+            self.req_SPAWN.initial_pose.position.y = 0.8
             self.req_SPAWN.initial_pose.position.z = 0.88
 
             # Assign RESULT value (future):

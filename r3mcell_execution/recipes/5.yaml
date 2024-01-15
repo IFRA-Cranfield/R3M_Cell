@@ -1,9 +1,10 @@
+# R3M Project - Recipe for Automatic Program Generation.
 id: 5
 type: "PTP"
 pose:
-  x: -0.25
-  y: 0.25
-  z: 1.00
+  x: 0.6
+  y: 0.2
+  z: 1.01
   qx: 0.0
   qy: 1.0
   qz: 0.0
