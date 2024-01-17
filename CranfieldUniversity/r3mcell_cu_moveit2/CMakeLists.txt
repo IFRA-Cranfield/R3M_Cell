@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(r3mcell_gazebo)
+project(r3mcell_cu_moveit2)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -32,13 +32,11 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+# REQUIRED to -> Launch simulation:
 install(
   DIRECTORY 
     config
     launch
-    urdf 
-    meshes
-    worlds
   DESTINATION 
     share/${PROJECT_NAME}
 )

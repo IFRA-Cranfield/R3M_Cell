@@ -70,7 +70,7 @@ class EntityClient(Node):
         if ELEMENT == "ROBOT":
         
             # LOAD URDF of ROBOT:
-            urdf_file_path = os.path.join(get_package_share_directory('r3mcell_gazebo'), 'urdf', 'irb120.urdf.xacro')
+            urdf_file_path = os.path.join(get_package_share_directory('r3mcell_cu_gazebo'), 'urdf', 'irb120.urdf.xacro')
             xacro_file = xacro.process_file(urdf_file_path, mappings={"name": "irb120"})
             
             # ARGUMENTS:
@@ -88,7 +88,7 @@ class EntityClient(Node):
         elif ELEMENT == "CUBE":
 
             # LOAD URDF of CUBE:
-            urdf_file_path = os.path.join(get_package_share_directory('r3mcell_gazebo'), 'urdf', 'box.urdf')
+            urdf_file_path = os.path.join(get_package_share_directory('r3mcell_cu_gazebo'), 'urdf', 'box.urdf')
             xacro_file = xacro.process_file(urdf_file_path, mappings={"name": "box"})
             
             # ARGUMENTS:

@@ -62,7 +62,7 @@
 
 
   <!-- Include XACRO-MACRO file of the IRB120: -->
-  <xacro:include filename="$(find r3mcell_gazebo)/urdf/irb120_macro.urdf.xacro"/>	
+  <xacro:include filename="$(find r3mcell_cu_gazebo)/urdf/irb120_macro.urdf.xacro"/>	
   <xacro:irb120 
     prefix=""
     bringup="${bringup}"
@@ -75,13 +75,13 @@
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="file://$(find r3mcell_gazebo)/meshes/IALab/IRB120enclosure.dae" scale="1 1 1" />
+        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/IALab/IRB120enclosure.dae" scale="1 1 1" />
       </geometry>
     </visual>
     <collision>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="file://$(find r3mcell_gazebo)/meshes/IALab/IRB120enclosure.dae" scale="1 1 1" />
+        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/IALab/IRB120enclosure.dae" scale="1 1 1" />
       </geometry>
     </collision>
     <inertial>
@@ -105,13 +105,13 @@
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="file://$(find r3mcell_gazebo)/meshes/IALab/ergobox.dae" scale="1 1 1" />
+        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/IALab/ergobox.dae" scale="1 1 1" />
       </geometry>
     </visual>
     <collision>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="file://$(find r3mcell_gazebo)/meshes/IALab/ergobox.dae" scale="1 1 1" />
+        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/IALab/ergobox.dae" scale="1 1 1" />
       </geometry>
     </collision>
     <inertial>

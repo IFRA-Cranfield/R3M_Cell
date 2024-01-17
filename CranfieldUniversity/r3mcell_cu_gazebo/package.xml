@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>r3mcell_moveit2</name>
+  <name>r3mcell_cu_gazebo</name>
   <version>0.0.0</version>
-  <description>IFRA-Cranfield (Cranfield University, UK). Package: R3M Cell MoveIt!2 (Humble)</description>
+  <description>IFRA-Cranfield (Cranfield University, UK). Package: R3M Cell Gazebo (Humble)</description>
 
   <author>Mikel Bueno Viso</author>
   <maintainer email="Mikel.Bueno-Viso@cranfield.ac.uk">Mikel Bueno Viso</maintainer>
@@ -14,6 +14,9 @@
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+
+  <build_depend>ros2_objectpose</build_depend>
+  <build_depend>ros2_linkpose</build_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

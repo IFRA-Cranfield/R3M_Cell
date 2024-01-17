@@ -28,8 +28,8 @@
 # You can cite our work with the following statement:
 # IFRA-Cranfield (2023) ROS 2 Sim-to-Real Robot Control. URL: https://github.com/IFRA-Cranfield/ros2_SimRealRobotControl.
 
-# irb120_interface.launch.py:
-# Launch file for the ABB-IRB120 Robot GAZEBO + MoveIt!2 SIMULATION (+ Robot/Gripper triggers) in ROS2 Humble:
+# irb120_bringup.launch.py:
+# Launch file for the ABB-IRB120 Robot CONTROL BRINGUP in ROS2 Humble:
 
 # Import libraries:
 import os
@@ -68,25 +68,14 @@ def load_yaml(package_name, file_path):
 # ========== **GENERATE LAUNCH DESCRIPTION** ========== #
 def generate_launch_description():
 
-    
-    # *********************** Gazebo *********************** # 
-    
-    # DECLARE Gazebo WORLD file:
-    r3mcell_gazebo = os.path.join(
-        get_package_share_directory('r3mcell_gazebo'),
-        'worlds',
-        'irb120.world')
-    # DECLARE Gazebo LAUNCH file:
-    gazebo = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-                launch_arguments={'world': r3mcell_gazebo}.items(),
-             )
-
     # ========== COMMAND LINE ARGUMENTS ========== #
     print("")
-    print("===== ABB IRB-120: Robot Simulation (r3mcell_moveit2) =====")
+    print("===== ABB IRB-120: Robot Bringup (r3mcell_cu_bringup) =====")
     print("Robot configuration:")
+    print("")
+    # robot_ip:
+    print("- IP Address:")
+    robot_ip = input("  Please input the IP Address of the Robot: ")
     print("")
     # Cell Layout:
     print("- Cell layout: Cranfield University - IA Lab enclosure.")
@@ -97,25 +86,28 @@ def generate_launch_description():
     # ***** ROBOT DESCRIPTION ***** #
     # ABB-IRB120 Description file package:
     irb120_description_path = os.path.join(
-        get_package_share_directory('r3mcell_gazebo'))
+        get_package_share_directory('r3mcell_cu_gazebo'))
     # ABB-IRB120 ROBOT urdf file path:
     xacro_file = os.path.join(irb120_description_path,
                               'urdf',
                               'irb120.urdf.xacro')
     # Generate ROBOT_DESCRIPTION for ABB-IRB120:
     doc = xacro.parse(open(xacro_file))
-    xacro.process_doc(doc, mappings={})
+    xacro.process_doc(doc, mappings={
+        "robot_ip": robot_ip, 
+        "bringup": "true",
+        })
     robot_description_config = doc.toxml()
     robot_description = {'robot_description': robot_description_config}
 
-    # SPAWN ROBOT TO GAZEBO:
-    spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
-                        arguments=['-topic', 'robot_description',
-                                   '-entity', 'irb120'],
-                        output='screen')
-
-    # ***** STATIC TRANSFORM ***** #
-    # NODE -> Static TF:
+    # ROBOT STATE PUBLISHER NODE:
+    node_robot_state_publisher = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        output='both',
+        parameters=[robot_description]
+    )
+    # Static TF:
     static_tf = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
@@ -123,19 +115,20 @@ def generate_launch_description():
         output="log",
         arguments=["0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "world", "base_link"],
     )
-    # Publish TF:
-    robot_state_publisher = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        output='both',
-        parameters=[
-            robot_description,
-            {"use_sim_time": True}
-        ]
+
+    # ***** CONTROLLERS ***** #
+    # ros2_control:
+    ros2_controllers_path = os.path.join(
+        get_package_share_directory("r3mcell_cu_bringup"),
+        "config",
+        "abb_controllers.yaml",
     )
-
-    # ***** ROS2_CONTROL -> LOAD CONTROLLERS ***** #
-
+    ros2_control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[robot_description, ros2_controllers_path],
+        output="both",
+    )
     # Joint STATE BROADCASTER:
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
@@ -146,25 +139,12 @@ def generate_launch_description():
     joint_trajectory_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["irb120_controller", "-c", "/controller_manager"],
+        arguments=["joint_trajectory_controller", "-c", "/controller_manager"],
     )
-    
-    # === SCHUNK EGP-64 === #
-    egp64left_controller_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["egp64_finger_left_controller", "-c", "/controller_manager"],
-    )
-    egp64right_controller_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["egp64_finger_right_controller", "-c", "/controller_manager"],
-    )
-    # === SCHUNK EGP-64 === #
 
 
-    # *********************** MoveIt!2 *********************** #   
-    
+    # ***** MoveIt!2 ***** #
+
     # Command-line argument: RVIZ file?
     rviz_arg = DeclareLaunchArgument(
         "rviz_file", default_value="False", description="Load RVIZ file."
@@ -172,17 +152,15 @@ def generate_launch_description():
 
     # *** PLANNING CONTEXT *** #
     # Robot description, SRDF:
-    robot_description_semantic_config = load_file("r3mcell_moveit2", "config/irb120egp64.srdf")
+    robot_description_semantic_config = load_file("r3mcell_cu_moveit2", "config/irb120egp64.srdf")
     robot_description_semantic = {"robot_description_semantic": robot_description_semantic_config}
 
     # Kinematics.yaml file:
-    kinematics_yaml = load_yaml(
-        "r3mcell_moveit2", "config/kinematics.yaml"
-    )
+    kinematics_yaml = load_yaml("r3mcell_cu_moveit2", "config/kinematics.yaml")
     robot_description_kinematics = {"robot_description_kinematics": kinematics_yaml}
 
     # joint_limits.yaml file:
-    joint_limits_yaml = load_yaml("r3mcell_moveit2", "config/joint_limits.yaml")
+    joint_limits_yaml = load_yaml("r3mcell_cu_moveit2", "config/joint_limits_bringup.yaml")
     joint_limits = {'robot_description_planning': joint_limits_yaml}
 
     # pilz_planning_pipeline_config.yaml file:
@@ -194,9 +172,7 @@ def generate_launch_description():
             "default_planner_config": "PTP",
         }
     }
-    pilz_cartesian_limits_yaml = load_yaml(
-        "r3mcell_moveit2", "config/pilz_cartesian_limits.yaml"
-    )
+    pilz_cartesian_limits_yaml = load_yaml("r3mcell_cu_moveit2", "config/pilz_cartesian_limits.yaml")
     pilz_cartesian_limits = {'robot_description_planning': pilz_cartesian_limits_yaml}
 
     # Move group: OMPL Planning.
@@ -207,21 +183,22 @@ def generate_launch_description():
             "start_state_max_bounds_error": 0.1,
         }
     }
-    # Load ompl_planning.yaml file:
-    ompl_planning_yaml = load_yaml("r3mcell_moveit2", "config/ompl_planning_egp64.yaml")
+    ompl_planning_yaml = load_yaml("r3mcell_cu_moveit2", "config/ompl_planning.yaml")
     ompl_planning_pipeline_config["move_group"].update(ompl_planning_yaml)
 
     # MoveIt!2 Controllers:
-    moveit_simple_controllers_yaml = load_yaml("r3mcell_moveit2", "config/irb120egp64_controllers.yaml"  )
+    moveit_simple_controllers_yaml = load_yaml(
+        "r3mcell_cu_bringup", "config/moveit_controllers.yaml"
+    )
     moveit_controllers = {
         "moveit_simple_controller_manager": moveit_simple_controllers_yaml,
         "moveit_controller_manager": "moveit_simple_controller_manager/MoveItSimpleControllerManager",
     }
     trajectory_execution = {
-        "moveit_manage_controllers": True,
+        "moveit_manage_controllers": False,
         "trajectory_execution.allowed_execution_duration_scaling": 1.2,
         "trajectory_execution.allowed_goal_duration_margin": 0.5,
-        "trajectory_execution.allowed_start_tolerance": 0.01,
+        "trajectory_execution.allowed_start_tolerance": 0.1,
     }
     planning_scene_monitor_parameters = {
         "publish_planning_scene": True,
@@ -229,6 +206,7 @@ def generate_launch_description():
         "publish_state_updates": True,
         "publish_transforms_updates": True,
     }
+
     move_group_capabilities = {
         "capabilities": """pilz_industrial_motion_planner/MoveGroupSequenceAction \
             pilz_industrial_motion_planner/MoveGroupSequenceService"""
@@ -240,10 +218,11 @@ def generate_launch_description():
         executable="move_group",
         output="screen",
         parameters=[
+            
             robot_description,
             robot_description_semantic,
             kinematics_yaml,
-            
+
             pilz_planning_pipeline_config,
             #ompl_planning_pipeline_config,
 
@@ -254,15 +233,14 @@ def generate_launch_description():
             moveit_controllers,
             planning_scene_monitor_parameters,
             move_group_capabilities,
-            {"use_sim_time": True},
+
         ],
     )
 
     # RVIZ:
     load_RVIZfile = LaunchConfiguration("rviz_file")
-    rviz_base = os.path.join(get_package_share_directory("r3mcell_moveit2"), "config")
-    rviz_full_config = os.path.join(rviz_base, "irb120egp64_moveit2.rviz")
-
+    rviz_base = os.path.join(get_package_share_directory("r3mcell_cu_moveit2"), "config")
+    rviz_full_config = os.path.join(rviz_base, "irb120_moveit2.rviz")
     rviz_node_full = Node(
         package="rviz2",
         executable="rviz2",
@@ -270,10 +248,11 @@ def generate_launch_description():
         output="log",
         arguments=["-d", rviz_full_config],
         parameters=[
+        
             robot_description,
             robot_description_semantic,
             kinematics_yaml,
-            
+
             pilz_planning_pipeline_config,
             #ompl_planning_pipeline_config,
 
@@ -284,123 +263,69 @@ def generate_launch_description():
             moveit_controllers,
             planning_scene_monitor_parameters,
             move_group_capabilities,
-            {"use_sim_time": True},
         ],
         condition=UnlessCondition(load_RVIZfile),
     )
-
-    R3MWrapper = Node(
-        name="R3MWrapper",
-        package="r3mcell_execution",
-        executable="r3m_wrapper",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"OL_PARAM": ["box", "box"]}],
-    )
-
-    R3MBridge = Node(
-        name="R3MBridge",
-        package="r3mcell_execution",
-        executable="r3m_matlab.py",
-        output="screen",
-        parameters=[],
-    )
-
-    R3MService = Node(
-        name="R3MService",
-        package="r3mcell_execution",
-        executable="SkillExecution.py",
-        output="screen",
-        parameters=[],
-    )
-
-    RobPoseInterface = Node(
-        name="robpose",
-        package="ros2srrc_execution",
-        executable="robpose",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}],
-    )
-
-    RobMoveInterface = Node(
-        name="robmove",
-        package="ros2srrc_execution",
-        executable="robmove",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"ENV_PARAM": "gazebo"}],
-    )
     
-    return LaunchDescription(
-        [
-            # Gazebo nodes:
-            gazebo, 
-            spawn_entity,
-            # ROS2_CONTROL:
-            static_tf,
-            robot_state_publisher,
-            
-            # ROS2 Controllers:
-            RegisterEventHandler(
-                OnProcessExit(
-                    target_action = spawn_entity,
-                    on_exit = [
-                        joint_state_broadcaster_spawner,
-                    ]
-                )
-            ),
-            RegisterEventHandler(
-                OnProcessExit(
-                    target_action = joint_state_broadcaster_spawner,
-                    on_exit = [
-                        joint_trajectory_controller_spawner,
-                    ]
-                )
-            ),
-            RegisterEventHandler(
-                OnProcessExit(
-                    target_action = joint_trajectory_controller_spawner,
-                    on_exit = [
-                        egp64left_controller_spawner,
-                    ]
-                )
-            ),
-            RegisterEventHandler(
-                OnProcessExit(
-                    target_action = egp64left_controller_spawner,
-                    on_exit = [
-                        egp64right_controller_spawner,
-                    ]
-                )
-            ),
-
-            RegisterEventHandler(
-                OnProcessExit(
-                    target_action = egp64right_controller_spawner,
-                    on_exit = [
-
-                        # MoveIt!2:
-                        TimerAction(
-                            period=2.0,
-                            actions=[
-                                rviz_arg,
-                                rviz_node_full,
-                                run_move_group_node
-                            ]
-                        ),
-
-                        # TEST:
-                        TimerAction(
-                            period=5.0,
-                            actions=[
-                                R3MWrapper,
-                                R3MBridge,
-                                R3MService,
-                                RobPoseInterface,
-                                RobMoveInterface
-                            ]
-                        ),
-
-                    ]
-                )
-            )
-        ]
+    MoveInterface = Node(
+        name="move",
+        package="ros2srrc_execution",
+        executable="move",
+        output="screen",
+        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"ENV_PARAM": "bringup"}],
     )
+    SequenceInterface = Node(
+        name="sequence",
+        package="ros2srrc_execution",
+        executable="sequence",
+        output="screen",
+        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"ENV_PARAM": "bringup"}],
+    )
+
+    # ========== ABB RWS CLIENT ========== #
+    
+    rws_client = Node(
+        package="abb_rws_client",
+        executable="rws_client",
+        name="rws_client",
+        output="screen",
+        parameters=[
+            {"robot_ip": robot_ip},
+            {"robot_port": 80},
+            {"robot_nickname": "ROB_1"},
+            {"polling_rate": 4.0},
+            {"no_connection_timeout": False},
+        ],
+    )
+
+    # ***** RETURN LAUNCH DESCRIPTION ***** #
+    return LaunchDescription([
+        
+        # 1. Step: Connect to ROBOT:
+        ros2_control_node,
+        node_robot_state_publisher,
+        static_tf,
+        joint_state_broadcaster_spawner,
+        joint_trajectory_controller_spawner,
+        rws_client,
+        
+        # 2. Step: Launch MoveIt!2:
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action = joint_trajectory_controller_spawner,
+                on_exit = [
+                    rviz_arg,
+                    run_move_group_node,
+
+                    TimerAction(
+                        period=5.0,
+                        actions=[rviz_node_full],
+                    ),
+
+                    MoveInterface,
+                    SequenceInterface,
+                ]
+            )
+        ),
+    ]
+)

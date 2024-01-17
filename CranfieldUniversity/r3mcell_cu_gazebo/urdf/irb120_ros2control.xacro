@@ -72,7 +72,7 @@
       <gazebo>
         <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
           <robot_sim_type>gazebo_ros2_control/GazeboSystem</robot_sim_type>
-          <parameters>$(find r3mcell_gazebo)/config/irb120egp64_controller.yaml</parameters>
+          <parameters>$(find r3mcell_cu_gazebo)/config/irb120egp64_controller.yaml</parameters>
         </plugin>
       </gazebo>
 

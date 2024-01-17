@@ -55,20 +55,20 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
   
   <!-- Include additional ABB-Resources/MATERIALS+COLOUR xacro files: -->
-  <xacro:include filename="$(find r3mcell_gazebo)/urdf/abb_resources/common_materials.xacro"/>
+  <xacro:include filename="$(find r3mcell_cu_gazebo)/urdf/abb_resources/common_materials.xacro"/>
 
   <!-- XACRO-MACRO of ABB-IRB120: -->
   <xacro:macro name="irb120" params="prefix bringup robot_ip">
 
     <!-- ABB-IRB120 + EGP64 TRANSMISSION: -->
     <xacro:unless value="${bringup}">  
-      <xacro:include filename="$(find r3mcell_gazebo)/urdf/irb120_transmission.xacro" />
+      <xacro:include filename="$(find r3mcell_cu_gazebo)/urdf/irb120_transmission.xacro" />
       <xacro:irb120_transmission 
         prefix="" />
     </xacro:unless>
 
     <!-- ABB-IRB120 + EGP64 GAZEBO - ROS2_CONTROL: -->
-    <xacro:include filename="$(find r3mcell_gazebo)/urdf/irb120_ros2control.xacro" />
+    <xacro:include filename="$(find r3mcell_cu_gazebo)/urdf/irb120_ros2control.xacro" />
     <xacro:irb120_ros2control 
       prefix="" 
       bringup="${bringup}"
@@ -87,14 +87,14 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/visual/base_link.dae"/>
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/visual/base_link.dae"/>
         </geometry>
         <xacro:material_abb_orange />
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/collision/base_link.stl"/>
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/collision/base_link.stl"/>
         </geometry>
         <xacro:material_abb_yellow />
       </collision>
@@ -110,14 +110,14 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/visual/link_1.dae"/>
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/visual/link_1.dae"/>
         </geometry>
         <xacro:material_abb_orange />
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/collision/link_1.stl"/>
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/collision/link_1.stl"/>
         </geometry>
         <xacro:material_abb_yellow />
       </collision>
@@ -133,14 +133,14 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/visual/link_2.dae"/>
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/visual/link_2.dae"/>
         </geometry>
         <xacro:material_abb_orange />
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/collision/link_2.stl"/>
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/collision/link_2.stl"/>
         </geometry>
         <xacro:material_abb_yellow />
       </collision>
@@ -156,14 +156,14 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/visual/link_3.dae"/>
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/visual/link_3.dae"/>
         </geometry>
         <xacro:material_abb_orange />
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/collision/link_3.stl"/>
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/collision/link_3.stl"/>
         </geometry>
         <xacro:material_abb_yellow />
       </collision>
@@ -179,14 +179,14 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/visual/link_4.dae"/>
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/visual/link_4.dae"/>
         </geometry>
         <xacro:material_abb_orange />
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/collision/link_4.stl"/>
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/collision/link_4.stl"/>
         </geometry>
         <xacro:material_abb_yellow />
       </collision>
@@ -202,14 +202,14 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/visual/link_5.dae"/>
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/visual/link_5.dae"/>
         </geometry>
         <xacro:material_abb_orange />
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/collision/link_5.stl"/>
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/collision/link_5.stl"/>
         </geometry>
         <xacro:material_abb_yellow />
       </collision>
@@ -225,14 +225,14 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/visual/link_6.dae"/>
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/visual/link_6.dae"/>
         </geometry>
         <xacro:material_abb_black />
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/collision/link_6.stl"/>
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/collision/link_6.stl"/>
         </geometry>
         <xacro:material_abb_yellow />
       </collision>
@@ -377,12 +377,12 @@
     <link name="schunk_coupler">
       <visual>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/egp64/egp64_Adapter.dae" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/egp64/egp64_Adapter.dae" />
         </geometry>
       </visual>
       <collision>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/egp64/egp64_Adapter.dae" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/egp64/egp64_Adapter.dae" />
         </geometry>
       </collision>
       <inertial>
@@ -412,7 +412,7 @@
       </inertial>
       <visual>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/egp64/egp64_BaseNoAdapter.dae" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/egp64/egp64_BaseNoAdapter.dae" />
         </geometry>
         <material name="blue">
           <color rgba="0 0 1 1"/>
@@ -420,7 +420,7 @@
       </visual>
       <collision>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/egp64/egp64_BaseNoAdapter.dae" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/egp64/egp64_BaseNoAdapter.dae" />
         </geometry>
         <material name="blue"/>
       </collision>
@@ -442,7 +442,7 @@
       </inertial>
       <visual>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/egp64/egp64_LeftFingerBase.dae" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/egp64/egp64_LeftFingerBase.dae" />
         </geometry>
         <material name="black">
           <color rgba="0 0 0 1"/>
@@ -450,7 +450,7 @@
       </visual>
       <collision>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/egp64/egp64_LeftFingerBase.dae" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/egp64/egp64_LeftFingerBase.dae" />
         </geometry>
         <material name="black" />
       </collision>
@@ -475,7 +475,7 @@
       </inertial>
       <visual>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/egp64/egp64_LeftFinger.dae" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/egp64/egp64_LeftFinger.dae" />
         </geometry>
         <material name="silver">
           <color rgba="0.8 0.8 0.8 1"/>
@@ -483,7 +483,7 @@
       </visual>
       <collision>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/egp64/egp64_LeftFinger.dae" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/egp64/egp64_LeftFinger.dae" />
         </geometry>
         <material name="black"/>
       </collision>
@@ -506,13 +506,13 @@
       </inertial>
       <visual>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/egp64/egp64_RightFingerBase.dae" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/egp64/egp64_RightFingerBase.dae" />
         </geometry>
         <material name="black"/>
       </visual>
       <collision>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/egp64/egp64_RightFingerBase.dae" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/egp64/egp64_RightFingerBase.dae" />
         </geometry>
         <material name="black"/>
       </collision>
@@ -537,13 +537,13 @@
       </inertial>
       <visual>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/egp64/egp64_RightFinger.dae" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/egp64/egp64_RightFinger.dae" />
         </geometry>
         <material name="silver" />
       </visual>
       <collision>
         <geometry>
-          <mesh filename="file://$(find r3mcell_gazebo)/meshes/egp64/egp64_RightFinger.dae" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/egp64/egp64_RightFinger.dae" />
         </geometry>
         <material name="black"/>
       </collision>

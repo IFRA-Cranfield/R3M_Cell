@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:include filename="$(find r3mcell_gazebo)/urdf/abb_resources/common_colours.xacro"/>
+  <xacro:include filename="$(find r3mcell_cu_gazebo)/urdf/abb_resources/common_colours.xacro"/>
 
   <xacro:macro name="material_abb_orange">
     <material name="">

@@ -68,21 +68,21 @@ def generate_launch_description():
     
     # ***** GAZEBO ***** #   
     # DECLARE Gazebo WORLD file:
-    r3mcell_gazebo = os.path.join(
-        get_package_share_directory('r3mcell_gazebo'),
+    r3mcell_cu_gazebo = os.path.join(
+        get_package_share_directory('r3mcell_cu_gazebo'),
         'worlds',
         'irb120.world')
     # DECLARE Gazebo LAUNCH file:
     gazebo = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
                     get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-                launch_arguments={'world': r3mcell_gazebo}.items(),
+                launch_arguments={'world': r3mcell_cu_gazebo}.items(),
              )
 
 
     # ========== COMMAND LINE ARGUMENTS ========== #
     print("")
-    print("===== ABB IRB-120: Robot Simulation (r3mcell_gazebo) =====")
+    print("===== ABB IRB-120: Robot Simulation (r3mcell_cu_gazebo) =====")
     print("Robot configuration:")
     print("")
     # Cell Layout:
@@ -94,7 +94,7 @@ def generate_launch_description():
     # ***** ROBOT DESCRIPTION ***** #
     # ABB-IRB120 Description file package:
     irb120_description_path = os.path.join(
-        get_package_share_directory('r3mcell_gazebo'))
+        get_package_share_directory('r3mcell_cu_gazebo'))
     # ABB-IRB120 ROBOT urdf file path:
     xacro_file = os.path.join(irb120_description_path,
                               'urdf',

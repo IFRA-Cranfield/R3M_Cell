@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(r3mcell_bringup)
+project(r3mcell_cu_gazebo)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -34,8 +34,11 @@ endif()
 
 install(
   DIRECTORY 
-    launch
     config
+    launch
+    urdf 
+    meshes
+    worlds
   DESTINATION 
     share/${PROJECT_NAME}
 )

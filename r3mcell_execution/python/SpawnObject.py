@@ -19,7 +19,7 @@ from gazebo_msgs.srv import SpawnEntity
 import rclpy
 
 # Reference to SPAWN OBJECT (.urdf or .xacro file) from the terminal shell:
-# EXAMPLE: BOX -> ros2 run r3mcell_execution SpawnObject.py --package "r3mcell_gazebo" --urdf "box.urdf" --name "box" --x -0.35 --y 0.85 --z 0.88
+# EXAMPLE: BOX -> ros2 run r3mcell_execution SpawnObject.py --package "r3mcell_cu_gazebo" --urdf "box.urdf" --name "box" --x -0.35 --y 0.85 --z 0.88
 
 def main():
     # Get input arguments from user
