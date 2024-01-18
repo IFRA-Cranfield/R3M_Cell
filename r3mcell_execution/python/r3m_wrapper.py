@@ -12,8 +12,6 @@
 
 # System:
 import os
-import sys
-import ast
 import time
 import yaml
 
@@ -21,15 +19,23 @@ import yaml
 import rclpy
 from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
-from rclpy.action import ActionClient
 
 # ROS2 MSG/SRV/ACTION:
 from geometry_msgs.msg import Pose
 
 # CUSTOM ROS2 MSG/SRV/ACTION:
-from r3mcell_data.msg import Product
 from r3mcell_data.msg import Skillresult
-from ros2srrc_data.action import Robmove
+
+# Import CLASSES/Functions:
+from Robot import RobotClient
+from Gripper_Gz import ParallelGripper
+from ObjectState import OBJECT
+from ResetGazebo import GzRESET
+
+# ========================================================================================= #
+# ================================ ROS2 - INPUT PARAMETERS ================================ #
+# ========================================================================================= #
+
 
 # ========================================================================================= #
 # =================================== CLASSES/FUNCTIONS =================================== #
@@ -42,18 +48,11 @@ class ExecuteSkill():
     def __init__(self):
         
         # Initialise CLASSES that are needed for every skill execution:
-        self.ROBOT = RobMoveCLIENT()
+        None
     
     def EXECUTE(self, RECIPE):
         
-        # Initialise RESULT variable:
-        RESULT = Skillresult()
-        
-        # For execution time calculations:
-        t_start = time.time()
-        
-        # 1. EXECUTE ROBOT MOVEMENT:
-        if RECIPE["type"] 
+        None
         
 # ========================================================================================= #
 # GetRecipe FUNCTION:
@@ -95,5 +94,31 @@ def GetRecipe(RECIPE_ID):
         
     return(RECIPE)
 
+# ========================================================================================= #
+# ========================================= MAIN ========================================== #
+# ========================================================================================= #
+
+def main(args=None):
+
+    print ("======= R3M PROJECT =======")
+    print ("== r3m_wrapper.py script ==")
+    print ("")
+    print ("This script makes the .. ROS2 service available, which executes any RECIPE stored in the /r3mcell_execution/recipes folder.")
+    print ("")
+    
+    # Initialise NODE:
+    rclpy.init(args=args)
+    r3mNode = serviceServer()
+    print ("r3m_serviceSERVER ROS2 node generated.")
+    print ("")
+
+    # Spin SERVICE -> The Service Server will execute the service_Callback every single time the service is called.
+    rclpy.spin(r3mNode)                                                                             # Spin SERVICE SERVER.
+
+    r3mNode.destroy_node
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
 
             

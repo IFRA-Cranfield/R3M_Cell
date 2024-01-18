@@ -11,11 +11,7 @@
 # ========================================================================================= #
 
 # System:
-import os
-import sys
-import ast
 import time
-import yaml
 
 # ROS2:
 import rclpy
@@ -27,32 +23,34 @@ from rclpy.action import ActionClient
 from std_msgs.msg import String
 
 # CUSTOM ROS2 MSG/SRV/ACTION:
-from linkpose_msgs.msg import LinkPose
-from objectpose_msgs.msg import ObjectPose
 from ros2srrc_data.action import Move
+from ros2srrc_data.msg import Action
+from linkattacher_msgs.srv import AttachLink
+from linkattacher_msgs.srv import DetachLink
+from linkpose_msgs.msg import LinkPose
 
 # ========================================================================================= #
 # ==================================== GLOBAL VARIABLES =================================== #
 # ========================================================================================= #
 
-# CUBES:
-CUBES = []
-
-# AttachCheck:
+# RES:
 from dataclasses import dataclass
 @dataclass
-class AttDetCHECK:
-    ATTACHED: bool
-    MODEL: String
-    LINK: String
-AttachCheck = AttDetCHECK(False, "", "")
-
-# RES:
-@dataclass
 class RobotRES:
-    MESSAGE: String
-    SUCCESS: bool
-RES = RobotRES("", False)
+    Message: String
+    Success: bool
+    ExecTime: float
+    Error: float
+    
+RES = RobotRES("", False, -1.0, -1.0)
+
+# AttachCheck:
+@dataclass
+class AttDetCHECK:
+    Attached: bool
+    Object: dict()
+
+AttachCheck = AttDetCHECK(False, None)
 
 # EEPose:
 EEPose = LinkPose()
@@ -62,12 +60,157 @@ EEPose = LinkPose()
 # ========================================================================================= #
 
 # ========================================================================================= #
+# Parallel Gripper:
+class ParallelGripper():
+    
+    # For information, the inputs to this class are:
+    # Robot = {"Model": "", "Link": "", "EEPose": Robpose()}
+    # ObjectList = [{"Model": "box", "Link": "box", "CurrentPose": ObjectPose()}, ...]
+    
+    def __init__(self, Robot):
+
+        # Initialise CLASSES to be used:
+        self.Gripper_CLIENT = MoveCLIENT()
+        self.LinkAttacher_CLIENT = LinkAttacher()
+        self.EEPose_CLIENT = EEPoseCLIENT(Robot)
+
+    def Execute(self, Robot, ObjectList, ACTION, SPEED):
+
+        global RES
+        global AttachCheck
+        
+        # EXECUTE GRIPPER MOVEMENT:
+        
+        MoveG = Action()
+        MoveG.speed = SPEED
+        if ACTION == "CLOSE":
+            MoveG.moveg = 0.006
+        elif ACTION == "OPEN":
+            MoveG.moveg = 0.00
+        
+        self.Gripper_CLIENT.send_goal(MoveG)
+
+        while rclpy.ok():
+            
+            rclpy.spin_once(self.Gripper_CLIENT)
+
+            if (RES.Message != ""):
+                break
+
+        # === DETACH === #
+        if ACTION == "OPEN":
+
+            # DET(1) -> CHECK for DETACHMENTS:
+            if AttachCheck.Attached == True:
+                
+                # DET(2) -> DETACH:
+                DETACH_RES = self.LinkAttacher_CLIENT.DETACH(Robot, AttachCheck.Object)
+
+                if DETACH_RES:
+                    print("(ParallelGripper): Gripper opened, OBJECT -> " + AttachCheck.Object["Model"] + " detached.")
+                    print("")
+                else:
+                    print("(ParallelGripper): Gripper opened, OBJECT -> " + AttachCheck.Object["Model"] + " not detached, LinkAttacher plugin failed.")
+                    print("")
+
+            else:
+                print("(ParallelGripper): Gripper opened without dropping any object.")
+
+        # === ATTACH === #
+        if ACTION == "CLOSE":
+            
+            # ATT(1) -> CHECK for ATTACHMENTS:
+            CHECK_RES = self.CHECK(ObjectList)
+
+            if CHECK_RES["Success"]:
+
+                # ATT(2) -> ATTACH:
+                OBJ = {"Model": CHECK_RES["Model"], "Link": CHECK_RES["Link"]}
+                ATTACH_RES = self.LinkAttacher_CLIENT.ATTACH(Robot, OBJ)
+
+                if ATTACH_RES:
+                    print("(ParallelGripper): Gripper closed, OBJECT -> " + OBJ["Model"] + " attached.")
+                    print("")
+                else:
+                    print("(ParallelGripper): Gripper closed, OBJECT -> " + OBJ["Model"] + " not attached, LinkAttacher plugin failed.")
+                    print("")
+
+            else:
+                print("(ParallelGripper): Gripper closed without grasping any object.")
+
+        # RESULT -> Convert to DICTIONARY:
+        RESULT = {}
+        RESULT["Message"] = RES.Message
+        RESULT["Success"] = RES.Success
+        RESULT["ExecTime"] = RES.ExecTime
+        RESULT["Error"] = RES.Error
+
+        # Reset RES variable:
+        RES = RobotRES("", False, -1.0, -1.0)
+
+        # Return RESULT:
+        return(RESULT)
+    
+    def CHECK(self, ObjectList):
+
+        # RESULT:
+        RESULT = {"Success": False, "Model": "", "Link": ""}
+
+        # Get EEPose:
+        global EEPose
+        T = time.time() + 0.1
+        while (time.time() < T):
+            rclpy.spin_once(self.EEPose_CLIENT)
+
+        Check = True
+        for x in ObjectList:
+            
+            ObjectPose = x["CurrentPose"]
+
+            # Print:
+            print("Checking if object is attached for OBJECT: " + x["Model"])
+            print("EEPose.x -> " + str(EEPose.x) + " / ObjectPose.x -> " + str(ObjectPose.x))
+            print("EEPose.y -> " + str(EEPose.y) + " / ObjectPose.y -> " + str(ObjectPose.y))
+            print("EEPose.z -> " + str(EEPose.z) + " / ObjectPose.z -> " + str(ObjectPose.z))
+
+            if (EEPose.x - 0.01 > ObjectPose.x) or (EEPose.x + 0.01 < ObjectPose.x): 
+                Check = False
+            if (EEPose.y - 0.01 > ObjectPose.y) or (EEPose.y + 0.01 < ObjectPose.y): 
+                Check = False
+            if (EEPose.z - 0.01 > ObjectPose.z) or (EEPose.z + 0.01 < ObjectPose.z): 
+                Check = False
+
+            if Check == True:
+
+                RESULT["Success"] = True
+                RESULT["Model"] = x["Model"]
+                RESULT["Link"] = x["Link"]
+
+            return(RESULT)
+        
+# ========================================================================================= #
+# CLASS to check the EEPose:
+class EEPoseCLIENT(Node):
+
+    def __init__(self, Robot):
+
+        super().__init__("r3mcell_EEPose_Subscriber")
+
+        TopicName = "/LinkPose_" + Robot["Model"] + "_" + Robot["Link"]
+        self.SUB = self.create_subscription(LinkPose, TopicName, self.CALLBACK_FN, 10)
+
+    def CALLBACK_FN(self, POSE):
+
+        global EEPose
+        EEPose = POSE
+
+# ========================================================================================= #
 # /Move ACTION CLIENT:
 class MoveCLIENT(Node):
 
     def __init__(self):
 
-        super().__init__('r3mcell(gripper_Gz)_Move_Client')
+        super().__init__('r3mcell_gripper_Gz_Move_Client')
         self._action_client = ActionClient(self, Move, 'Move')
 
         print("(/Move)-Gripper: Initialising ROS2 Action Client!")
@@ -77,8 +220,10 @@ class MoveCLIENT(Node):
 
     def send_goal(self, ACTION):
 
+        self.T_start = time.time()
+
         goal_msg = Move.Goal()
-        goal_msg.action = ACTION.action
+        goal_msg.action = "MoveG"
         goal_msg.speed = ACTION.speed
         goal_msg.moveg = ACTION.moveg
         
@@ -101,11 +246,124 @@ class MoveCLIENT(Node):
     def get_result_callback(self, future):
         
         global RES
-        
-        RESULT = future.result().result
-        RES.MESSAGE = RESULT.result
 
-        if "FAILED" in RES.MESSAGE:
-            RES.SUCCESS = False
+        # 0. Compute time difference:
+        self.T_end = time.time()
+        T = round((self.T_end - self.T_start), 4)
+        RES.ExecTime = T
+
+        # 1. ERROR in ParallelGriper = 0.0:
+        RES.Error = 0
+
+        # 2. GET RESULT:
+        RESULT = future.result().result
+        RES.Message = RESULT.result
+
+        if "FAILED" in RES.Message:
+            RES.Success = False
         else:
-            RES.SUCCESS = True
+            RES.Success = True
+
+# ========================================================================================= #
+# ===================================== LINK ATTACHER ===================================== #
+# ========================================================================================= #
+    
+# ========================================================================================= #
+# LinkAttacher ROS2 Service (/ATTACHLINK and /DETACHLINK) CLIENTS:
+class LinkAttacher_Client(Node):
+
+    def __init__(self):
+
+        super().__init__("irb120pe_LinkAttacher_Client")
+
+        self.AttachClient = self.create_client(AttachLink, "/ATTACHLINK")
+        self.DetachClient = self.create_client(DetachLink, "/DETACHLINK")
+
+        while not self.AttachClient.wait_for_service(timeout_sec=1.0): 
+            print("(LinkAttacher): /ATTACHLINK ROS2 Service not still available, waiting...")
+        print("(LinkAttacher): /ATTACHLINK ROS2 Service ready.")
+        while not self.DetachClient.wait_for_service(timeout_sec=1.0): 
+            print("(LinkAttacher): /DETACHLINK ROS2 Service not still available, waiting...")
+        print("(LinkAttacher): /DETACHLINK ROS2 Service ready.")
+
+        self.AttachRequest = AttachLink.Request()
+        self.DetachRequest = DetachLink.Request()
+
+    def ATTACHService(self, Robot, Object):
+
+        self.AttachRequest.model1_name = Robot["Model"]
+        self.AttachRequest.link1_name = Robot["Link"]
+        self.AttachRequest.model2_name = Object["Model"]
+        self.AttachRequest.link2_name = Object["Link"]
+
+        self.AttachFuture = self.AttachClient.call_async(self.AttachRequest)
+
+    def DETACHService(self, Robot, Object):
+
+        self.DetachRequest.model1_name = Robot["Model"]
+        self.DetachRequest.link1_name = Robot["Link"]
+        self.DetachRequest.model2_name = Object["Model"]
+        self.DetachRequest.link2_name = Object["Link"]
+
+        self.DetachFuture = self.DetachClient.call_async(self.DetachRequest)
+
+# ========================================================================================= #
+# LinkAttacher CLASS:
+class LinkAttacher():
+
+    def __init__(self):
+
+        # Initialise ROS2 Service CLIENTS:
+        self.CLIENT = LinkAttacher_Client()
+
+    def ATTACH(self, Robot, Object):
+
+        global AttachCheck
+
+        self.CLIENT.ATTACHService(Robot,Object)
+
+        while rclpy.ok():
+            rclpy.spin_once(self.CLIENT)
+            if self.CLIENT.AttachFuture.done():
+                try:
+                    AttachRES = self.CLIENT.AttachFuture.result()
+                except Exception as exc:
+                    print("(LinkAttacher): /ATTACHLINK Service call failed -> " + str(exc))
+                    return(False)
+                else:
+                    if (AttachRES.success):
+                        print("(LinkAttacher): /ATTACHLINK successful -> " + str(AttachRES.message))
+
+                        AttachCheck.Attached = True
+                        AttachCheck.Object = Object
+
+                        return(True)
+                    else:
+                        print("(LinkAttacher): /ATTACHLINK unuccessful -> " + str(AttachRES.message))
+                        return(False)
+                    
+    def DETACH(self, Robot, Object):
+
+        global AttachCheck
+
+        self.CLIENT.DETACHService(Robot,Object)
+
+        while rclpy.ok():
+            rclpy.spin_once(self.CLIENT)
+            if self.CLIENT.DetachFuture.done():
+                try:
+                    DetachRES = self.CLIENT.DetachFuture.result()
+                except Exception as exc:
+                    print("(LinkAttacher): /DETACHLINK Service call failed -> " + str(exc))
+                    return(False)
+                else:
+                    if (DetachRES.success):
+                        print("(LinkAttacher): /DETACHLINK successful -> " + str(DetachRES.message))
+
+                        AttachCheck.Attached = False
+                        AttachCheck.Object = {"Model": "", "Link": ""}
+
+                        return(True)
+                    else:
+                        print("(LinkAttacher): /DETACHLINK unuccessful -> " + str(DetachRES.message))
+                        return(False)
