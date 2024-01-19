@@ -21,8 +21,6 @@
   <depend>rclcpp_action</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>yaml-cpp</depend>
-  <depend>ament_index_cpp</depend>
 
   <depend>r3mcell_data</depend>
   <build_depend>linkattacher_msgs</build_depend>

@@ -49,6 +49,22 @@ class GzRESET():
         # "ObjectList": [{"Package": "", "Model": "", "Name": "", "Pose": ""}, ...]
         # "ControllerList": ["", ...]
 
+        # Spawn OBJECTS IN INITIAL CONDITIONS:
+        for x in self.ResetCond["ObjectList"]:
+
+            self.ENTITY_CLIENT.spawn_REQUEST("OBJECT", x)
+            while rclpy.ok():
+                rclpy.spin_once(self.ENTITY_CLIENT)
+                if self.ENTITY_CLIENT.future_SPAWN.done():
+                    try:
+                        spawnRES = self.ENTITY_CLIENT.future_SPAWN.result()
+                    except Exception as exc:
+                        print("/SpawnEntity ROS2 Service call failed. ERROR: " + str(exc))
+                        return(False)
+                    else:
+                        print("RESULT: " + str(spawnRES.status_message))
+                    break
+
     def RESET(self):
 
         # 1. Delete any object that could be in the workspace:
@@ -216,11 +232,11 @@ class EntityClient(Node):
             xacro_file = xacro.process_file(urdf_file_path, mappings={"name": INFORMATION["Model"]})
             
             # ARGUMENTS:
-            self.req_SPAWN.name = "irb120"
+            self.req_SPAWN.name = INFORMATION["Model"]
             self.req_SPAWN.xml = xacro_file.toxml()
-            self.req_SPAWN.initial_pose.position.x = INFORMATION["Pose"].x
-            self.req_SPAWN.initial_pose.position.y = INFORMATION["Pose"].y
-            self.req_SPAWN.initial_pose.position.z = INFORMATION["Pose"].z
+            self.req_SPAWN.initial_pose.position.x = INFORMATION["InitialPose"]["x"]
+            self.req_SPAWN.initial_pose.position.y = INFORMATION["InitialPose"]["y"]
+            self.req_SPAWN.initial_pose.position.z = INFORMATION["InitialPose"]["x"]
 
             # Assign RESULT value (future):
             self.future_SPAWN = self.cli_SPAWN.call_async(self.req_SPAWN)
@@ -236,9 +252,9 @@ class EntityClient(Node):
             # ARGUMENTS:
             self.req_SPAWN.name = INFORMATION["Name"]
             self.req_SPAWN.xml = xacro_file.toxml()
-            self.req_SPAWN.initial_pose.position.x = INFORMATION["Pose"].x
-            self.req_SPAWN.initial_pose.position.y = INFORMATION["Pose"].y
-            self.req_SPAWN.initial_pose.position.z = INFORMATION["Pose"].z
+            self.req_SPAWN.initial_pose.position.x = INFORMATION["InitialPose"]["x"]
+            self.req_SPAWN.initial_pose.position.y = INFORMATION["InitialPose"]["y"]
+            self.req_SPAWN.initial_pose.position.z = INFORMATION["InitialPose"]["z"]
 
             # Assign RESULT value (future):
             self.future_SPAWN = self.cli_SPAWN.call_async(self.req_SPAWN)

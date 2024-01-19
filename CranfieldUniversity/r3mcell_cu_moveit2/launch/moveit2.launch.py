@@ -289,30 +289,6 @@ def generate_launch_description():
         condition=UnlessCondition(load_RVIZfile),
     )
 
-    R3MWrapper = Node(
-        name="R3MWrapper",
-        package="r3mcell_execution",
-        executable="r3m_wrapper",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"OL_PARAM": ["box", "box"]}],
-    )
-
-    R3MBridge = Node(
-        name="R3MBridge",
-        package="r3mcell_execution",
-        executable="r3m_matlab.py",
-        output="screen",
-        parameters=[],
-    )
-
-    R3MService = Node(
-        name="R3MService",
-        package="r3mcell_execution",
-        executable="SkillExecution.py",
-        output="screen",
-        parameters=[],
-    )
-
     RobPoseInterface = Node(
         name="robpose",
         package="ros2srrc_execution",
@@ -330,11 +306,19 @@ def generate_launch_description():
     )
     
     MoveInterface = Node(
-        name="robmove",
+        name="move",
         package="ros2srrc_execution",
         executable="move",
         output="screen",
         parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"ENV_PARAM": "gazebo"}],
+    )
+
+    r3m_RecipeExecution = Node(
+        name="r3m_RecipeExecution",
+        package="r3mcell_execution",
+        executable="r3m_RecipeExecution.py",
+        output="screen",
+        parameters=[{"InitialConditions": "r3mcell_cu_1"}, {"use_sim_time": True}],
     )
     
     return LaunchDescription(
@@ -399,12 +383,11 @@ def generate_launch_description():
                         TimerAction(
                             period=5.0,
                             actions=[
-                                R3MWrapper,
-                                R3MBridge,
-                                R3MService,
                                 RobPoseInterface,
                                 RobMoveInterface,
-                                MoveInterface
+                                MoveInterface,
+                                
+                                r3m_RecipeExecution
                             ]
                         ),
 

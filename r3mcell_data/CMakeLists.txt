@@ -34,7 +34,6 @@ endif()
 
 install(
   DIRECTORY 
-    action
     srv 
     msg
   DESTINATION 
@@ -49,9 +48,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Pose.msg"
   "msg/Product.msg"
   "msg/Skillresult.msg"
-  "srv/ObjectList.srv"
   "srv/SkillExecution.srv"
-  "action/ExecuteSkill.action"
 )
 
 ament_package()

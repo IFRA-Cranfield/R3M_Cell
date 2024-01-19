@@ -1,0 +1,39 @@
+# R3M Project - Initial Conditions for the R3M Cell Environment Launch:
+
+# Object List:
+ObjectList:
+  - Model: "box"
+    Link: "box"
+    Name: "box"
+    Package: "r3mcell_cu_gazebo"
+    InitialPose: 
+      x: 0.6
+      y: 0.8
+      z: 0.88
+      qx: 0.0
+      qy: 0.0
+      qz: 0.0
+      qw: 0.0
+    CurrentPose: None
+    PreviousPose: None
+
+# Robot Information:
+Robot:
+  Model: "irb120"
+  Link: "EE_egp64"
+  Package: "r3mcell_cu_gazebo"
+  InitialPose:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    qx: 0.0
+    qy: 0.0
+    qz: 0.0
+    qw: 0.0
+
+# Controller List:
+ControllerList:
+  - "joint_state_broadcaster"
+  - "irb120_controller"
+  - "egp64_finger_right_controller"
+  - "egp64_finger_left_controller"

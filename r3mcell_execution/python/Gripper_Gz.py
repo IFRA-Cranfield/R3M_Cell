@@ -253,7 +253,7 @@ class MoveCLIENT(Node):
         RES.ExecTime = T
 
         # 1. ERROR in ParallelGriper = 0.0:
-        RES.Error = 0
+        RES.Error = 0.0
 
         # 2. GET RESULT:
         RESULT = future.result().result
@@ -362,6 +362,9 @@ class LinkAttacher():
 
                         AttachCheck.Attached = False
                         AttachCheck.Object = {"Model": "", "Link": ""}
+
+                        # We wait Xs in order to give time to the ObjectPose() subscriber to wait until the object is dropped.
+                        time.sleep(2)
 
                         return(True)
                     else:

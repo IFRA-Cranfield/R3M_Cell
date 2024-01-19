@@ -48,8 +48,6 @@ class SkillExecution_CLIENT(Node):
         self.req_SKILL = SkillExecution.Request()  
 
     def Recipe_REQUEST(self, ACTION, ID):
-
-        time.sleep(1.0)
         
         if ACTION == "RESET":
             self.req_SKILL.id = 0
