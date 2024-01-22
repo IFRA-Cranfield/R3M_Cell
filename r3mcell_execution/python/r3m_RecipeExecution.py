@@ -54,10 +54,10 @@ class getIC(Node):
         self.declare_parameter('InitialConditions', "default")
         PARAM_IC = self.get_parameter('InitialConditions').get_parameter_value().string_value
         if (PARAM_IC == "default"):
-            self.get_logger().info('InitialConditions ROS2 Parameter was not defined.')
+            self.get_logger().info('[R3M Cell] - InitialConditions ROS2 Parameter was not defined.')
             exit()
         else:    
-            self.get_logger().info('InitialConditions ROS2 Parameter received: ' + PARAM_IC)
+            self.get_logger().info('[R3M Cell] - InitialConditions ROS2 Parameter received: ' + PARAM_IC)
         
         P_CHECK_IC = True
 
@@ -125,6 +125,8 @@ class ExecuteSkill_SERVER(Node):
             return(response)
 
         elif (ID == 0):
+
+            self.GRIPPER.Execute(None, None, "OPEN", 1.0)
 
             RES = self.RESET.RESET()
             self.OBJECTS.ResetObjectList()
@@ -256,12 +258,6 @@ def GetRecipe(RECIPE_ID):
 # ========================================================================================= #
 
 def main(args=None):
-
-    print ("======= R3M PROJECT =======")
-    print ("== R3M: Recipe Execution ==")
-    print ("")
-    print ("This script makes the /ExecuteSkill ROS2 service available, which executes any RECIPE stored in the /r3mcell_execution/recipes folder.")
-    print ("")
     
     rclpy.init(args=args)
 
@@ -276,12 +272,9 @@ def main(args=None):
     # Get InitialConditions from yaml file:
     IC = GetIC_YAML(PARAM_IC)
 
-    print(IC)
-
     # Initialise NODE:
     r3mNode = ExecuteSkill_SERVER(IC["ObjectList"], IC["Robot"], IC["ControllerList"])
-    print ("/ExecuteSkill ROS2 Service Server running, ROS2 node generated.")
-    print ("")
+    r3mNode.get_logger().info("[R3M Cell] - /ExecuteSkill ROS2 Service Server running, ROS2 node generated.")
 
     rclpy.spin(r3mNode)                                                                     
 

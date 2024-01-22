@@ -107,14 +107,12 @@ class ParallelGripper():
                 DETACH_RES = self.LinkAttacher_CLIENT.DETACH(Robot, AttachCheck.Object)
 
                 if DETACH_RES:
-                    print("(ParallelGripper): Gripper opened, OBJECT -> " + AttachCheck.Object["Model"] + " detached.")
-                    print("")
+                    self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper opened, OBJECT -> " + AttachCheck.Object["Model"] + " detached.")
                 else:
-                    print("(ParallelGripper): Gripper opened, OBJECT -> " + AttachCheck.Object["Model"] + " not detached, LinkAttacher plugin failed.")
-                    print("")
+                    self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper opened, OBJECT -> " + AttachCheck.Object["Model"] + " not detached, LinkAttacher plugin failed.")
 
             else:
-                print("(ParallelGripper): Gripper opened without dropping any object.")
+                self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper opened without dropping any object.")
 
         # === ATTACH === #
         if ACTION == "CLOSE":
@@ -129,14 +127,12 @@ class ParallelGripper():
                 ATTACH_RES = self.LinkAttacher_CLIENT.ATTACH(Robot, OBJ)
 
                 if ATTACH_RES:
-                    print("(ParallelGripper): Gripper closed, OBJECT -> " + OBJ["Model"] + " attached.")
-                    print("")
+                    self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper closed, OBJECT -> " + OBJ["Model"] + " attached.")
                 else:
-                    print("(ParallelGripper): Gripper closed, OBJECT -> " + OBJ["Model"] + " not attached, LinkAttacher plugin failed.")
-                    print("")
+                    self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper closed, OBJECT -> " + OBJ["Model"] + " not attached, LinkAttacher plugin failed.")
 
             else:
-                print("(ParallelGripper): Gripper closed without grasping any object.")
+                self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper closed without grasping any object.")
 
         # RESULT -> Convert to DICTIONARY:
         RESULT = {}
@@ -168,10 +164,10 @@ class ParallelGripper():
             ObjectPose = x["CurrentPose"]
 
             # Print:
-            print("Checking if object is attached for OBJECT: " + x["Model"])
-            print("EEPose.x -> " + str(EEPose.x) + " / ObjectPose.x -> " + str(ObjectPose.x))
-            print("EEPose.y -> " + str(EEPose.y) + " / ObjectPose.y -> " + str(ObjectPose.y))
-            print("EEPose.z -> " + str(EEPose.z) + " / ObjectPose.z -> " + str(ObjectPose.z))
+            self.Gripper_CLIENT.get_logger().info("[R3M Cell] - Checking if object is attached for OBJECT: " + x["Model"])
+            self.Gripper_CLIENT.get_logger().info("[R3M Cell] - EEPose.x -> " + str(EEPose.x) + " / ObjectPose.x -> " + str(ObjectPose.x))
+            self.Gripper_CLIENT.get_logger().info("[R3M Cell] - EEPose.y -> " + str(EEPose.y) + " / ObjectPose.y -> " + str(ObjectPose.y))
+            self.Gripper_CLIENT.get_logger().info("[R3M Cell] - EEPose.z -> " + str(EEPose.z) + " / ObjectPose.z -> " + str(ObjectPose.z))
 
             if (EEPose.x - 0.01 > ObjectPose.x) or (EEPose.x + 0.01 < ObjectPose.x): 
                 Check = False
@@ -197,7 +193,7 @@ class EEPoseCLIENT(Node):
         super().__init__("r3mcell_EEPose_Subscriber")
 
         TopicName = "/LinkPose_" + Robot["Model"] + "_" + Robot["Link"]
-        self.SUB = self.create_subscription(LinkPose, TopicName, self.CALLBACK_FN, 10)
+        self.SUB = self.create_subscription(LinkPose, TopicName, self.CALLBACK_FN, 1)
 
     def CALLBACK_FN(self, POSE):
 
@@ -213,10 +209,10 @@ class MoveCLIENT(Node):
         super().__init__('r3mcell_gripper_Gz_Move_Client')
         self._action_client = ActionClient(self, Move, 'Move')
 
-        print("(/Move)-Gripper: Initialising ROS2 Action Client!")
-        print("(/Move)-Gripper: Waiting for /Move ROS2 ActionServer to be available...")
+        self.get_logger().info("[R3M Cell] - (/Move)-Gripper: Initialising ROS2 Action Client!")
+        self.get_logger().info("[R3M Cell] - (/Move)-Gripper: Waiting for /Move ROS2 ActionServer to be available...")
         self._action_client.wait_for_server()
-        print("(/Move)-Gripper: /Move ACTION SERVER detected.")
+        self.get_logger().info("[R3M Cell] - (/Move)-Gripper: /Move ACTION SERVER detected.")
 
     def send_goal(self, ACTION):
 
@@ -235,7 +231,7 @@ class MoveCLIENT(Node):
         goal_handle = future.result()
 
         if not goal_handle.accepted:
-            print('(/Move)-Gripper: Move ACTION CALL -> GOAL has been REJECTED.')
+            self.get_logger().info("[R3M Cell] - (/Move)-Gripper: Move ACTION CALL -> GOAL has been REJECTED.")
             return
         
         # print('(/Move): Move ACTION CALL -> GOAL has been ACCEPTED.')
@@ -280,11 +276,11 @@ class LinkAttacher_Client(Node):
         self.DetachClient = self.create_client(DetachLink, "/DETACHLINK")
 
         while not self.AttachClient.wait_for_service(timeout_sec=1.0): 
-            print("(LinkAttacher): /ATTACHLINK ROS2 Service not still available, waiting...")
-        print("(LinkAttacher): /ATTACHLINK ROS2 Service ready.")
+            self.get_logger().info("[R3M Cell] - (LinkAttacher): /ATTACHLINK ROS2 Service not still available, waiting...")
+        self.get_logger().info("[R3M Cell] - (LinkAttacher): /ATTACHLINK ROS2 Service ready.")
         while not self.DetachClient.wait_for_service(timeout_sec=1.0): 
-            print("(LinkAttacher): /DETACHLINK ROS2 Service not still available, waiting...")
-        print("(LinkAttacher): /DETACHLINK ROS2 Service ready.")
+            self.get_logger().info("[R3M Cell] - (LinkAttacher): /DETACHLINK ROS2 Service not still available, waiting...")
+        self.get_logger().info("[R3M Cell] - (LinkAttacher): /DETACHLINK ROS2 Service ready.")
 
         self.AttachRequest = AttachLink.Request()
         self.DetachRequest = DetachLink.Request()
@@ -328,18 +324,18 @@ class LinkAttacher():
                 try:
                     AttachRES = self.CLIENT.AttachFuture.result()
                 except Exception as exc:
-                    print("(LinkAttacher): /ATTACHLINK Service call failed -> " + str(exc))
+                    self.CLIENT.get_logger().info("[R3M Cell] - (LinkAttacher): /ATTACHLINK Service call failed -> " + str(exc))
                     return(False)
                 else:
                     if (AttachRES.success):
-                        print("(LinkAttacher): /ATTACHLINK successful -> " + str(AttachRES.message))
+                        self.CLIENT.get_logger().info("[R3M Cell] - (LinkAttacher): /ATTACHLINK successful -> " + str(AttachRES.message))
 
                         AttachCheck.Attached = True
                         AttachCheck.Object = Object
 
                         return(True)
                     else:
-                        print("(LinkAttacher): /ATTACHLINK unuccessful -> " + str(AttachRES.message))
+                        self.CLIENT.get_logger().info("[R3M Cell] - (LinkAttacher): /ATTACHLINK unuccessful -> " + str(AttachRES.message))
                         return(False)
                     
     def DETACH(self, Robot, Object):
@@ -354,11 +350,11 @@ class LinkAttacher():
                 try:
                     DetachRES = self.CLIENT.DetachFuture.result()
                 except Exception as exc:
-                    print("(LinkAttacher): /DETACHLINK Service call failed -> " + str(exc))
+                    self.CLIENT.get_logger().info("[R3M Cell] - (LinkAttacher): /DETACHLINK Service call failed -> " + str(exc))
                     return(False)
                 else:
                     if (DetachRES.success):
-                        print("(LinkAttacher): /DETACHLINK successful -> " + str(DetachRES.message))
+                        self.CLIENT.get_logger().info("[R3M Cell] - (LinkAttacher): /DETACHLINK successful -> " + str(DetachRES.message))
 
                         AttachCheck.Attached = False
                         AttachCheck.Object = {"Model": "", "Link": ""}
@@ -368,5 +364,5 @@ class LinkAttacher():
 
                         return(True)
                     else:
-                        print("(LinkAttacher): /DETACHLINK unuccessful -> " + str(DetachRES.message))
+                        self.CLIENT.get_logger().info("[R3M Cell] - (LinkAttacher): /DETACHLINK unuccessful -> " + str(DetachRES.message))
                         return(False)

@@ -107,10 +107,10 @@ class RobMoveCLIENT(Node):
         super().__init__('r3mcell_RobMove_Client')
         self._action_client = ActionClient(self, Robmove, 'Robmove')
 
-        print("(/RobMove): Initialising ROS2 Action Client!")
-        print("(/RobMove): Waiting for /Robmove ROS2 ActionServer to be available...")
+        self.get_logger().info("[R3M Cell] - (/RobMove): Initialising ROS2 Action Client!")
+        self.get_logger().info("[R3M Cell] - (/RobMove): Waiting for /Robmove ROS2 ActionServer to be available...")
         self._action_client.wait_for_server()
-        print("(/RobMove): /Robmove ACTION SERVER detected.")
+        self.get_logger().info("[R3M Cell] - (/RobMove): /Robmove ACTION SERVER detected.")
         
         # Initialise RobPose CLIENT:
         self.RP = RobPoseCLIENT()
@@ -149,7 +149,7 @@ class RobMoveCLIENT(Node):
         goal_handle = future.result()
 
         if not goal_handle.accepted:
-            print('(/RobMove): RobMove ACTION CALL -> GOAL has been REJECTED.')
+            self.get_logger().info('[R3M Cell] - (/RobMove): RobMove ACTION CALL -> GOAL has been REJECTED.')
             return
         
         # print('(/RobMove): RobMove ACTION CALL -> GOAL has been ACCEPTED.')
@@ -185,9 +185,6 @@ class RobMoveCLIENT(Node):
 # ========================================================================================= #
 # Function -> Get Error (ROBOT):
 def CalculateError(TARGET_POSE, OBTAINED_POSE):
-
-    print(TARGET_POSE)
-    print(OBTAINED_POSE)
 
     # POSITION ERROR: Norm of the (p1-p0) difference vector:
 

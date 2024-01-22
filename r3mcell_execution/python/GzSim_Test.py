@@ -43,6 +43,11 @@ class SkillExecution_CLIENT(Node):
 
         # Create ROS2 Service Client:
         self.cli_SKILL = self.create_client(SkillExecution, "/r3m_SkillExecution")  
+        
+        while not self.cli_SKILL.wait_for_service(timeout_sec=1.0):                                      
+            self.get_logger().info("/r3m_SkillExecution ROS2 Service not still available, waiting...")                                                                                                          
+        print ("/r3m_SkillExecution ROS2.0 SERVICE detected!")
+        print("")
 
         # Declare REQUEST variable:
         self.req_SKILL = SkillExecution.Request()  
@@ -292,7 +297,7 @@ def main(args=None):
     EXECUTE = SkillExecution_CLIENT()
 
     # MAIN LOOP:
-    N = 100
+    N = 1000
     j = 1
     for i in range(1,N+1):
         
