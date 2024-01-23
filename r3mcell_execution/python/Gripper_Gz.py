@@ -74,8 +74,14 @@ class ParallelGripper():
         self.LinkAttacher_CLIENT = LinkAttacher()
         self.EEPose_CLIENT = EEPoseCLIENT(Robot)
 
+        self.Robot = Robot
+
     def Execute(self, Robot, ObjectList, ACTION, SPEED):
 
+        # Quick fix:
+        if Robot == None:
+            Robot = self.Robot
+        
         global RES
         global AttachCheck
         
