@@ -33,6 +33,7 @@
 
 # Import libraries:
 import os
+import sys
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
@@ -62,10 +63,61 @@ def load_yaml(package_name, file_path):
     except EnvironmentError:
         # parent of IOError, OSError *and* WindowsError where available.
         return None
+    
+# ========== **INPUT ARGUMENTS** ========== #
+#  layout -> Cell layout.
+
+# EVALUATE INPUT ARGUMENTS:
+def AssignArgument(ARGUMENT):
+    
+    ARGUMENTS = sys.argv
+    for y in ARGUMENTS:
+        if (ARGUMENT + ":=") in y:
+            ARG = y.replace((ARGUMENT + ":="),"")
+            return(ARG)
 
 # ========== **GENERATE LAUNCH DESCRIPTION** ========== #
 def generate_launch_description():
-    
+
+    # ========== INPUT ARGUMENTS ========== #
+    # Cell layout:
+    layout = AssignArgument("layout")
+    if layout != None:
+        None
+    else:
+        print("")
+        print("ERROR: layout INPUT ARGUMENT has not been defined. Please try again.")
+        print("Closing... BYE!")
+        exit()
+
+    if layout == "r3mcell_cu_1":
+        LYT = "R3M Cell (Cranfield University): Simple Cube Pick-and-Place."
+        EE = "Schunk EGP-64 parallel gripper."
+        r3mcell_cu_1 = "true"
+        r3mcell_cu_2 = "false"
+    elif layout == "r3mcell_cu_2":
+        LYT = "R3M Cell (Cranfield University): Lamination Sheet Pick-and-Place."
+        EE = "Custom R3M Vacuum Gripper."
+        r3mcell_cu_1 = "false"
+        r3mcell_cu_2 = "true"
+    else:
+        print("")
+        print("ERROR: layout INPUT ARGUMENT has not been defined properly. Please try again.")
+        print("Options: {r3mcell_cu_1, r3mcell_cu_2}")
+        print("Closing... BYE!")
+        exit()
+
+    # ========== CELL INFORMATION ========== #
+    print("")
+    print("===== ABB IRB-120: Robot Simulation (r3mcell_cu_gazebo) =====")
+    print("Robot configuration:")
+    print("")
+    # Cell Layout:
+    print("- Cell layout: " + LYT)
+    # End-Effector:
+    print("- End-effector: " + EE)
+    print("")
+
     # ***** GAZEBO ***** #   
     # DECLARE Gazebo WORLD file:
     r3mcell_cu_gazebo = os.path.join(
@@ -79,18 +131,6 @@ def generate_launch_description():
                 launch_arguments={'world': r3mcell_cu_gazebo}.items(),
              )
 
-
-    # ========== COMMAND LINE ARGUMENTS ========== #
-    print("")
-    print("===== ABB IRB-120: Robot Simulation (r3mcell_cu_gazebo) =====")
-    print("Robot configuration:")
-    print("")
-    # Cell Layout:
-    print("- Cell layout: Cranfield University - IA Lab enclosure.")
-    # End-Effector:
-    print("- End-effector: Schunk EGP-64 parallel gripper.")
-    print("")
-
     # ***** ROBOT DESCRIPTION ***** #
     # ABB-IRB120 Description file package:
     irb120_description_path = os.path.join(
@@ -101,7 +141,12 @@ def generate_launch_description():
                               'irb120.urdf.xacro')
     # Generate ROBOT_DESCRIPTION for ABB-IRB120:
     doc = xacro.parse(open(xacro_file))
-    xacro.process_doc(doc, mappings={})
+    
+    xacro.process_doc(doc, mappings={
+        "r3mcell_cu_1": r3mcell_cu_1,
+        "r3mcell_cu_2": r3mcell_cu_2,
+        })
+    
     robot_description_config = doc.toxml()
     robot_description = {'robot_description': robot_description_config}
 
