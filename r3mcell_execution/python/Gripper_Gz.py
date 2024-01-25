@@ -60,6 +60,117 @@ EEPose = LinkPose()
 # ========================================================================================= #
 
 # ========================================================================================= #
+# Vacuum Gripper:
+class VacuumGripper():
+    
+    # For information, the inputs to this class are:
+    # Robot = {"Model": "", "Link": "", "EEPose": Robpose()}
+    # ObjectList = [{"Model": "box", "Link": "box", "CurrentPose": ObjectPose()}, ...]
+    
+    def __init__(self, Robot):
+
+        # Initialise CLASSES to be used:
+        self.LinkAttacher_CLIENT = LinkAttacher()
+        self.EEPose_CLIENT = EEPoseCLIENT(Robot)
+
+        self.Robot = Robot
+
+    def Execute(self, Robot, ObjectList, ACTION):
+
+        # Quick fix:
+        if Robot == None:
+            Robot = self.Robot
+
+        # ===== VacuumON // VacuumOFF ===== #
+        # RESULT -> Convert to DICTIONARY:
+        RESULT = {}
+
+        # === DETACH === #
+        if ACTION == "VacuumOFF":
+
+            RESULT["Message"] = "Vacuum Gripper: VACUUM DEACTIVATED."
+
+            # DET(1) -> CHECK for DETACHMENTS:
+            if AttachCheck.Attached == True:
+                
+                # DET(2) -> DETACH:
+                DETACH_RES = self.LinkAttacher_CLIENT.DETACH(Robot, AttachCheck.Object)
+
+                if DETACH_RES:
+                    self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (VacuumGripper): Gripper OFF, OBJECT -> " + AttachCheck.Object["Model"] + " detached.")
+                else:
+                    self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (VacuumGripper): Gripper OFF, OBJECT -> " + AttachCheck.Object["Model"] + " not detached, LinkAttacher plugin failed.")
+
+            else:
+                self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (VacuumGripper): Gripper OFF without dropping any object.")
+
+        # === ATTACH === #
+        if ACTION == "VacuumON":
+
+            RESULT["Message"] = "Vacuum Gripper: VACUUM ACTIVATED."
+            
+            # ATT(1) -> CHECK for ATTACHMENTS:
+            CHECK_RES = self.CHECK(ObjectList)
+
+            if CHECK_RES["Success"]:
+
+                # ATT(2) -> ATTACH:
+                OBJ = {"Model": CHECK_RES["Model"], "Link": CHECK_RES["Link"]}
+                ATTACH_RES = self.LinkAttacher_CLIENT.ATTACH(Robot, OBJ)
+
+                if ATTACH_RES:
+                    self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper ON, OBJECT -> " + OBJ["Model"] + " attached.")
+                else:
+                    self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper ON, OBJECT -> " + OBJ["Model"] + " not attached, LinkAttacher plugin failed.")
+
+            else:
+                self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper ON without grasping any object.")
+
+        RESULT["Success"] = True
+        RESULT["ExecTime"] = 0.0
+        RESULT["Error"] = 0.0
+
+        # Return RESULT:
+        return(RESULT)
+    
+    def CHECK(self, ObjectList):
+
+        # RESULT:
+        RESULT = {"Success": False, "Model": "", "Link": ""}
+
+        # Get EEPose:
+        global EEPose
+        T = time.time() + 0.1
+        while (time.time() < T):
+            rclpy.spin_once(self.EEPose_CLIENT)
+
+        Check = True
+        for x in ObjectList:
+            
+            ObjectPose = x["CurrentPose"]
+
+            # Print:
+            self.EEPose_CLIENT.get_logger().info("[R3M Cell] - Checking if object is attached for OBJECT: " + x["Model"])
+            self.EEPose_CLIENT.get_logger().info("[R3M Cell] - EEPose.x -> " + str(EEPose.x) + " / ObjectPose.x -> " + str(ObjectPose.x))
+            self.EEPose_CLIENT.get_logger().info("[R3M Cell] - EEPose.y -> " + str(EEPose.y) + " / ObjectPose.y -> " + str(ObjectPose.y))
+            self.EEPose_CLIENT.get_logger().info("[R3M Cell] - EEPose.z -> " + str(EEPose.z) + " / ObjectPose.z -> " + str(ObjectPose.z))
+
+            if (EEPose.x - 0.01 > ObjectPose.x) or (EEPose.x + 0.01 < ObjectPose.x): 
+                Check = False
+            if (EEPose.y - 0.01 > ObjectPose.y) or (EEPose.y + 0.01 < ObjectPose.y): 
+                Check = False
+            if (EEPose.z - 0.02 > ObjectPose.z) or (EEPose.z < ObjectPose.z): 
+                Check = False
+
+            if Check == True:
+
+                RESULT["Success"] = True
+                RESULT["Model"] = x["Model"]
+                RESULT["Link"] = x["Link"]
+
+            return(RESULT)
+
+# ========================================================================================= #
 # Parallel Gripper:
 class ParallelGripper():
     
@@ -276,7 +387,7 @@ class LinkAttacher_Client(Node):
 
     def __init__(self):
 
-        super().__init__("irb120pe_LinkAttacher_Client")
+        super().__init__("r3mcell_LinkAttacher_Client")
 
         self.AttachClient = self.create_client(AttachLink, "/ATTACHLINK")
         self.DetachClient = self.create_client(DetachLink, "/DETACHLINK")

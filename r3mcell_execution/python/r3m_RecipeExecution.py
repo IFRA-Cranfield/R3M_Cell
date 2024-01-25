@@ -31,6 +31,7 @@ from r3mcell_data.msg import Pose
 # Import CLASSES/Functions:
 from Robot import RobotClient
 from Gripper_Gz import ParallelGripper
+from Gripper_Gz import VacuumGripper
 from ObjectState import OBJECT
 from ResetGazebo import GzRESET
 
@@ -39,6 +40,28 @@ from ResetGazebo import GzRESET
 # ========================================================================================= #
 
 # ========================================================================================= #
+# Get AUTO CLASS:
+PARAM_AUTO = "default"
+P_CHECK_AUTO = False
+
+class getAUTO(Node):
+
+    def __init__(self):
+        
+        global PARAM_AUTO
+        global P_CHECK_AUTO
+        
+        super().__init__('r3mcell_AUTO_PARAM')
+        self.declare_parameter('AUTO', "default")
+        PARAM_AUTO = self.get_parameter('AUTO').get_parameter_value().string_value
+        if (PARAM_AUTO == "default"):
+            self.get_logger().info('[R3M Cell] - AUTO ROS2 Parameter was not defined.')
+            exit()
+        else:    
+            self.get_logger().info('[R3M Cell] - AUTO ROS2 Parameter received: ' + PARAM_AUTO)
+        
+        P_CHECK_AUTO = True
+
 # Get InitialConditions CLASS:
 PARAM_IC = "default"
 P_CHECK_IC = False
@@ -104,7 +127,12 @@ class ExecuteSkill_SERVER(Node):
         # Initialise CLASSES needed for the Skill Execution:
         self.OBJECTS = OBJECT(self.ObjectList)
         self.ROBOT = RobotClient()
-        self.GRIPPER = ParallelGripper(self.RBT)
+        
+        if ROB["EEType"] == "ParallelGripper":
+            self.GRIPPER = ParallelGripper(self.RBT)
+        elif ROB["EEType"] == "VacuumGripper":
+            self.GRIPPER = VacuumGripper(self.RBT)
+        
         self.RESET = GzRESET(self.ResetCond)
 
         # Initialise SERVICE SERVER:
@@ -126,7 +154,10 @@ class ExecuteSkill_SERVER(Node):
 
         elif (ID == 0):
 
-            self.GRIPPER.Execute(None, None, "OPEN", 1.0)
+            if self.RBT["EEType"] == "ParallelGripper":
+                self.GRIPPER.Execute(None, None, "OPEN", 1.0)
+            elif self.RBT["EEType"] == "VacuumGripper":
+                self.GRIPPER.Execute(None, None, "VacuumOFF")
 
             RES = self.RESET.RESET()
             self.OBJECTS.ResetObjectList()
@@ -160,10 +191,22 @@ class ExecuteSkill_SERVER(Node):
                     response.result.success = RES["Success"]
                     response.result.exectime = RES["ExecTime"]
                     response.result.error = RES["Error"]
-                    
+                
+                # ParallelGripper:
                 elif (RECIPE["type"] == "GRIP"):
 
                     RES = self.GRIPPER.Execute(self.RBT, self.ObjectList, RECIPE["action"], RECIPE["speed"])
+
+                    response.result.id = ID
+                    response.result.message = RES["Message"]
+                    response.result.success = RES["Success"]
+                    response.result.exectime = RES["ExecTime"]
+                    response.result.error = RES["Error"]
+                
+                # VacuumGripper:
+                elif (RECIPE["type"] == "VACUUM"):
+                    
+                    RES = self.GRIPPER.Execute(self.RBT, self.ObjectList, RECIPE["action"])
 
                     response.result.id = ID
                     response.result.message = RES["Message"]
@@ -250,6 +293,10 @@ def GetRecipe(RECIPE_ID):
     elif RECIPE["type"] == "GRIP":
         
         RECIPE["action"] = RecipeYAML["action"]
+
+    elif RECIPE["type"] == "VACUUM":
+        
+        RECIPE["action"] = RecipeYAML["action"]
         
     return(RECIPE)
 
@@ -260,6 +307,19 @@ def GetRecipe(RECIPE_ID):
 def main(args=None):
     
     rclpy.init(args=args)
+
+    # Check if NODE is going to be EXECUTED:
+    global PARAM_AUTO
+    global P_CHECK_AUTO
+    paramAUTO = getAUTO()
+    while (P_CHECK_AUTO == False):
+        rclpy.spin_once(paramAUTO)
+
+    if PARAM_AUTO == "False":
+        paramAUTO.get_logger().info("[R3M Cell] - R3M AutomaticOperation is not required for this simulation. Shutting down node!")
+        exit()
+    
+    paramAUTO.destroy_node()
 
     # === INITIAL CONDITIONS === #
     # Get ROS2 Parameter value:

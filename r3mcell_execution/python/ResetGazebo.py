@@ -32,7 +32,6 @@ from r3mcell_data.msg import Pose
 
 # Import CLASSES/FUNCTIONS:
 from Robot import RobotClient
-from Gripper_Gz import ParallelGripper
 
 # ========================================================================================= #
 # =================================== CLASSES/FUNCTIONS =================================== #
@@ -293,7 +292,7 @@ class EntityClient(Node):
         elif ELEMENT == "OBJECT":
 
             # LOAD URDF of CUBE:
-            urdf_file_path = os.path.join(get_package_share_directory(INFORMATION["Package"]), 'urdf', INFORMATION["Model"] + '.urdf')
+            urdf_file_path = os.path.join(get_package_share_directory(INFORMATION["Package"]), 'urdf', 'objects', INFORMATION["Model"] + '.urdf')
             xacro_file = xacro.process_file(urdf_file_path, mappings={"name": INFORMATION["Name"]})
             
             # ARGUMENTS:

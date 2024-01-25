@@ -33,11 +33,12 @@
 
 # Import libraries:
 import os
+import sys
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration
-from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler, DeclareLaunchArgument, TimerAction
+from launch.substitutions import LaunchConfiguration, PythonExpression, EnvironmentVariable
+from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler, DeclareLaunchArgument, TimerAction, SetEnvironmentVariable
 from launch.conditions import IfCondition, UnlessCondition
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -64,13 +65,80 @@ def load_yaml(package_name, file_path):
     except EnvironmentError:
         # parent of IOError, OSError *and* WindowsError where available.
         return None
+    
+# ========== **INPUT ARGUMENTS** ========== #
+#  layout -> Cell layout.
+
+# EVALUATE INPUT ARGUMENTS:
+def AssignArgument(ARGUMENT):
+    
+    ARGUMENTS = sys.argv
+    for y in ARGUMENTS:
+        if (ARGUMENT + ":=") in y:
+            ARG = y.replace((ARGUMENT + ":="),"")
+            return(ARG)
 
 # ========== **GENERATE LAUNCH DESCRIPTION** ========== #
 def generate_launch_description():
 
+    # ========== INPUT ARGUMENTS ========== #
     
+    # Cell layout:
+    layout = AssignArgument("layout")
+    if layout != None:
+        None
+    else:
+        print("")
+        print("ERROR: layout INPUT ARGUMENT has not been defined. Please try again.")
+        print("Closing... BYE!")
+        exit()
+    
+    if layout == "r3mcell_cu_1":
+        LYT = "R3M Cell (Cranfield University): Simple Cube Pick-and-Place."
+        EE = "Schunk EGP-64 parallel gripper."
+        r3mcell_cu_1 = "true"
+        r3mcell_cu_2 = "false"
+        endeffector = "egp64"
+    elif layout == "r3mcell_cu_2":
+        LYT = "R3M Cell (Cranfield University): Lamination Sheet Pick-and-Place."
+        EE = "Custom R3M Vacuum Gripper."
+        r3mcell_cu_1 = "false"
+        r3mcell_cu_2 = "true"
+        endeffector = "vgr"
+    else:
+        print("")
+        print("ERROR: layout INPUT ARGUMENT has not been defined properly. Please try again.")
+        print("Options: {r3mcell_cu_1, r3mcell_cu_2}")
+        print("Closing... BYE!")
+        exit()
+
+    # Automatic Operation:
+    autoOP = AssignArgument("autoOP")
+
+    if autoOP == "True" or autoOP == "true":
+        AUTO = "True"
+    elif autoOP == "False" or autoOP == "false" or autoOP == None:
+        AUTO = "False"
+    else:
+        print("")
+        print("ERROR: layout INPUT ARGUMENT has not been defined properly. Please try again.")
+        print("Options: true / false")
+        print("Closing... BYE!")
+        exit()
+
+    # ========== CELL INFORMATION ========== #
+    print("")
+    print("===== ABB IRB-120: Robot Simulation (r3mcell_cu_moveit2) =====")
+    print("Robot configuration:")
+    print("")
+    # Cell Layout:
+    print("- Cell layout: " + LYT)
+    # End-Effector:
+    print("- End-effector: " + EE)
+    print("")
+
     # *********************** Gazebo *********************** # 
-    
+
     # DECLARE Gazebo WORLD file:
     r3mcell_cu_gazebo = os.path.join(
         get_package_share_directory('r3mcell_cu_gazebo'),
@@ -83,17 +151,6 @@ def generate_launch_description():
                 launch_arguments={'world': r3mcell_cu_gazebo}.items(),
              )
 
-    # ========== COMMAND LINE ARGUMENTS ========== #
-    print("")
-    print("===== ABB IRB-120: Robot Simulation (r3mcell_cu_moveit2) =====")
-    print("Robot configuration:")
-    print("")
-    # Cell Layout:
-    print("- Cell layout: Cranfield University - IA Lab enclosure.")
-    # End-Effector:
-    print("- End-effector: Schunk EGP-64 parallel gripper.")
-    print("")
-
     # ***** ROBOT DESCRIPTION ***** #
     # ABB-IRB120 Description file package:
     irb120_description_path = os.path.join(
@@ -104,7 +161,12 @@ def generate_launch_description():
                               'irb120.urdf.xacro')
     # Generate ROBOT_DESCRIPTION for ABB-IRB120:
     doc = xacro.parse(open(xacro_file))
-    xacro.process_doc(doc, mappings={})
+    
+    xacro.process_doc(doc, mappings={
+        "r3mcell_cu_1": r3mcell_cu_1,
+        "r3mcell_cu_2": r3mcell_cu_2,
+        })
+
     robot_description_config = doc.toxml()
     robot_description = {'robot_description': robot_description_config}
 
@@ -172,7 +234,14 @@ def generate_launch_description():
 
     # *** PLANNING CONTEXT *** #
     # Robot description, SRDF:
-    robot_description_semantic_config = load_file("r3mcell_cu_moveit2", "config/irb120egp64.srdf")
+
+    # === SCHUNK EGP-64 === #
+    if endeffector == "egp64":
+        robot_description_semantic_config = load_file("r3mcell_cu_moveit2", "config/irb120egp64.srdf")
+    # === R3M VACUUM GRIPPER === #
+    elif endeffector == "vgr":
+        robot_description_semantic_config = load_file("r3mcell_cu_moveit2", "config/irb120vgr.srdf")
+    
     robot_description_semantic = {"robot_description_semantic": robot_description_semantic_config}
 
     # Kinematics.yaml file:
@@ -199,20 +268,15 @@ def generate_launch_description():
     )
     pilz_cartesian_limits = {'robot_description_planning': pilz_cartesian_limits_yaml}
 
-    # Move group: OMPL Planning.
-    ompl_planning_pipeline_config = {
-        "move_group": {
-            "planning_plugin": "ompl_interface/OMPLPlanner",
-            "request_adapters": """default_planner_request_adapters/AddTimeOptimalParameterization default_planner_request_adapters/FixWorkspaceBounds default_planner_request_adapters/FixStartStateBounds default_planner_request_adapters/FixStartStateCollision default_planner_request_adapters/FixStartStatePathConstraints""",
-            "start_state_max_bounds_error": 0.1,
-        }
-    }
-    # Load ompl_planning.yaml file:
-    ompl_planning_yaml = load_yaml("r3mcell_cu_moveit2", "config/ompl_planning_egp64.yaml")
-    ompl_planning_pipeline_config["move_group"].update(ompl_planning_yaml)
-
     # MoveIt!2 Controllers:
-    moveit_simple_controllers_yaml = load_yaml("r3mcell_cu_moveit2", "config/irb120egp64_controllers.yaml"  )
+
+    # === SCHUNK EGP-64 === #
+    if endeffector == "egp64":
+        moveit_simple_controllers_yaml = load_yaml("r3mcell_cu_moveit2", "config/irb120egp64_controllers.yaml"  )
+    # === R3M VACUUM GRIPPER === #
+    elif endeffector == "vgr":
+        moveit_simple_controllers_yaml = load_yaml("r3mcell_cu_moveit2", "config/irb120_controllers.yaml"  )
+
     moveit_controllers = {
         "moveit_simple_controller_manager": moveit_simple_controllers_yaml,
         "moveit_controller_manager": "moveit_simple_controller_manager/MoveItSimpleControllerManager",
@@ -245,7 +309,6 @@ def generate_launch_description():
             kinematics_yaml,
             
             pilz_planning_pipeline_config,
-            #ompl_planning_pipeline_config,
 
             joint_limits,
             pilz_cartesian_limits,
@@ -261,7 +324,13 @@ def generate_launch_description():
     # RVIZ:
     load_RVIZfile = LaunchConfiguration("rviz_file")
     rviz_base = os.path.join(get_package_share_directory("r3mcell_cu_moveit2"), "config")
-    rviz_full_config = os.path.join(rviz_base, "irb120egp64_moveit2.rviz")
+
+    # === SCHUNK EGP-64 === #
+    if endeffector == "egp64":
+        rviz_full_config = os.path.join(rviz_base, "irb120egp64_moveit2.rviz")
+    # === R3M VACUUM GRIPPER === #
+    elif endeffector == "vgr":
+        rviz_full_config = os.path.join(rviz_base, "irb120vgr_moveit2.rviz")
 
     rviz_node_full = Node(
         package="rviz2",
@@ -275,7 +344,6 @@ def generate_launch_description():
             kinematics_yaml,
             
             pilz_planning_pipeline_config,
-            #ompl_planning_pipeline_config,
 
             joint_limits,
             pilz_cartesian_limits,
@@ -297,31 +365,52 @@ def generate_launch_description():
         parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}],
     )
 
-    RobMoveInterface = Node(
-        name="robmove",
-        package="ros2srrc_execution",
-        executable="robmove",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"ENV_PARAM": "gazebo"}],
-    )
     
-    MoveInterface = Node(
-        name="move",
-        package="ros2srrc_execution",
-        executable="move",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"ENV_PARAM": "gazebo"}],
-    )
+    if endeffector == "egp64":
+        
+        RobMoveInterface = Node(
+            name="robmove",
+            package="ros2srrc_execution",
+            executable="robmove",
+            output="screen",
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"ENV_PARAM": "gazebo"}],
+        )
+        MoveInterface = Node(
+            name="move",
+            package="ros2srrc_execution",
+            executable="move",
+            output="screen",
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"ENV_PARAM": "gazebo"}],
+        )
+    
+    elif endeffector == "vgr":
+       
+        RobMoveInterface = Node(
+            name="robmove",
+            package="ros2srrc_execution",
+            executable="robmove",
+            output="screen",
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "none"}, {"ENV_PARAM": "gazebo"}],
+        )
+        MoveInterface = Node(
+            name="move",
+            package="ros2srrc_execution",
+            executable="move",
+            output="screen",
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "none"}, {"ENV_PARAM": "gazebo"}],
+        )
+    
 
-    r3m_RecipeExecution = Node(
+    R3MautoOP = Node(
         name="r3m_RecipeExecution",
         package="r3mcell_execution",
         executable="r3m_RecipeExecution.py",
         output="screen",
-        parameters=[{"InitialConditions": "r3mcell_cu_1"}, {"use_sim_time": True}],
+        parameters=[{"InitialConditions": layout}, {"use_sim_time": True}, {"AUTO": AUTO}],
     )
     
     return LaunchDescription(
+        
         [
             # Gazebo nodes:
             gazebo, 
@@ -387,7 +476,8 @@ def generate_launch_description():
                                 RobMoveInterface,
                                 MoveInterface,
                                 
-                                r3m_RecipeExecution
+                                R3MautoOP,
+                                
                             ]
                         ),
 

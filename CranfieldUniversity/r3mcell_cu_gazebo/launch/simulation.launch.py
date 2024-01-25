@@ -95,11 +95,13 @@ def generate_launch_description():
         EE = "Schunk EGP-64 parallel gripper."
         r3mcell_cu_1 = "true"
         r3mcell_cu_2 = "false"
+        endeffector = "egp64"
     elif layout == "r3mcell_cu_2":
         LYT = "R3M Cell (Cranfield University): Lamination Sheet Pick-and-Place."
         EE = "Custom R3M Vacuum Gripper."
         r3mcell_cu_1 = "false"
         r3mcell_cu_2 = "true"
+        endeffector = "vgr"
     else:
         print("")
         print("ERROR: layout INPUT ARGUMENT has not been defined properly. Please try again.")
