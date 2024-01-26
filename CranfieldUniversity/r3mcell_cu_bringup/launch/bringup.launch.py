@@ -82,8 +82,7 @@ def AssignArgument(ARGUMENT):
 def generate_launch_description():
 
     # ========== INPUT ARGUMENTS ========== #
-    
-    # ========== INPUT ARGUMENTS ========== #
+
     # Robot IP:
     robot_ip = AssignArgument("ip_address")
     if robot_ip != None:
