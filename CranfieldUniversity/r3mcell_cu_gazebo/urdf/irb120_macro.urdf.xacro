@@ -58,23 +58,25 @@
   <xacro:include filename="$(find r3mcell_cu_gazebo)/urdf/abb_resources/common_materials.xacro"/>
 
   <!-- XACRO-MACRO of ABB-IRB120: -->
-  <xacro:macro name="irb120" params="prefix r3mcell_cu_1 r3mcell_cu_2 bringup robot_ip">
+  <xacro:macro name="irb120" params="prefix EE_no EE_egp64 EE_vgr bringup robot_ip">
 
     <!-- ABB-IRB120 + EGP64 TRANSMISSION: -->
     <xacro:unless value="${bringup}">  
       <xacro:include filename="$(find r3mcell_cu_gazebo)/urdf/irb120_transmission.xacro" />
       <xacro:irb120_transmission 
         prefix=""
-        r3mcell_cu_1="${r3mcell_cu_1}"
-        r3mcell_cu_2="${r3mcell_cu_2}"/>
+        EE_no="${EE_no}"
+        EE_egp64="${EE_egp64}"
+        EE_vgr="${EE_vgr}"/>
     </xacro:unless>
 
     <!-- ABB-IRB120 + EGP64 GAZEBO - ROS2_CONTROL: -->
     <xacro:include filename="$(find r3mcell_cu_gazebo)/urdf/irb120_ros2control.xacro" />
     <xacro:irb120_ros2control 
       prefix="" 
-      r3mcell_cu_1="${r3mcell_cu_1}"
-      r3mcell_cu_2="${r3mcell_cu_2}"
+      EE_no="${EE_no}"
+      EE_egp64="${EE_egp64}"
+      EE_vgr="${EE_vgr}"
       bringup="${bringup}"
       robot_ip="${robot_ip}"/>
 
@@ -376,7 +378,7 @@
     <!-- ========== END-EFFECTORS ========== -->
 
     <!-- === SCHUNK EGP-64 GRIPPER === -->
-    <xacro:if value="${r3mcell_cu_1}">
+    <xacro:if value="${EE_egp64}">
 
       <!-- Schunk coupler (LINK): -->
       <link name="schunk_coupler">
@@ -594,7 +596,7 @@
     </xacro:if>
 
     <!-- === CUSTOM R3M VACUUM GRIPPER === -->
-    <xacro:if value="${r3mcell_cu_2}">
+    <xacro:if value="${EE_vgr}">
 
       <!-- Vacuum Gripper: Body -->
       <link name="vgr_link">

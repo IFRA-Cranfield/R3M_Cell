@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<robot name="can" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <link name="can">
+
+    <inertial>
+
+      <origin xyz= "0.0 0.0 0.0" rpy="0 0 0"/>
+      <mass value= "0.1" />
+      <inertia
+        ixx="0.000015" ixy="0.0"  ixz="0.0"
+        iyy="0.000015" iyz="0.0"
+        izz="0.000015" />
+
+    </inertial>
+
+    <collision name="collision">
+
+      <origin xyz= "0.0 0.0 0.0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/canPP/can.dae"/>
+      </geometry>
+
+    </collision>
+
+    <visual name="visual">
+
+      <origin xyz= "0.0 0.0 0.0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/canPP/can.dae"/>
+      </geometry>
+
+    </visual>
+
+  </link>
+
+  <gazebo reference="can">
+    <material>Gazebo/Black</material>
+    <selfCollide>false</selfCollide>
+  </gazebo>
+
+  <!-- Input parameters: -->
+  <xacro:arg name="name" default="none"/>
+  <xacro:property name="name" value="$(arg name)"/>
+
+  <!-- LOAD ObjectPose Gazebo (ROS2) PLUGIN: -->
+  <gazebo>
+    <plugin name="ros2_objectpose_plugin" filename="libros2_objectpose_plugin.so" >
+      <ros>
+        <namespace>${name}</namespace>
+      </ros>
+    </plugin>
+  </gazebo>
+
+</robot>

@@ -54,7 +54,7 @@
 
 <robot xmlns:xacro="http://wiki.ros.org/xacro">
 
-  <xacro:macro name="irb120_transmission" params="prefix r3mcell_cu_1 r3mcell_cu_2">
+  <xacro:macro name="irb120_transmission" params="prefix EE_no EE_egp64 EE_vgr">
 
     <transmission name="irb120_joint1_trans">
       <type>transmission_interface/SimpleTransmission</type>
@@ -117,7 +117,7 @@
     </transmission>
 
     <!-- === SCHUNK EGP-64 GRIPPER === -->
-    <xacro:if value="${r3mcell_cu_1}">
+    <xacro:if value="${EE_egp64}">
       <transmission name="egp64_left_finger_trans">
         <type>transmission_interface/SimpleTransmission</type>
         <joint name="egp64_finger_left_joint">

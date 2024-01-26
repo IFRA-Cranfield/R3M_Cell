@@ -54,7 +54,7 @@
 
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <xacro:macro name="irb120_ros2control" params="prefix r3mcell_cu_1 r3mcell_cu_2 bringup robot_ip" >
+  <xacro:macro name="irb120_ros2control" params="prefix EE_no EE_egp64 EE_vgr bringup robot_ip" >
 
     <!-- 1. ROS2_CONTROL tag name: -->
     <!-- A. GAZEBO SIMULATION: -->
@@ -69,7 +69,7 @@
     <!-- 2. IF GAZEBO -> Load PLUGIN: -->
     <xacro:unless value="${bringup}">
 
-      <xacro:if value="${r3mcell_cu_1}">
+      <xacro:if value="${EE_egp64}">
         <gazebo>
           <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
             <robot_sim_type>gazebo_ros2_control/GazeboSystem</robot_sim_type>
@@ -78,7 +78,15 @@
         </gazebo>
       </xacro:if>
 
-      <xacro:if value="${r3mcell_cu_2}">
+      <xacro:if value="${EE_no}">
+        <gazebo>
+          <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+            <robot_sim_type>gazebo_ros2_control/GazeboSystem</robot_sim_type>
+            <parameters>$(find r3mcell_cu_gazebo)/config/irb120_controller.yaml</parameters>
+          </plugin>
+        </gazebo>
+      </xacro:if>
+      <xacro:if value="${EE_vgr}">
         <gazebo>
           <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
             <robot_sim_type>gazebo_ros2_control/GazeboSystem</robot_sim_type>
@@ -207,7 +215,7 @@
 
       <!-- === SCHUNK EGP-64 GRIPPER === -->
       <xacro:unless value="${bringup}">
-        <xacro:if value="${r3mcell_cu_1}">
+        <xacro:if value="${EE_egp64}">
           <!-- egp64_finger_left_joint -->
           <joint name="egp64_finger_left_joint">
             <command_interface name="position">
@@ -260,7 +268,7 @@
           <state_interface name="effort"/>
         </joint>
 
-        <xacro:if value="${r3mcell_cu_1}">
+        <xacro:if value="${EE_egp64}">
           <joint name="EE_egp64_joint">
             <command_interface name="position"/>
             <command_interface name="velocity"/>
@@ -269,7 +277,7 @@
             <state_interface name="effort"/>
           </joint>
         </xacro:if>
-        <xacro:if value="${r3mcell_cu_2}">
+        <xacro:if value="${EE_vgr}">
           <joint name="EE_vgr_joint">
             <command_interface name="position"/>
             <command_interface name="velocity"/>
@@ -308,7 +316,7 @@
       </gazebo>
 
       <!-- === SCHUNK EGP-64 GRIPPER === -->
-      <xacro:if value="${r3mcell_cu_1}">
+      <xacro:if value="${EE_egp64}">
         <gazebo reference="egp64_gripper_base_link">
           <selfCollide>false</selfCollide>
         </gazebo>
@@ -328,7 +336,7 @@
       <!-- === SCHUNK EGP-64 GRIPPER === -->
 
       <!-- === VACUUM GRIPPER === -->
-      <xacro:if value="${r3mcell_cu_2}">
+      <xacro:if value="${EE_vgr}">
         <gazebo reference="vgr_link">
           <selfCollide>false</selfCollide>
         </gazebo>
