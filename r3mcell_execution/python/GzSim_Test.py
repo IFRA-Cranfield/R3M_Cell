@@ -336,6 +336,35 @@ def SEQUENCE(CLIENT):
             
             break
 
+    # Step 9 -> RECIPE N0:
+    CLIENT.Recipe_REQUEST("SEQUENCE", 0)
+    print("STEP9 -> Recipe N0:")
+                
+    while rclpy.ok():
+        rclpy.spin_once(CLIENT)
+        
+        if CLIENT.future_SKILL.done():
+            try:
+                RESULT = CLIENT.future_SKILL.result()
+                RES = RESULT.result
+            
+            except Exception as exc:
+                print("/ExecuteSkill ROS2 Service call failed. ERROR: " + str(exc))
+                print("")
+                print("CLOSING PROGRAM... BYE!")
+                rclpy.shutdown()
+                exit()
+            
+            else:
+                print("Place step successful. RESULTS:")
+                print(" - Recipe ID: " + str(RES.id))
+                print(" - Execution Time: " + str(RES.exectime))
+                print(" - Message: " + RES.message)
+                print(" - Success? -> " + str(RES.success))
+                print("")
+            
+            break
+
     print("WHOLE SEQUENCE EXECUTION SUCCESSFUL!")
     print("")
 
