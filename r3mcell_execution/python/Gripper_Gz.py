@@ -477,7 +477,7 @@ class LinkAttacher():
                         AttachCheck.Object = {"Model": "", "Link": ""}
 
                         # We wait Xs in order to give time to the ObjectPose() subscriber to wait until the object is dropped.
-                        time.sleep(2)
+                        time.sleep(1)
 
                         return(True)
                     else:
