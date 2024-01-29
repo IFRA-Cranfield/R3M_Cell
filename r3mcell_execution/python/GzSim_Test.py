@@ -162,9 +162,9 @@ def SEQUENCE(CLIENT):
             
             break
 
-    # Step 4 -> RECIPE N4:
-    CLIENT.Recipe_REQUEST("SEQUENCE", 4)
-    print("STEP4 -> Recipe N4:")
+    # Step 4 -> RECIPE N2:
+    CLIENT.Recipe_REQUEST("SEQUENCE", 2)
+    print("STEP4 -> Recipe N2:")
                 
     while rclpy.ok():
         rclpy.spin_once(CLIENT)
@@ -191,9 +191,9 @@ def SEQUENCE(CLIENT):
             
             break
 
-    # Step 5 -> RECIPE N5:
-    CLIENT.Recipe_REQUEST("SEQUENCE", 5)
-    print("STEP5 -> Recipe N5:")
+    # Step 5 -> RECIPE N4:
+    CLIENT.Recipe_REQUEST("SEQUENCE", 4)
+    print("STEP5 -> Recipe N4:")
                 
     while rclpy.ok():
         rclpy.spin_once(CLIENT)
@@ -222,7 +222,7 @@ def SEQUENCE(CLIENT):
     
     # CHECK IF BREAKS BY ASKING TO GRASP AGAIN (w/ object attached):
     CLIENT.Recipe_REQUEST("SEQUENCE", 6)
-    print("STEP3 -> Recipe N6:")
+    print("STEP (EXTRA-check) -> Recipe N6:")
                 
     while rclpy.ok():
         rclpy.spin_once(CLIENT)
@@ -249,9 +249,67 @@ def SEQUENCE(CLIENT):
             
             break
 
-    # Step 6 -> RECIPE N7:
+    # Step 6 -> RECIPE N5:
+    CLIENT.Recipe_REQUEST("SEQUENCE", 5)
+    print("STEP6 -> Recipe N5:")
+                
+    while rclpy.ok():
+        rclpy.spin_once(CLIENT)
+        
+        if CLIENT.future_SKILL.done():
+            try:
+                RESULT = CLIENT.future_SKILL.result()
+                RES = RESULT.result
+            
+            except Exception as exc:
+                print("/ExecuteSkill ROS2 Service call failed. ERROR: " + str(exc))
+                print("")
+                print("CLOSING PROGRAM... BYE!")
+                rclpy.shutdown()
+                exit()
+            
+            else:
+                print("Place step successful. RESULTS:")
+                print(" - Recipe ID: " + str(RES.id))
+                print(" - Execution Time: " + str(RES.exectime))
+                print(" - Message: " + RES.message)
+                print(" - Success? -> " + str(RES.success))
+                print("")
+            
+            break
+
+    # Step 7 -> RECIPE N7:
     CLIENT.Recipe_REQUEST("SEQUENCE", 7)
-    print("STEP6 -> Recipe N7:")
+    print("STEP7 -> Recipe N7:")
+                
+    while rclpy.ok():
+        rclpy.spin_once(CLIENT)
+        
+        if CLIENT.future_SKILL.done():
+            try:
+                RESULT = CLIENT.future_SKILL.result()
+                RES = RESULT.result
+            
+            except Exception as exc:
+                print("/ExecuteSkill ROS2 Service call failed. ERROR: " + str(exc))
+                print("")
+                print("CLOSING PROGRAM... BYE!")
+                rclpy.shutdown()
+                exit()
+            
+            else:
+                print("Place step successful. RESULTS:")
+                print(" - Recipe ID: " + str(RES.id))
+                print(" - Execution Time: " + str(RES.exectime))
+                print(" - Message: " + RES.message)
+                print(" - Success? -> " + str(RES.success))
+                print("")
+            
+            break
+    
+    # Step 8 -> RECIPE N4:
+    CLIENT.Recipe_REQUEST("SEQUENCE", 4)
+    print("STEP8 -> Recipe N4:")
                 
     while rclpy.ok():
         rclpy.spin_once(CLIENT)
