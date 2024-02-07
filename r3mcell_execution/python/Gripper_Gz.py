@@ -168,7 +168,7 @@ class VacuumGripper():
                 RESULT["Model"] = x["Model"]
                 RESULT["Link"] = x["Link"]
 
-            return(RESULT)
+        return(RESULT)
 
 # ========================================================================================= #
 # Parallel Gripper:
@@ -299,7 +299,7 @@ class ParallelGripper():
                 RESULT["Model"] = x["Model"]
                 RESULT["Link"] = x["Link"]
 
-            return(RESULT)
+        return(RESULT)
         
 # ========================================================================================= #
 # CLASS to check the EEPose:
