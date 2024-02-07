@@ -98,6 +98,7 @@ def generate_launch_description():
         r3mcell_cu_1 = "true"
         r3mcell_cu_2 = "false"
         r3mcell_cu_3 = "false"
+        r3mcell_cu_4 = "false"
         endeffector = "egp64"
         EE_no = "false"
         EE_egp64 = "true"
@@ -108,6 +109,7 @@ def generate_launch_description():
         r3mcell_cu_1 = "false"
         r3mcell_cu_2 = "true"
         r3mcell_cu_3 = "false"
+        r3mcell_cu_4 = "false"
         endeffector = "vgr"
         EE_no = "false"
         EE_egp64 = "false"
@@ -118,6 +120,18 @@ def generate_launch_description():
         r3mcell_cu_1 = "false"
         r3mcell_cu_2 = "false"
         r3mcell_cu_3 = "true"
+        r3mcell_cu_4 = "false"
+        endeffector = "egp64"
+        EE_no = "false"
+        EE_egp64 = "true"
+        EE_vgr = "false"
+    elif layout == "r3mcell_cu_4":
+        LYT = "R3M Cell (Cranfield University): R3M-Perception Testing."
+        EE = "Schunk EGP-64 parallel gripper."
+        r3mcell_cu_1 = "false"
+        r3mcell_cu_2 = "false"
+        r3mcell_cu_3 = "false"
+        r3mcell_cu_4 = "true"
         endeffector = "egp64"
         EE_no = "false"
         EE_egp64 = "true"
@@ -125,7 +139,7 @@ def generate_launch_description():
     else:
         print("")
         print("ERROR: layout INPUT ARGUMENT has not been defined properly. Please try again.")
-        print("Options: {r3mcell_cu_1, r3mcell_cu_2, r3mcell_cu_3}")
+        print("Options: {r3mcell_cu_1, r3mcell_cu_2, r3mcell_cu_3, r3mcell_cu_4}")
         print("Closing... BYE!")
         exit()
 
@@ -183,6 +197,7 @@ def generate_launch_description():
         "r3mcell_cu_1": r3mcell_cu_1,
         "r3mcell_cu_2": r3mcell_cu_2,
         "r3mcell_cu_3": r3mcell_cu_3,
+        "r3mcell_cu_4": r3mcell_cu_4,
         "EE_no": EE_no,
         "EE_egp64": EE_egp64,
         "EE_vgr": EE_vgr,

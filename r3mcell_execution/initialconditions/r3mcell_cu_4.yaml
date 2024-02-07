@@ -1,27 +1,13 @@
 # R3M Project - Initial Conditions for the R3M Cell Environment Launch:
 
 # Object List:
-ObjectList:
-  - Model: "r3m_object"
-    Link: "LamSheet"
-    Name: "LamSheet"
-    Package: "r3mcell_cu_gazebo"
-    InitialPose: 
-      x: 0.6
-      y: 0.8
-      z: 0.90
-      qx: 0.0
-      qy: 0.0
-      qz: 0.0
-      qw: 0.0
-    CurrentPose: None
-    PreviousPose: None
+ObjectList: ""
 
 # Robot Information:
 Robot:
   Model: "irb120"
-  Link: "EE_vgr"
-  EEType: "VacuumGripper"
+  Link: "EE_egp64"
+  EEType: "ParallelGripper"
   Package: "r3mcell_cu_gazebo"
   InitialPose:
     x: 0.0
@@ -44,3 +30,5 @@ Robot:
 ControllerList:
   - "joint_state_broadcaster"
   - "irb120_controller"
+  - "egp64_finger_right_controller"
+  - "egp64_finger_left_controller"

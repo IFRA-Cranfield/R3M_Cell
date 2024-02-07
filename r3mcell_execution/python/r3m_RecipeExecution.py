@@ -100,6 +100,10 @@ def GetIC_YAML(NAME):
         RecipeYAML = yaml.safe_load(YAML)
 
     RESULT["ObjectList"] = RecipeYAML["ObjectList"]
+    
+    if RESULT["ObjectList"] == "":
+        RESULT["ObjectList"] = []
+    
     RESULT["Robot"] = RecipeYAML["Robot"]
     RESULT["ControllerList"] = RecipeYAML["ControllerList"]
 
