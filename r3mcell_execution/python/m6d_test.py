@@ -11,6 +11,7 @@
 
 # ROS2:
 import rclpy
+import sys
 from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
 import xacro
@@ -37,18 +38,20 @@ from cv_bridge import CvBridge, CvBridgeError
 
 # ===== GLOBAL VARIABLES ===== #
 Gz_CAM = None
-CubePose = ObjectPose()
+ObjPose = ObjectPose()
 i = None
 
 # ========================================================================================= #
-# ServiceClient (SPAWN/DELETE CUBE):
+# ServiceClient (SPAWN/DELETE OBJECT):
 
 class EntityClient(Node):
 
-    def __init__(self):
+    def __init__(self, object):
 
         # Initialise ROS2 Node:
         super().__init__('r3m_M6DTest_EntityClient')
+        
+        self.object = object
 
         # Create ROS2 Service Clients:
         self.cli_SPAWN = self.create_client(SpawnEntity, "/spawn_entity")  
@@ -60,16 +63,16 @@ class EntityClient(Node):
 
     def spawn_REQUEST(self):
         
-        # LOAD URDF of CUBE:
-        urdf_file_path = os.path.join(get_package_share_directory('r3mcell_cu_gazebo'), 'urdf', 'objects', 'box.urdf')
-        xacro_file = xacro.process_file(urdf_file_path, mappings={"name": "box"})
+        # LOAD URDF of R3M_OBJECT:
+        urdf_file_path = os.path.join(get_package_share_directory('r3mcell_cu_gazebo'), 'urdf', 'objects', 'r3m_object.urdf')
+        xacro_file = xacro.process_file(urdf_file_path, mappings={"name": self.object})
         
         # ARGUMENTS:
-        self.req_SPAWN.name = "box"
+        self.req_SPAWN.name = self.object
         self.req_SPAWN.xml = xacro_file.toxml()
-        self.req_SPAWN.initial_pose.position.x = random.uniform(0.40, 0.75)
-        self.req_SPAWN.initial_pose.position.y = random.uniform(0.0, 1.05)
-        self.req_SPAWN.initial_pose.position.z = 0.88
+        self.req_SPAWN.initial_pose.position.x = random.uniform(0.5, 0.7)
+        self.req_SPAWN.initial_pose.position.y = random.uniform(0.1, 0.9)
+        self.req_SPAWN.initial_pose.position.z = 1.0
         # Add here -> Random orientation.
 
         # Assign RESULT value (future):
@@ -77,25 +80,28 @@ class EntityClient(Node):
 
     def delete_REQUEST(self):
 
-        self.req_DELETE.name = "box"
+        self.req_DELETE.name = self.object
         self.future_DELETE = self.cli_DELETE.call_async(self.req_DELETE)
 
 # ========================================================================================= #
-# SUBSCRIBER (CubePose):
+# SUBSCRIBER (ObjectPose):
 
 class PoseSubscriber(Node):
 
-    def __init__(self):
+    def __init__(self, object):
 
         super().__init__("r3m_M6DTest_PoseSubscriber")
-        self.subscription_ = self.create_subscription(ObjectPose, "/box/ObjectPose", self.listener_callback, 10)
+        TopicName = "/" + object + "/ObjectPose"
+        self.subscription_ = self.create_subscription(ObjectPose, TopicName, self.listener_callback, 10)
+        
+        self.object = object
 
     def listener_callback(self, POSE):
 
-        print("CubePose information obtained.")
+        print("ObjectPose (obj: " + self.object + ") information obtained.")
 
-        global CubePose
-        CubePose = POSE
+        global ObjPose
+        ObjPose = POSE
 
 # =============================================================================== #
 # CLASS -> ImgSUB:
@@ -123,9 +129,12 @@ class ImgSUB(Node):
 
 class CAMERA():
 
-    def __init__(self):
+    def __init__(self, object):
+        
         self.GzCAM = ImgSUB()
         self.IMGPath = os.path.expanduser('~') + "/M6D_TEST" # This folder MUST BE CREATED in the PC!
+        
+        self.object = object
 
     def SaveIMG(self):
 
@@ -137,19 +146,19 @@ class CAMERA():
             self.IMG = Gz_CAM
         
         if self.IMG is not None:
-            imgNAME = self.IMGPath + "/R3M_M6DTest_IMG_" + str(i) + ".png"
+            imgNAME = self.IMGPath + "/R3M_M6DTest_" + self.object + "_IMG_" + str(i) + ".png"
             cv2.imwrite(imgNAME, self.IMG)
             print("Image saved -> " + imgNAME)
 
 # =============================================================================== #
-# CLASS -> CubePose_LOG:
+# CLASS -> ObjectPose_LOG:
 
-class CubePose_LOG():
+class ObjectPose_LOG():
 
-    def __init__(self):
-        
+    def __init__(self, object):
+         
         PATH = os.path.expanduser('~') + "/M6D_TEST"
-        self.FilePath = PATH + "/CubePose_LOG.txt"
+        self.FilePath = PATH + "/ObjectPose_LOG_" + object + ".txt"
         f = open(self.FilePath, "x")
         f.close()
 
@@ -160,7 +169,7 @@ class CubePose_LOG():
         f.write("\n")
         f.close()
 
-        print("CubePose logged -> " + str(POSE))
+        print("ObjectPose logged -> " + str(POSE))
 
 # =============================================================================== #
 # Megapose6D:
@@ -169,6 +178,14 @@ class CubePose_LOG():
 # ===================================================================================== #
 # ======================================= MAIN ======================================== #
 # ===================================================================================== #
+
+def AssignArgument(ARGUMENT):
+    
+    ARGUMENTS = sys.argv
+    for y in ARGUMENTS:
+        if (ARGUMENT + ":=") in y:
+            ARG = y.replace((ARGUMENT + ":="),"")
+            return(ARG)
 
 def main(args=None):
 
@@ -182,24 +199,34 @@ def main(args=None):
     print("Megapose 6D Testing - R3MCell")
     print("Python script -> m6d_test.py")
     print("")
+    
+    # INPUT ARGUMENT -> OBJECT:
+    object = AssignArgument("object")
+    if object != None:
+        None
+    else:
+        print("")
+        print("ERROR: object INPUT ARGUMENT has not been defined. Please try again.")
+        print("Closing... BYE!")
+        exit()
 
     # Initialise ROS2:
     rclpy.init(args=None)
 
     # Initialise CLASSES:
-    ENTITY_CLIENT = EntityClient()
-    CUBEPOSE_CLIENT = PoseSubscriber()
-    IMG_CLIENT = CAMERA()
-    CPLOG_CLIENT = CubePose_LOG()
+    ENTITY_CLIENT = EntityClient(object)
+    OBJECTPOSE_CLIENT = PoseSubscriber(object)
+    IMG_CLIENT = CAMERA(object)
+    CPLOG_CLIENT = ObjectPose_LOG(object)
 
     # Initialise POSE:
-    global CubePose
+    global ObjPose
     POSE = dict()
 
     # MAIN LOOP:
     while i <= 100:
 
-        # 0. SPAWN CUBE:
+        # 0. SPAWN OBJECTS:
         ENTITY_CLIENT.spawn_REQUEST()
 
         print("=============")
@@ -208,20 +235,20 @@ def main(args=None):
         # 1. Save IMG:
         IMG_CLIENT.SaveIMG() 
 
-        # 2. Get CubePose:    
-        rclpy.spin_once(CUBEPOSE_CLIENT)
+        # 2. Get OBJECTPose:    
+        rclpy.spin_once(OBJECTPOSE_CLIENT)
 
         POSE["N"] = i
-        POSE["Object Name"] = CubePose.objectname
-        POSE["x"] = round(CubePose.x, 2)
-        POSE["y"] = round(CubePose.y, 2)
-        POSE["z"] = round(CubePose.z, 2)
-        POSE["qx"] = round(CubePose.qx, 2)
-        POSE["qy"] = round(CubePose.qy, 2)
-        POSE["qz"] = round(CubePose.qz, 2)
-        POSE["qw"] = round(CubePose.qw, 2)
+        POSE["Object Name"] = ObjPose.objectname
+        POSE["x"] = round(ObjPose.x, 2)
+        POSE["y"] = round(ObjPose.y, 2)
+        POSE["z"] = round(ObjPose.z, 2)
+        POSE["qx"] = round(ObjPose.qx, 2)
+        POSE["qy"] = round(ObjPose.qy, 2)
+        POSE["qz"] = round(ObjPose.qz, 2)
+        POSE["qw"] = round(ObjPose.qw, 2)
 
-        # 3. Write CubePose into file:
+        # 3. Write ObjPose into file:
         CPLOG_CLIENT.LOGPose(POSE)
 
         # 4. MEGAPOSE:
@@ -233,7 +260,7 @@ def main(args=None):
         # 6. LOG MEGAPOSE VALUES + ACCURACY:
         # TBD.
 
-        # 7. DELETE CUBE:
+        # 7. DELETE OBJECT:
         ENTITY_CLIENT.delete_REQUEST()
 
         print("")

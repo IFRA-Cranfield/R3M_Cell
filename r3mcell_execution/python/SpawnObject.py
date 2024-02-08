@@ -4,11 +4,11 @@
 # SpawnObject.py script taken from:
 # IFRA-Cranfield (2023) ROS 2 Sim-to-Real Robot Control. URL: https://github.com/IFRA-Cranfield/ros2_SimRealRobotControl -> ros2srrc_execution ROS2 Package.
 
-#
-
-#    ===== COPYRIGHT HERE =====
-
-#
+# ============================ #
+# ============================ #
+#  ===== COPYRIGHT HERE =====  #
+# ============================ #
+# ============================ #
 
 # IMPORT LIBRARIES:
 import argparse
@@ -17,9 +17,6 @@ import xacro
 from ament_index_python.packages import get_package_share_directory
 from gazebo_msgs.srv import SpawnEntity
 import rclpy
-
-# Reference to SPAWN OBJECT (.urdf or .xacro file) from the terminal shell:
-# EXAMPLE: BOX -> ros2 run r3mcell_execution SpawnObject.py --package "r3mcell_cu_gazebo" --urdf "box.urdf" --name "box" --x -0.35 --y 0.85 --z 0.88
 
 def main():
     # Get input arguments from user
@@ -52,7 +49,7 @@ def main():
     request = SpawnEntity.Request()
     request.name = args.name
 
-    urdf_file_path = os.path.join(get_package_share_directory(args.package), 'urdf', args.urdf) # It is assumed that the .urdf/.xacro file is located in /urdf folder!
+    urdf_file_path = os.path.join(get_package_share_directory(args.package), 'urdf', 'objects', args.urdf) # It is assumed that the .urdf/.xacro file is located in /urdf folder!
     xacro_file = xacro.process_file(urdf_file_path, mappings={"name": args.name})
     request.xml = xacro_file.toxml()
 
