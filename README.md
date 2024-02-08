@@ -14,28 +14,58 @@
     colcon build
     ```
 
-## STEPS TO EXECUTE R3M_Cell -> Pick&Place use-case:
+## STEPS TO EXECUTE R3M_Cell for R3M-Perception testing:
 
 Launch Simulation Environment:
 ```sh
-ros2 launch r3mcell_cu_moveit2 r3mcell_cu_moveit2.launch.py
+ros2 launch r3mcell_cu_moveit2 moveit.launch.py layout:=r3mcell_cu_4
 ```
 
-Spawn box into R3M Cell:
+Spawn any object manually to the workspace:
 ```sh
-ros2 run r3mcell_execution SpawnObject.py --package "r3mcell_cu_gazebo" --urdf "box.urdf" --name "box" --x -0.45 --y 0.85 --z 0.88
+ros2 run r3mcell_execution SpawnObject.py --package "r3mcell_cu_gazebo" --urdf "r3m_object.urdf" --name "{}" --x {} --y {} --z {}
+
+REMOVE OBJECT:
+To remove any object from the Gazebo environment, right-click the object on the left-panel and click "delete/remove".
+
+RECOMMENDED POSES to Spawn Objects on top of the panel:
+- x -> (0.5 , 0.7)
+- y -> (0.1 , 0.9)
+- z -> 1.0
 ```
 
-Execute RECIPES:
+Execute m6d_test script to save images and ObjectPoses to the /M6D_TEST folder (this script automatically generates 100 images and the .txt log file with the pose information for the selected object):
 ```sh
-ros2 action send_goal -f /ExecuteSkill r3mcell_data/action/ExecuteSkill "{id: '---'}"
+ros2 run r3mcell_execution m6d_test.py object:={}
 ```
+</br>
 
-RECIPE LIST:
-- RECIPE N1: Move "PTP" to HomePos.
-- RECIPE N2: Move "PTP" to PickApproach.
-- RECIPE N3: Move "LIN" to Pick.
-- RECIPE N4: Move "LIN" to PickApproach.
-- RECIPE N5: Move "PTP" to Place.
-- RECIPE N6: Grip "CLOSE".
-- RECIPE N7: Grip "OPEN".
+__OBJECTS__
+
+Replace the {} tag in the commandline for any of the following names to spawn the objects in Gazebo:
+- adapter_plate_square
+- adapter_plate_triangular
+- bracket_big
+- bracket_planar
+- bracket_screw
+- can
+- cap
+- car_rim
+- clamp_big
+- clamp_small
+- connector_planar
+- engine_part_bearing
+- engine_part_cooler_round
+- engine_part_cooler_square
+- engine_part_cover
+- filter
+- fuse
+- injection_pump
+- LamSheet
+- multi_bracket
+- punched_rail
+- screw
+- star
+- tee_connector
+- thread
+- washer
