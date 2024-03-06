@@ -12,6 +12,7 @@
 
 # System:
 import os
+import time
 
 # ROS2:
 import rclpy
@@ -59,12 +60,20 @@ class RobotPoseSubscriber(Node):
     def __init__(self):
 
         super().__init__("r3mcell_APGMatlab_RobotPoseSubscriber")
-        self.subscription_ = self.create_subscription(Robpose, "/Robpose", self.CALLBACK, 10)
+        self.subscription_ = self.create_subscription(Robpose, "/Robpose", self.CALLBACK, 1)
 
     def CALLBACK(self, POSE):
 
         global RobPose
         RobPose = POSE
+
+        RobPose.x = round(RobPose.x, 2)
+        RobPose.y = round(RobPose.y, 2)
+        RobPose.z = round(RobPose.z, 2)
+        RobPose.qx = round(RobPose.qx, 2)
+        RobPose.qy = round(RobPose.qy, 2)
+        RobPose.qz = round(RobPose.qz, 2)
+        RobPose.qw = round(RobPose.qw, 2)
         
 # ========================================================================================= #
 # MatlabAgent:
@@ -128,14 +137,33 @@ def main(args=None):
             break
         
     ID = 0
-    rclpy.spin_once(Node_RobotPose) # We assign current pose to RobPose.
+    
+    T = time.time() + 0.5
+    while (time.time() < T):
+        rclpy.spin_once(Node_RobotPose) # We assign current pose to RobPose.
+    
     ObjPose = skillRES.product[0].currentpose
+    ObjPose.x = round(ObjPose.x, 2)
+    ObjPose.y = round(ObjPose.y, 2)
+    ObjPose.z = round(ObjPose.z, 2)
+    ObjPose.qx = round(ObjPose.qx, 2)
+    ObjPose.qy = round(ObjPose.qy, 2)
+    ObjPose.qz = round(ObjPose.qz, 2)
+    ObjPose.qw = round(ObjPose.qw, 2)
+    
     EEState = skillRES.endeffector
     
     CONTINUE = True
     while CONTINUE:
         
         print("RECIPE EXECUTION: Getting Recipe ID from RLA...")
+        print("Robot Pose:")
+        print(RobPose)
+        print("Object Pose:")
+        print(ObjPose)
+        print("Gripper State:")
+        print(EEState)
+        print("")
         
         # GET -> RECIPE ID from AGENT:
         RECIPE = APG_Agent.Execute(ID, RobPose, EEState, ObjPose)
@@ -164,9 +192,20 @@ def main(args=None):
                 break
             
         ID = float(skillRES.id)
-        rclpy.spin_once(Node_RobotPose) # We assign current pose to RobPose.
+        T = time.time() + 0.5
+        while (time.time() < T):
+            rclpy.spin_once(Node_RobotPose) # We assign current pose to RobPose.
+        
         ObjPose = skillRES.product[0].currentpose
-        EEState = float(skillRES.endeffector)
+        ObjPose.x = round(ObjPose.x, 2)
+        ObjPose.y = round(ObjPose.y, 2)
+        ObjPose.z = round(ObjPose.z, 2)
+        ObjPose.qx = round(ObjPose.qx, 2)
+        ObjPose.qy = round(ObjPose.qy, 2)
+        ObjPose.qz = round(ObjPose.qz, 2)
+        ObjPose.qw = round(ObjPose.qw, 2)
+        
+        EEState = skillRES.endeffector
 
     # FINISH:
     rclpy.shutdown()
