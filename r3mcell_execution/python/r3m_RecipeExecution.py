@@ -35,6 +35,9 @@ from Gripper_Gz import VacuumGripper
 from ObjectState import OBJECT
 from ResetGazebo import GzRESET
 
+# Global VAR: 
+EEState = 1
+
 # ========================================================================================= #
 # ================================ ROS2 - INPUT PARAMETERS ================================ #
 # ========================================================================================= #
@@ -145,6 +148,8 @@ class ExecuteSkill_SERVER(Node):
     
     def EXECUTE(self, request, response):
         
+        global EEState
+        
         # Get RECIPE ID:
         ID = request.id
 
@@ -166,6 +171,9 @@ class ExecuteSkill_SERVER(Node):
             RES = self.RESET.RESET()
             self.OBJECTS.ResetObjectList()
             response.result.id = 0
+            
+            EEState = 1
+            response.result.endeffector = EEState
 
             if RES == True:
                 response.result.message = "ROS2 Environment RESET successful."
@@ -193,6 +201,7 @@ class ExecuteSkill_SERVER(Node):
                     response.result.id = ID
                     response.result.message = RES["Message"]
                     response.result.success = RES["Success"]
+                    response.result.endeffector = EEState
                     response.result.exectime = RES["ExecTime"]
                     response.result.error = RES["Error"]
                 
@@ -201,9 +210,12 @@ class ExecuteSkill_SERVER(Node):
 
                     RES = self.GRIPPER.Execute(self.RBT, self.ObjectList, RECIPE["action"], RECIPE["speed"])
 
+                    EEState = RES["EEState"]
+
                     response.result.id = ID
                     response.result.message = RES["Message"]
                     response.result.success = RES["Success"]
+                    response.result.endeffector = EEState
                     response.result.exectime = RES["ExecTime"]
                     response.result.error = RES["Error"]
                 
@@ -212,9 +224,12 @@ class ExecuteSkill_SERVER(Node):
                     
                     RES = self.GRIPPER.Execute(self.RBT, self.ObjectList, RECIPE["action"])
 
+                    EEState = RES["EEState"]
+                    
                     response.result.id = ID
                     response.result.message = RES["Message"]
                     response.result.success = RES["Success"]
+                    response.result.endeffector = EEState
                     response.result.exectime = RES["ExecTime"]
                     response.result.error = RES["Error"]
 

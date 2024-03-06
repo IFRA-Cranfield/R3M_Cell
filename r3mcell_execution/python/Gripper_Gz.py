@@ -55,6 +55,9 @@ AttachCheck = AttDetCHECK(False, None)
 # EEPose:
 EEPose = LinkPose()
 
+# EEState:
+EEState = 1
+
 # ========================================================================================= #
 # =================================== CLASSES/FUNCTIONS =================================== #
 # ========================================================================================= #
@@ -76,19 +79,25 @@ class VacuumGripper():
         self.Robot = Robot
 
     def Execute(self, Robot, ObjectList, ACTION):
+        
+        # ===== VacuumON // VacuumOFF ===== #
+        # RESULT -> Convert to DICTIONARY:
+        RESULT = {}
+        
+        global EEState
+        RESULT["EEState"] = EEState 
 
         # Quick fix:
         if Robot == None:
             Robot = self.Robot
 
-        # ===== VacuumON // VacuumOFF ===== #
-        # RESULT -> Convert to DICTIONARY:
-        RESULT = {}
-
         # === DETACH === #
         if ACTION == "VacuumOFF":
 
             RESULT["Message"] = "Vacuum Gripper: VACUUM DEACTIVATED."
+            
+            EEState = 1
+            RESULT["EEState"] = EEState
 
             # DET(1) -> CHECK for DETACHMENTS:
             if AttachCheck.Attached == True:
@@ -108,6 +117,9 @@ class VacuumGripper():
         if ACTION == "VacuumON":
 
             RESULT["Message"] = "Vacuum Gripper: VACUUM ACTIVATED."
+            
+            EEState = 0
+            RESULT["EEState"] = EEState
             
             # ATT(1) -> CHECK for ATTACHMENTS:
             CHECK_RES = self.CHECK(ObjectList)
@@ -189,6 +201,11 @@ class ParallelGripper():
 
     def Execute(self, Robot, ObjectList, ACTION, SPEED):
 
+        RESULT = {}
+        
+        global EEState
+        RESULT["EEState"] = EEState 
+        
         # Quick fix:
         if Robot == None:
             Robot = self.Robot
@@ -216,6 +233,11 @@ class ParallelGripper():
 
         # === DETACH === #
         if ACTION == "OPEN":
+            
+            # Define EEState:
+            if RES.Success:
+                EEState = 1
+                RESULT["EEState"] = EEState
 
             # DET(1) -> CHECK for DETACHMENTS:
             if AttachCheck.Attached == True:
@@ -233,6 +255,11 @@ class ParallelGripper():
 
         # === ATTACH === #
         if ACTION == "CLOSE":
+            
+            # Define EEState:
+            if RES.Success:
+                EEState = 0
+                RESULT["EEState"] = EEState
             
             # ATT(1) -> CHECK for ATTACHMENTS:
             CHECK_RES = self.CHECK(ObjectList)
@@ -252,7 +279,6 @@ class ParallelGripper():
                 self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper closed without grasping any object.")
 
         # RESULT -> Convert to DICTIONARY:
-        RESULT = {}
         RESULT["Message"] = RES.Message
         RESULT["Success"] = RES.Success
         RESULT["ExecTime"] = RES.ExecTime

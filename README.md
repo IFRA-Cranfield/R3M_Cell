@@ -69,3 +69,15 @@ Replace the {} tag in the commandline for any of the following names to spawn th
 - tee_connector
 - thread
 - washer
+
+## STEPS TO EXECUTE the APG Agent:
+
+Launch Simulation Environment:
+```sh
+ros2 launch r3mcell_cu_moveit2 moveit2.launch.py layout:=r3mcell_cu_1 autoOP:=True
+```
+
+Launch APG Agent:
+```sh
+ros2 run r3mcell_execution apg_MATLAB.py
+```

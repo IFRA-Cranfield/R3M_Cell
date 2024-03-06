@@ -36,6 +36,7 @@ install(
 install(
   DIRECTORY 
     python
+    r3m_APG
   DESTINATION 
     share/${PROJECT_NAME}
 )
@@ -46,6 +47,8 @@ install(PROGRAMS
   python/Gripper_Gz.py
   python/ObjectState.py
   python/ResetGazebo.py
+
+  r3m_APG/apg_MATLAB.py
 
   python/GzSim_Test.py
   python/m6d_test.py
