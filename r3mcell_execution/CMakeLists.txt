@@ -49,6 +49,7 @@ install(PROGRAMS
   python/ResetGazebo.py
 
   r3m_APG/apg_MATLAB.py
+  r3m_APG/getRecipe.py
 
   python/GzSim_Test.py
   python/m6d_test.py

@@ -27,6 +27,9 @@ from r3mcell_data.srv import SkillExecution
 import numpy as np
 import matlab.engine
 
+# IMPORT -> getRecipe.py:
+from getRecipe import computeRecipe
+
 # ================ #
 # GLOBAL VARIABLES #
 RobPose = Robpose()
@@ -112,6 +115,13 @@ def main(args=None):
     print("==========================================================")
     print("R3M - AUTOMATIC PROGRAM GENERATION: Execution of APG Agent")
     print("")
+    
+    # 0. COMPUTE RECIPE FROM OBJECT POSE!
+    #print("Computing RECIPE parameters from OBJECT POSITION...")
+    #EditRecipe = computeRecipe("box")
+    #EditRecipe.smallCUBE()
+    #print("DONE")
+    #print("")
 
     # INITIALISE ROS 2 Classes:
     Node_SkillExecution = R3MSkillClient()
