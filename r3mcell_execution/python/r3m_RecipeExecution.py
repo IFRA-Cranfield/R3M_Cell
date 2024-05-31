@@ -14,6 +14,7 @@
 import os
 import time
 import yaml
+import math
 
 # ROS2:
 import rclpy
@@ -89,9 +90,9 @@ class getIC(Node):
 
 def GetIC_YAML(NAME):
 
-    RESULT = {"ObjectList": None, "Robot": None, "ControllerList": None, "Success": True}
+    RESULT = {"UseCaseInfo": None, "Robot": None, "ObjectList": None, "Success": True}
     
-    PATH = os.path.join(get_package_share_directory('r3mcell_execution'), 'initialconditions')
+    PATH = os.path.join(get_package_share_directory('r3mcell_execution'), 'apg', 'initialconditions')
     YAML_PATH = PATH + "/" + NAME + ".yaml"
     
     if not os.path.exists(YAML_PATH):
@@ -100,15 +101,14 @@ def GetIC_YAML(NAME):
 
     # Get VALUES:
     with open(YAML_PATH, 'r') as YAML:
-        RecipeYAML = yaml.safe_load(YAML)
-
-    RESULT["ObjectList"] = RecipeYAML["ObjectList"]
+        icYAML = yaml.safe_load(YAML)
+    
+    RESULT["UseCaseInfo"] = icYAML["Information"]
+    RESULT["Robot"] = icYAML["Robot"]
+    RESULT["ObjectList"] = icYAML["ObjectList"]
     
     if RESULT["ObjectList"] == "":
         RESULT["ObjectList"] = []
-    
-    RESULT["Robot"] = RecipeYAML["Robot"]
-    RESULT["ControllerList"] = RecipeYAML["ControllerList"]
 
     return(RESULT)
 
@@ -116,20 +116,59 @@ def GetIC_YAML(NAME):
 # =================================== CLASSES/FUNCTIONS =================================== #
 # ========================================================================================= #
 
+# Global variables:
+RobStep = 0
+ProdStep = 0
+
+# ========================================================================================= #
+# Calculate DIFFERENCE -> Product POSITIONORIENTATION changed?
+def CalculateDif_PROD(A,B):
+
+    # POSITION DIFFERENCE: Norm of the (p1-p0) difference vector:
+
+    DIFx = abs(A.x - B.x)
+    DIFy = abs(A.y - B.y)
+    DIFz = abs(A.z - B.z)
+
+    DIF_POS = math.sqrt(DIFx*DIFx + DIFy*DIFy + DIFz*DIFz)
+
+    # ROTATION DIFFERENCE: Norm of the (C = A*inv(B)) difference quaternion:
+
+    Ax = A.qx
+    Ay = A.qy
+    Az = A.qz
+    Aw = A.qw
+
+    Bx = -B.qx
+    By = -B.qy
+    Bz = -B.qz
+    Bw = B.qw
+
+    qw = Aw*Bw - Ax*Bx - Ay*By - Az*Bz # Not needed.
+    qx = Aw*Bx + Ax*Bw + Ay*Bz - Az*By
+    qy = Aw*By - Ax*Bz + Ay*Bw + Az*Bx
+    qz = Aw*Bz + Ax*By - Ay*Bx + Az*Bw
+
+    DIF_ROT = math.sqrt((qx*qx)+(qy*qy)+(qz*qz))
+
+    # ABSOLUTE DIFFERENCE: Average between POSITION and ROTATION differences:
+    DIF = (DIF_POS + DIF_ROT)/2
+    return(DIF)
+
 # ========================================================================================= #
 # ExecuteSkill_SERVER CLASS:
 class ExecuteSkill_SERVER(Node):
     
-    def __init__(self, OL, ROB, CL):
+    def __init__(self, INFO, ROB, OL):
         
         # Initialise VARIABLES using the information from the INPUT PARAMETERS:
-        self.ObjectList = OL                       # [{"Model": "", "Link": "", "Package":, "", "InitialPose": "", "CurrentPose": "", "PreviousPose": ""}, ...]
-        self.RBT = ROB                             # {"Model": "", "Link": "", "InitialPose": ""}
-    
+        self.RecipeFolder = INFO["Name"]       # FOLDER to get the recipes from!
+        self.RBT = ROB                         # {"Model": "", "Link": "", "InitialPose": ""}
+        self.ObjectList = OL                   # [{"Model": "", "Link": "", "Package":, "", "InitialPose": "", "CurrentPose": "", "PreviousPose": ""}, ...]
+
         self.ResetCond = {}
         self.ResetCond["Robot"] = ROB
         self.ResetCond["ObjectList"] = OL
-        self.ResetCond["ControllerList"] = CL      # ["", "", ...]
 
         # Initialise CLASSES needed for the Skill Execution:
         self.OBJECTS = OBJECT(self.ObjectList)
@@ -148,20 +187,13 @@ class ExecuteSkill_SERVER(Node):
     
     def EXECUTE(self, request, response):
         
-        global EEState
+        global EEState, RobStep, ProdStep
         
         # Get RECIPE ID:
         ID = request.id
 
-        # EXECUTE according to RECIPE NUMBER:
-        if (ID == 999):
-
-            response.result.id = 999
-            response.result.message = "999 received from Simulink -> No execution."
-            response.result.success = True
-            return(response)
-
-        elif (ID == 0):
+        # EXECUTE RECIPE:
+        if (ID == 0):
 
             if self.RBT["EEType"] == "ParallelGripper":
                 self.GRIPPER.Execute(None, None, "OPEN", 1.0)
@@ -187,7 +219,7 @@ class ExecuteSkill_SERVER(Node):
         else:
 
             # Get RECIPE VALUES:
-            RECIPE = GetRecipe(ID)
+            RECIPE = GetRecipe(self.RecipeFolder, ID)
 
             if RECIPE["Exists"] == True:
 
@@ -198,26 +230,15 @@ class ExecuteSkill_SERVER(Node):
 
                     RES = self.ROBOT.Execute(RECIPE["type"], RECIPE["speed"], RECIPE["pose"])
 
-                    response.result.id = ID
-                    response.result.message = RES["Message"]
-                    response.result.success = RES["Success"]
-                    response.result.endeffector = EEState
-                    response.result.exectime = RES["ExecTime"]
-                    response.result.error = RES["Error"]
-                
+                    if RES["Success"]:
+                        RobStep = ID
+
                 # ParallelGripper:
                 elif (RECIPE["type"] == "GRIP"):
 
                     RES = self.GRIPPER.Execute(self.RBT, self.ObjectList, RECIPE["action"], RECIPE["speed"])
 
                     EEState = RES["EEState"]
-
-                    response.result.id = ID
-                    response.result.message = RES["Message"]
-                    response.result.success = RES["Success"]
-                    response.result.endeffector = EEState
-                    response.result.exectime = RES["ExecTime"]
-                    response.result.error = RES["Error"]
                 
                 # VacuumGripper:
                 elif (RECIPE["type"] == "VACUUM"):
@@ -225,13 +246,21 @@ class ExecuteSkill_SERVER(Node):
                     RES = self.GRIPPER.Execute(self.RBT, self.ObjectList, RECIPE["action"])
 
                     EEState = RES["EEState"]
-                    
-                    response.result.id = ID
-                    response.result.message = RES["Message"]
-                    response.result.success = RES["Success"]
-                    response.result.endeffector = EEState
-                    response.result.exectime = RES["ExecTime"]
-                    response.result.error = RES["Error"]
+
+                # ============================================ #
+                # ========== SKILL EXECUTION RESULT ========== #
+
+                # RESULT -> ID, exectime, error, message and success:
+                response.result.id = ID
+                response.result.exectime = RES["ExecTime"]
+                response.result.error = RES["Error"]
+                response.result.message = RES["Message"]
+                response.result.success = RES["Success"]
+
+                # RESULT -> Robot + EndEffector:
+                #response.result.robstate.robpose = TBD
+                response.result.robstate.step = RobStep
+                response.result.robstate.endeffector = EEState
 
                 # GET ObjectList -> OBJECT POSES:
                 OL = self.OBJECTS.GetObjectPose()
@@ -262,6 +291,12 @@ class ExecuteSkill_SERVER(Node):
 
                     P.error = 0.0 # Error when retrieving from Gazebo is null.
 
+                    DIF = CalculateDif_PROD(P.currentpose,P.previouspose)
+                    if (DIF > 0.1):
+                        ProdStep = ProdStep + 1
+
+                    P.step = ProdStep
+
                     PRODUCTS.append(P)
 
                 response.result.product = PRODUCTS
@@ -277,11 +312,11 @@ class ExecuteSkill_SERVER(Node):
         
 # ========================================================================================= #
 # GetRecipe FUNCTION:
-def GetRecipe(RECIPE_ID):
+def GetRecipe(FOLDER, RECIPE_ID):
     
     RECIPE = {"Exists": True}
     
-    PATH = os.path.join(get_package_share_directory('r3mcell_execution'), 'recipes')
+    PATH = os.path.join(get_package_share_directory('r3mcell_execution'), 'apg', 'recipes', FOLDER)
     RECIPE_PATH = PATH + "/" + str(RECIPE_ID) + ".yaml"
     
     if not os.path.exists(RECIPE_PATH):
@@ -352,7 +387,7 @@ def main(args=None):
     IC = GetIC_YAML(PARAM_IC)
 
     # Initialise NODE:
-    r3mNode = ExecuteSkill_SERVER(IC["ObjectList"], IC["Robot"], IC["ControllerList"])
+    r3mNode = ExecuteSkill_SERVER(IC["UseCaseInformation"], IC["Robot"], IC["ObjectList"], )
     r3mNode.get_logger().info("[R3M Cell] - /ExecuteSkill ROS2 Service Server running, ROS2 node generated.")
 
     rclpy.spin(r3mNode)                                                                     
@@ -362,5 +397,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
-            

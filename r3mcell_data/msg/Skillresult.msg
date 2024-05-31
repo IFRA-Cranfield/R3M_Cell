@@ -1,7 +1,8 @@
 int32 id
 float64 exectime
 float64 error
-int32 endeffector
+Rob robstate
 Product[] product 
+Liaison[] liaison
 string message
 bool success

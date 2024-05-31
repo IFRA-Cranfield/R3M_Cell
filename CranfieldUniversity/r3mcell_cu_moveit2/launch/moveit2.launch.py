@@ -136,10 +136,21 @@ def generate_launch_description():
         EE_no = "false"
         EE_egp64 = "true"
         EE_vgr = "false"
+    elif layout == "r3mcell_cu_5":
+        LYT = "R3M Cell (Cranfield University): Cube Stacking Use-Case."
+        EE = "Schunk EGP-64 parallel gripper."
+        r3mcell_cu_1 = "true"
+        r3mcell_cu_2 = "false"
+        r3mcell_cu_3 = "false"
+        r3mcell_cu_4 = "false"
+        endeffector = "egp64"
+        EE_no = "false"
+        EE_egp64 = "true"
+        EE_vgr = "false"
     else:
         print("")
         print("ERROR: layout INPUT ARGUMENT has not been defined properly. Please try again.")
-        print("Options: {r3mcell_cu_1, r3mcell_cu_2, r3mcell_cu_3, r3mcell_cu_4}")
+        print("Options: {r3mcell_cu_1, r3mcell_cu_2, r3mcell_cu_3, r3mcell_cu_4, r3mcell_cu_5}")
         print("Closing... BYE!")
         exit()
 

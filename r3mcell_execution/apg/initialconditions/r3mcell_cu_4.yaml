@@ -1,7 +1,9 @@
 # R3M Project - Initial Conditions for the R3M Cell Environment Launch:
 
-# Object List:
-ObjectList: ""
+# Use-Case Information:
+Information:
+  UseCase: "R3M Cell (Cranfield University): R3M-Perception Testing."
+  Name: None # No recipes required for this case.
 
 # Robot Information:
 Robot:
@@ -26,9 +28,5 @@ Robot:
     qz: 0.0
     qw: 0.0
 
-# Controller List:
-ControllerList:
-  - "joint_state_broadcaster"
-  - "irb120_controller"
-  - "egp64_finger_right_controller"
-  - "egp64_finger_left_controller"
+# Object List:
+ObjectList: "" # No objects required for this case.

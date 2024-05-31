@@ -48,6 +48,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Pose.msg"
   "msg/Product.msg"
   "msg/Skillresult.msg"
+  "msg/Liaison.msg"
+  "msg/Rob.msg"
   "srv/SkillExecution.srv"
 )
 
