@@ -1,5 +1,0 @@
-# R3M Project - Recipe for Automatic Program Generation.
-id: 13
-type: "VACUUM"
-action: "VacuumOFF"
-speed: 0.0
