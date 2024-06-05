@@ -21,9 +21,6 @@ import rclpy
 from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
 
-# ROS2 MSG/SRV/ACTION:
-from geometry_msgs.msg import Pose
-
 # CUSTOM ROS2 MSG/SRV/ACTION:
 from r3mcell_data.srv import SkillExecution
 from r3mcell_data.msg import Product
@@ -38,6 +35,9 @@ from ResetGazebo import GzRESET
 
 # Global VAR: 
 EEState = 1
+RobStep = 0
+ProdStep = []
+
 
 # ========================================================================================= #
 # ================================ ROS2 - INPUT PARAMETERS ================================ #
@@ -90,6 +90,8 @@ class getIC(Node):
 
 def GetIC_YAML(NAME):
 
+    global ProdStep
+
     RESULT = {"UseCaseInfo": None, "Robot": None, "ObjectList": None, "Success": True}
     
     PATH = os.path.join(get_package_share_directory('r3mcell_execution'), 'apg', 'initialconditions')
@@ -110,50 +112,52 @@ def GetIC_YAML(NAME):
     if RESULT["ObjectList"] == "":
         RESULT["ObjectList"] = []
 
+    # Initialise ProdStep vector:
+    else:
+        for x in RESULT["ObjectList"]:
+            ProdStep.append({"Name": x["Name"], "Step": 0})
+
     return(RESULT)
 
 # ========================================================================================= #
 # =================================== CLASSES/FUNCTIONS =================================== #
 # ========================================================================================= #
 
-# Global variables:
-RobStep = 0
-ProdStep = 0
-
 # ========================================================================================= #
 # Calculate DIFFERENCE -> Product POSITIONORIENTATION changed?
 def CalculateDif_PROD(A,B):
 
-    # POSITION DIFFERENCE: Norm of the (p1-p0) difference vector:
+    RES = False
 
-    DIFx = abs(A.x - B.x)
-    DIFy = abs(A.y - B.y)
-    DIFz = abs(A.z - B.z)
-
-    DIF_POS = math.sqrt(DIFx*DIFx + DIFy*DIFy + DIFz*DIFz)
-
-    # ROTATION DIFFERENCE: Norm of the (C = A*inv(B)) difference quaternion:
-
-    Ax = A.qx
-    Ay = A.qy
-    Az = A.qz
-    Aw = A.qw
-
-    Bx = -B.qx
-    By = -B.qy
-    Bz = -B.qz
-    Bw = B.qw
-
-    qw = Aw*Bw - Ax*Bx - Ay*By - Az*Bz # Not needed.
-    qx = Aw*Bx + Ax*Bw + Ay*Bz - Az*By
-    qy = Aw*By - Ax*Bz + Ay*Bw + Az*Bx
-    qz = Aw*Bz + Ax*By - Ay*Bx + Az*Bw
-
-    DIF_ROT = math.sqrt((qx*qx)+(qy*qy)+(qz*qz))
-
-    # ABSOLUTE DIFFERENCE: Average between POSITION and ROTATION differences:
-    DIF = (DIF_POS + DIF_ROT)/2
-    return(DIF)
+    DIFx = B.x - A.x
+    if (abs(DIFx) > 0.01):
+        RES = True
+    
+    DIFy = B.y - A.y
+    if (abs(DIFy) > 0.01):
+        RES = True
+    
+    DIFz = B.z - A.z
+    if (abs(DIFz) > 0.01):
+        RES = True
+    
+    DIFqx = B.qx - A.qx
+    if (abs(DIFqx) > 0.1):
+        RES = True
+    
+    DIFqy = B.qy - A.qy
+    if (abs(DIFqy) > 0.1):
+        RES = True
+    
+    DIFqz = B.qz - A.qz
+    if (abs(DIFqz) > 0.1):
+        RES = True
+    
+    DIFqw = B.qw - A.qw
+    if (abs(DIFqw) > 0.1):
+        RES = True
+    
+    return(RES)
 
 # ========================================================================================= #
 # ExecuteSkill_SERVER CLASS:
@@ -161,26 +165,28 @@ class ExecuteSkill_SERVER(Node):
     
     def __init__(self, INFO, ROB, OL):
         
-        # Initialise VARIABLES using the information from the INPUT PARAMETERS:
-        self.RecipeFolder = INFO["Name"]       # FOLDER to get the recipes from!
-        self.RBT = ROB                         # {"Model": "", "Link": "", "InitialPose": ""}
-        self.ObjectList = OL                   # [{"Model": "", "Link": "", "Package":, "", "InitialPose": "", "CurrentPose": "", "PreviousPose": ""}, ...]
+        # Robot -> {Model - Link - EEType - Package - InitialPose - HomePose}
+        # ObjectList -> [{Name - Link - CADFile - Package - InitialPose - CurrentPose - PreviousPose}, ..]
 
+        # INITIALISE -> CLASSES needed for the Skill Execution:
+        self.OBJECTS = OBJECT(OL)
+        self.ROBOT = RobotClient()
+        if ROB["EEType"] == "ParallelGripper":
+            self.GRIPPER = ParallelGripper(ROB)
+        elif ROB["EEType"] == "VacuumGripper":
+            self.GRIPPER = VacuumGripper(ROB)
+
+        # INITIALISE -> GAZEBO SIMULATION ENVIRONMENT:
         self.ResetCond = {}
         self.ResetCond["Robot"] = ROB
         self.ResetCond["ObjectList"] = OL
-
-        # Initialise CLASSES needed for the Skill Execution:
-        self.OBJECTS = OBJECT(self.ObjectList)
-        self.ROBOT = RobotClient()
-        
-        if ROB["EEType"] == "ParallelGripper":
-            self.GRIPPER = ParallelGripper(self.RBT)
-        elif ROB["EEType"] == "VacuumGripper":
-            self.GRIPPER = VacuumGripper(self.RBT)
-        
         self.RESET = GzRESET(self.ResetCond)
 
+        # Initialise VARIABLES using the information from the INPUT PARAMETERS:
+        self.RecipeFolder = INFO["Name"]       # FOLDER to get the recipes from!
+        self.RBT = ROB                         
+        self.ObjectList = self.OBJECTS.GetObjectPose()                 
+        
         # Initialise SERVICE SERVER:
         super().__init__('r3mcell_SkillExecution_ServiceServer')                                              
         self.srv = self.create_service(SkillExecution, "/r3m_SkillExecution", self.EXECUTE)
@@ -205,7 +211,15 @@ class ExecuteSkill_SERVER(Node):
             response.result.id = 0
             
             EEState = 1
-            response.result.endeffector = EEState
+            response.result.robstate.endeffector = EEState
+            
+            response.result.robstate.step = 0
+
+            ProdStep = []
+            for x in self.ObjectList:
+                ProdStep.append({"Name": x["Name"], "Step": 0})
+
+            self.ObjectList = self.OBJECTS.GetObjectPose()
 
             if RES == True:
                 response.result.message = "ROS2 Environment RESET successful."
@@ -228,7 +242,7 @@ class ExecuteSkill_SERVER(Node):
                 # ROBOT:
                 if (RECIPE["type"] == "PTP" or RECIPE["type"] == "LIN"):
 
-                    RES = self.ROBOT.Execute(RECIPE["type"], RECIPE["speed"], RECIPE["pose"])
+                    RES = self.ROBOT.Execute(RECIPE["type"], RECIPE["speed"], RECIPE["pose"], self.ObjectList)
 
                     if RES["Success"]:
                         RobStep = ID
@@ -264,11 +278,12 @@ class ExecuteSkill_SERVER(Node):
 
                 # GET ObjectList -> OBJECT POSES:
                 OL = self.OBJECTS.GetObjectPose()
+                self.ObjectList = OL
                 PRODUCTS = []
-                P = Product()
 
                 for x in OL:
 
+                    P = Product()
                     P.name = x["Name"]
 
                     P.currentpose = Pose()
@@ -292,10 +307,20 @@ class ExecuteSkill_SERVER(Node):
                     P.error = 0.0 # Error when retrieving from Gazebo is null.
 
                     DIF = CalculateDif_PROD(P.currentpose,P.previouspose)
-                    if (DIF > 0.1):
-                        ProdStep = ProdStep + 1
+                    if (DIF == True):
 
-                    P.step = ProdStep
+                        for y in ProdStep:
+                            if P.name == y["Name"]:
+                                y["Step"] = y["Step"] + 1
+                                P.step = y["Step"]
+                                break
+
+                    else:
+                        
+                        for y in ProdStep:
+                            if P.name == y["Name"]:
+                                P.step = y["Step"]
+                                break
 
                     PRODUCTS.append(P)
 
@@ -327,22 +352,68 @@ def GetRecipe(FOLDER, RECIPE_ID):
     with open(RECIPE_PATH, 'r') as YAML:
         RecipeYAML = yaml.safe_load(YAML)
       
+    RECIPE["usecase"] = RecipeYAML["Information"]["UseCase"]
+    RECIPE["name"] = RecipeYAML["Information"]["Recipe"]
+    
     RECIPE["id"] = RecipeYAML["id"] 
     RECIPE["type"] = RecipeYAML["type"]
     RECIPE["speed"] = RecipeYAML["speed"]
+
+    RECIPE["pose"] = {}
       
     if (RECIPE["type"] == "PTP" or RECIPE["type"] == "LIN"):
         
-        POSE = Pose()
-        POSE.x = RecipeYAML["pose"]["x"]
-        POSE.y = RecipeYAML["pose"]["y"]
-        POSE.z = RecipeYAML["pose"]["z"]
-        POSE.qx = RecipeYAML["pose"]["qx"]
-        POSE.qy = RecipeYAML["pose"]["qy"]
-        POSE.qz = RecipeYAML["pose"]["qz"]
-        POSE.qw = RecipeYAML["pose"]["qw"]
+        # GET -> POSITION:
         
-        RECIPE["pose"] = POSE
+        POSITION = {}
+        POSITION["type"] = RecipeYAML["pose"]["position"]["type"]
+
+        if POSITION["type"] == "DYNAMIC":
+            
+            POSITION["topic"] = RecipeYAML["pose"]["position"]["topic"]
+            
+            T = Pose()
+            T.x = RecipeYAML["pose"]["position"]["transform"]["x"]
+            T.y = RecipeYAML["pose"]["position"]["transform"]["y"]
+            T.z = RecipeYAML["pose"]["position"]["transform"]["z"]
+            POSITION["transform"] = T
+
+        else:
+            
+            P = Pose()
+            P.x = RecipeYAML["pose"]["position"]["pose"]["x"]
+            P.y = RecipeYAML["pose"]["position"]["pose"]["y"]
+            P.z = RecipeYAML["pose"]["position"]["pose"]["z"]
+            POSITION["pose"] = P
+
+        RECIPE["pose"]["position"] = POSITION
+
+        # GET -> ORIENTATION:
+
+        ORIENTATION = {}
+        ORIENTATION["type"] = RecipeYAML["pose"]["orientation"]["type"]
+
+        if ORIENTATION["type"] == "DYNAMIC":
+            
+            ORIENTATION["topic"] = RecipeYAML["pose"]["orientation"]["topic"]
+            
+            T = Pose()
+            T.qx = RecipeYAML["pose"]["orientation"]["transform"]["qx"]
+            T.qy = RecipeYAML["pose"]["orientation"]["transform"]["qy"]
+            T.qz = RecipeYAML["pose"]["orientation"]["transform"]["qz"]
+            T.qw = RecipeYAML["pose"]["orientation"]["transform"]["qw"]
+            ORIENTATION["transform"] = T
+
+        else:
+            
+            P = Pose()
+            P.qx = RecipeYAML["pose"]["orientation"]["pose"]["qx"]
+            P.qy = RecipeYAML["pose"]["orientation"]["pose"]["qy"]
+            P.qz = RecipeYAML["pose"]["orientation"]["pose"]["qz"]
+            P.qw = RecipeYAML["pose"]["orientation"]["pose"]["qw"]
+            ORIENTATION["pose"] = P
+
+        RECIPE["pose"]["orientation"] = ORIENTATION
     
     elif RECIPE["type"] == "GRIP":
         
@@ -387,7 +458,7 @@ def main(args=None):
     IC = GetIC_YAML(PARAM_IC)
 
     # Initialise NODE:
-    r3mNode = ExecuteSkill_SERVER(IC["UseCaseInformation"], IC["Robot"], IC["ObjectList"], )
+    r3mNode = ExecuteSkill_SERVER(IC["UseCaseInfo"], IC["Robot"], IC["ObjectList"])
     r3mNode.get_logger().info("[R3M Cell] - /ExecuteSkill ROS2 Service Server running, ROS2 node generated.")
 
     rclpy.spin(r3mNode)                                                                     

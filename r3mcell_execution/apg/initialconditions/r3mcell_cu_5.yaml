@@ -30,9 +30,9 @@ Robot:
 
 # Object List:
 ObjectList:
-  - Model: "box"
-    Link: "box"
-    Name: "OrangeCube"
+  - Name: "BlackCube"
+    Link: "BlackCube"
+    CADFile: "Cube"
     Package: "r3mcell_cu_gazebo"
     InitialPose: 
       x: "{'min': 0.4, 'max': 0.8}"
@@ -44,11 +44,11 @@ ObjectList:
       qw: 0.0
     CurrentPose: None
     PreviousPose: None
-  - Model: "box"
-    Link: "box"
-    Name: "BlackCube"
+  - Name: "RedCube"
+    Link: "RedCube"
+    CADFile: "Cube"
     Package: "r3mcell_cu_gazebo"
-    InitialPose: 
+    InitialPose:   
       x: "{'min': 0.4, 'max': 0.8}"
       y: "{'min': 0.0, 'max': 0.8}"
       z: 0.88
@@ -61,8 +61,8 @@ ObjectList:
 
 # Liaison:
 Liaison:
-  - Parent: "OrangeCube"
-  - Child: "BlackCube"
+  - Parent: "BlackCube"
+  - Child: "RedCube"
   - Transform:
       x: 0.0
       y: 0.0

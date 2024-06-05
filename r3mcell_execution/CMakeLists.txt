@@ -23,20 +23,12 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-install(
-  DIRECTORY 
-    recipes
-    initialconditions
-  DESTINATION 
-    share/${PROJECT_NAME}
-)
-
 # =========================================================== #
 # REQUIRED TO EXECUTE .py scripts:
 install(
   DIRECTORY 
     python
-    r3m_APG
+    apg
   DESTINATION 
     share/${PROJECT_NAME}
 )
@@ -48,8 +40,8 @@ install(PROGRAMS
   python/ObjectState.py
   python/ResetGazebo.py
 
-  r3m_APG/apg_MATLAB.py
-  r3m_APG/getRecipe.py
+  apg/apg_MATLAB.py
+  apg/getRecipe.py
 
   python/GzSim_Test.py
   python/m6d_test.py

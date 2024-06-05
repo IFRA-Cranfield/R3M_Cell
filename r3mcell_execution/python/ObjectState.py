@@ -36,18 +36,18 @@ class OBJECT(Node):
 
         self.DET =[]
                 
-        # ObjectList = [] of dict{Object}, where Object = {"Model": "", "Link": ""}
+        # "ObjectList": [{Name - Link - CADFile - Package - InitialPose - CurrentPose - PreviousPose}, ..]
 
         super().__init__("r3mcell_ObjectPose_Subscriber")
         self.SUBList = []
         
         for x in ObjectList:
             
-            TopicName = "/" + x["Model"] + "/ObjectPose"
+            TopicName = "/" + x["Name"] + "/ObjectPose"
             self.SUBList.append(self.create_subscription(ObjectPose, TopicName, self.CALLBACK_FN, 10))
             
             EmptyPose = ObjectPose()
-            EmptyPose.objectname = x["Model"]
+            EmptyPose.objectname = x["Name"]
             EmptyPose.x = 0.0
             EmptyPose.y = 0.0
             EmptyPose.z = 0.0
@@ -60,22 +60,32 @@ class OBJECT(Node):
             x["PreviousPose"] = EmptyPose
 
             # Initialise self.DET:
-            self.DET.append({"Model": x["Model"], "Detected": False})
+            self.DET.append({"Name": x["Name"], "Detected": False})
 
     def CALLBACK_FN(self, OBJ):
 
         # 1. Assign CURRENTPOSE to PREVIOUSPOSE:
         # 2. Assign NEWPOSE to CURRENTPOSE:
 
+        # ASSIGN -> PreviousPose:
         for x in self.DET:
-            if (x["Model"] == OBJ.objectname and x["Detected"] == False):
+            if (x["Name"] == OBJ.objectname and x["Detected"] == False):
 
                 x["Detected"] = True
 
                 for y in self.ObjectList:
-                    if (OBJ.objectname == y["Model"]):
+                    if (OBJ.objectname == y["Name"]):
                         
                         y["PreviousPose"] = y["CurrentPose"]
+                        y["CurrentPose"] = OBJ
+
+        # ASSIGN -> CurrentPose (just in case to take the last subscribed value):
+        for x in self.DET:
+            if (x["Name"] == OBJ.objectname and x["Detected"] == True):
+
+                for y in self.ObjectList:
+                    if (OBJ.objectname == y["Name"]):
+                        
                         y["CurrentPose"] = OBJ
 
     def ResetObjectList(self):
@@ -83,7 +93,7 @@ class OBJECT(Node):
         for x in self.ObjectList:
             
             EmptyPose = ObjectPose()
-            EmptyPose.objectname = x["Model"]
+            EmptyPose.objectname = x["Name"]
             EmptyPose.x = 0.0
             EmptyPose.y = 0.0
             EmptyPose.z = 0.0

@@ -52,8 +52,8 @@ class GzRESET():
         self.ResetCond = ResetCondition
 
         # InitialCondition: dict() with:
-        # "Robot": {"Package": "", "Model": "", "Pose": ""}
-        # "ObjectList": [{"Package": "", "Model": "", "Name": "", "Pose": ""}, ...]
+        # "Robot": {Model - Link - EEType - Package - InitialPose - HomePose}
+        # "ObjectList": [{Name - Link - CADFile - Package - InitialPose - CurrentPose - PreviousPose}, ..]
 
         # Spawn OBJECTS IN INITIAL CONDITIONS:
         for x in self.ResetCond["ObjectList"]:
@@ -90,16 +90,26 @@ class GzRESET():
                     break
 
         # Reset Robot's position:
-        HomePose = Pose()
-        HomePose.x = self.ResetCond["Robot"]["HomePose"]["x"]
-        HomePose.y = self.ResetCond["Robot"]["HomePose"]["y"]
-        HomePose.z = self.ResetCond["Robot"]["HomePose"]["z"]
-        HomePose.qx = self.ResetCond["Robot"]["HomePose"]["qx"]
-        HomePose.qy = self.ResetCond["Robot"]["HomePose"]["qy"]
-        HomePose.qz = self.ResetCond["Robot"]["HomePose"]["qz"]
-        HomePose.qw = self.ResetCond["Robot"]["HomePose"]["qw"]
+        HomePose = {}
+        HomePose["position"] = {}
+        HomePose["orientation"] ={}
         
-        HP_RES = self.ROBOT_CLIENT.Execute("PTP", 1.0, HomePose)
+        HomePose["position"]["type"] = "STATIC"
+        HomePose_P = Pose()
+        HomePose_P.x = self.ResetCond["Robot"]["HomePose"]["x"]
+        HomePose_P.y = self.ResetCond["Robot"]["HomePose"]["y"]
+        HomePose_P.z = self.ResetCond["Robot"]["HomePose"]["z"]
+        HomePose["position"]["pose"] = HomePose_P
+
+        HomePose["orientation"]["type"] = "STATIC"
+        HomePose_O = Pose()
+        HomePose_O.qx = self.ResetCond["Robot"]["HomePose"]["qx"]
+        HomePose_O.qy = self.ResetCond["Robot"]["HomePose"]["qy"]
+        HomePose_O.qz = self.ResetCond["Robot"]["HomePose"]["qz"]
+        HomePose_O.qw = self.ResetCond["Robot"]["HomePose"]["qw"]
+        HomePose["orientation"]["pose"] = HomePose_O
+        
+        HP_RES = self.ROBOT_CLIENT.Execute("PTP", 1.0, HomePose, [])
         
         if HP_RES["Success"]:
             self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - Robot moved back to HOME POSITION. Ready to start again!")
@@ -146,7 +156,10 @@ class EntityClient(Node):
     def spawn_REQUEST(self, ELEMENT, INFORMATION):
         
         # ELEMENT can be: "ROBOT"/ "OBJECT"
-        # INFORMATION: {"Package": "", "Model": "", "Pose": ""}
+
+        # INFORMATION:
+        # Robot -> {Model - Link - EEType - Package - InitialPose - HomePose}
+        # Object -> {Name - Link - CADFile - Package - InitialPose - CurrentPose - PreviousPose}
         
         # 1. SPAWN ROBOT:
 
@@ -175,9 +188,11 @@ class EntityClient(Node):
         elif ELEMENT == "OBJECT":
 
             # LOAD URDF of CUBE:
-            urdf_file_path = os.path.join(get_package_share_directory(INFORMATION["Package"]), 'urdf', 'objects', INFORMATION["Model"] + '.urdf')
+            urdf_file_path = os.path.join(get_package_share_directory(INFORMATION["Package"]), 'urdf', 'objects', INFORMATION["CADFile"] + '.urdf')
             xacro_file = xacro.process_file(urdf_file_path, mappings={"name": INFORMATION["Name"]})
             
+            IP = {}
+
             # Check if RANDOM values are needed:
             for key, value in INFORMATION["InitialPose"].items():
                 
@@ -185,18 +200,21 @@ class EntityClient(Node):
                     LIM = ast.literal_eval(value)
                     VAL = round(random.uniform(LIM["min"],LIM["max"]), 2)
                     
-                    INFORMATION["InitialPose"][key] = VAL
+                    IP[key] = VAL
+                    
+                else: 
+                    IP[key] = INFORMATION["InitialPose"][key]
 
             # ARGUMENTS:
             self.req_SPAWN.name = INFORMATION["Name"]
             self.req_SPAWN.xml = xacro_file.toxml()
-            self.req_SPAWN.initial_pose.position.x = INFORMATION["InitialPose"]["x"]
-            self.req_SPAWN.initial_pose.position.y = INFORMATION["InitialPose"]["y"]
-            self.req_SPAWN.initial_pose.position.z = INFORMATION["InitialPose"]["z"]
-            self.req_SPAWN.initial_pose.orientation.x = INFORMATION["InitialPose"]["qx"]
-            self.req_SPAWN.initial_pose.orientation.y = INFORMATION["InitialPose"]["qy"]
-            self.req_SPAWN.initial_pose.orientation.z = INFORMATION["InitialPose"]["qz"]
-            self.req_SPAWN.initial_pose.orientation.w = INFORMATION["InitialPose"]["qw"]
+            self.req_SPAWN.initial_pose.position.x = IP["x"]
+            self.req_SPAWN.initial_pose.position.y = IP["y"]
+            self.req_SPAWN.initial_pose.position.z = IP["z"]
+            self.req_SPAWN.initial_pose.orientation.x = IP["qx"]
+            self.req_SPAWN.initial_pose.orientation.y = IP["qy"]
+            self.req_SPAWN.initial_pose.orientation.z = IP["qz"]
+            self.req_SPAWN.initial_pose.orientation.w = IP["qw"]
 
             # Assign RESULT value (future):
             self.future_SPAWN = self.cli_SPAWN.call_async(self.req_SPAWN)

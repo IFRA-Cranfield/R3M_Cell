@@ -9,10 +9,10 @@ Information:
 id: 5
 
 # Recipe TYPE:
-type: "PTP"
+type: "LIN"
 
 # Recipe VALUE:
-speed: 1.0
+speed: 0.1
 pose:
   position:
     type: "STATIC"

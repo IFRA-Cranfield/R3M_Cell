@@ -67,8 +67,8 @@ EEState = 1
 class VacuumGripper():
     
     # For information, the inputs to this class are:
-    # Robot = {"Model": "", "Link": "", "EEPose": Robpose()}
-    # ObjectList = [{"Model": "box", "Link": "box", "CurrentPose": ObjectPose()}, ...]
+    # "Robot": {Model - Link - EEType - Package - InitialPose - HomePose}
+    # "ObjectList": [{Name - Link - CADFile - Package - InitialPose - CurrentPose - PreviousPose}, ..]
     
     def __init__(self, Robot):
 
@@ -106,9 +106,9 @@ class VacuumGripper():
                 DETACH_RES = self.LinkAttacher_CLIENT.DETACH(Robot, AttachCheck.Object)
 
                 if DETACH_RES:
-                    self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (VacuumGripper): Gripper OFF, OBJECT -> " + AttachCheck.Object["Model"] + " detached.")
+                    self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (VacuumGripper): Gripper OFF, OBJECT -> " + AttachCheck.Object["Name"] + " detached.")
                 else:
-                    self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (VacuumGripper): Gripper OFF, OBJECT -> " + AttachCheck.Object["Model"] + " not detached, LinkAttacher plugin failed.")
+                    self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (VacuumGripper): Gripper OFF, OBJECT -> " + AttachCheck.Object["Name"] + " not detached, LinkAttacher plugin failed.")
 
             else:
                 self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (VacuumGripper): Gripper OFF without dropping any object.")
@@ -127,13 +127,13 @@ class VacuumGripper():
             if CHECK_RES["Success"]:
 
                 # ATT(2) -> ATTACH:
-                OBJ = {"Model": CHECK_RES["Model"], "Link": CHECK_RES["Link"]}
+                OBJ = {"Name": CHECK_RES["Name"], "Link": CHECK_RES["Link"]}
                 ATTACH_RES = self.LinkAttacher_CLIENT.ATTACH(Robot, OBJ)
 
                 if ATTACH_RES:
-                    self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper ON, OBJECT -> " + OBJ["Model"] + " attached.")
+                    self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper ON, OBJECT -> " + OBJ["Name"] + " attached.")
                 else:
-                    self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper ON, OBJECT -> " + OBJ["Model"] + " not attached, LinkAttacher plugin failed.")
+                    self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper ON, OBJECT -> " + OBJ["Name"] + " not attached, LinkAttacher plugin failed.")
 
             else:
                 self.EEPose_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper ON without grasping any object.")
@@ -148,7 +148,7 @@ class VacuumGripper():
     def CHECK(self, ObjectList):
 
         # RESULT:
-        RESULT = {"Success": False, "Model": "", "Link": ""}
+        RESULT = {"Success": False, "Name": "", "Link": ""}
 
         # Get EEPose:
         global EEPose
@@ -162,7 +162,7 @@ class VacuumGripper():
             ObjectPose = x["CurrentPose"]
 
             # Print:
-            self.EEPose_CLIENT.get_logger().info("[R3M Cell] - Checking if object is attached for OBJECT: " + x["Model"])
+            self.EEPose_CLIENT.get_logger().info("[R3M Cell] - Checking if object is attached for OBJECT: " + x["Name"])
             self.EEPose_CLIENT.get_logger().info("[R3M Cell] - EEPose.x -> " + str(EEPose.x) + " / ObjectPose.x -> " + str(ObjectPose.x))
             self.EEPose_CLIENT.get_logger().info("[R3M Cell] - EEPose.y -> " + str(EEPose.y) + " / ObjectPose.y -> " + str(ObjectPose.y))
             self.EEPose_CLIENT.get_logger().info("[R3M Cell] - EEPose.z -> " + str(EEPose.z) + " / ObjectPose.z -> " + str(ObjectPose.z))
@@ -177,7 +177,7 @@ class VacuumGripper():
             if Check == True:
 
                 RESULT["Success"] = True
-                RESULT["Model"] = x["Model"]
+                RESULT["Name"] = x["Name"]
                 RESULT["Link"] = x["Link"]
 
         return(RESULT)
@@ -187,8 +187,8 @@ class VacuumGripper():
 class ParallelGripper():
     
     # For information, the inputs to this class are:
-    # Robot = {"Model": "", "Link": "", "EEPose": Robpose()}
-    # ObjectList = [{"Model": "box", "Link": "box", "CurrentPose": ObjectPose()}, ...]
+    # "Robot": {Model - Link - EEType - Package - InitialPose - HomePose}
+    # "ObjectList": [{Name - Link - CADFile - Package - InitialPose - CurrentPose - PreviousPose}, ..]
     
     def __init__(self, Robot):
 
@@ -246,9 +246,9 @@ class ParallelGripper():
                 DETACH_RES = self.LinkAttacher_CLIENT.DETACH(Robot, AttachCheck.Object)
 
                 if DETACH_RES:
-                    self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper opened, OBJECT -> " + AttachCheck.Object["Model"] + " detached.")
+                    self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper opened, OBJECT -> " + AttachCheck.Object["Name"] + " detached.")
                 else:
-                    self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper opened, OBJECT -> " + AttachCheck.Object["Model"] + " not detached, LinkAttacher plugin failed.")
+                    self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper opened, OBJECT -> " + AttachCheck.Object["Name"] + " not detached, LinkAttacher plugin failed.")
 
             else:
                 self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper opened without dropping any object.")
@@ -267,13 +267,13 @@ class ParallelGripper():
             if CHECK_RES["Success"]:
 
                 # ATT(2) -> ATTACH:
-                OBJ = {"Model": CHECK_RES["Model"], "Link": CHECK_RES["Link"]}
+                OBJ = {"Name": CHECK_RES["Name"], "Link": CHECK_RES["Link"]}
                 ATTACH_RES = self.LinkAttacher_CLIENT.ATTACH(Robot, OBJ)
 
                 if ATTACH_RES:
-                    self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper closed, OBJECT -> " + OBJ["Model"] + " attached.")
+                    self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper closed, OBJECT -> " + OBJ["Name"] + " attached.")
                 else:
-                    self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper closed, OBJECT -> " + OBJ["Model"] + " not attached, LinkAttacher plugin failed.")
+                    self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper closed, OBJECT -> " + OBJ["Name"] + " not attached, LinkAttacher plugin failed.")
 
             else:
                 self.Gripper_CLIENT.get_logger().info("[R3M Cell] - (ParallelGripper): Gripper closed without grasping any object.")
@@ -293,7 +293,7 @@ class ParallelGripper():
     def CHECK(self, ObjectList):
 
         # RESULT:
-        RESULT = {"Success": False, "Model": "", "Link": ""}
+        RESULT = {"Success": False, "Name": "", "Link": ""}
 
         # Get EEPose:
         global EEPose
@@ -301,13 +301,13 @@ class ParallelGripper():
         while (time.time() < T):
             rclpy.spin_once(self.EEPose_CLIENT)
 
-        Check = True
         for x in ObjectList:
             
+            Check = True
             ObjectPose = x["CurrentPose"]
 
             # Print:
-            self.Gripper_CLIENT.get_logger().info("[R3M Cell] - Checking if object is attached for OBJECT: " + x["Model"])
+            self.Gripper_CLIENT.get_logger().info("[R3M Cell] - Checking if object is attached for OBJECT: " + x["Name"])
             self.Gripper_CLIENT.get_logger().info("[R3M Cell] - EEPose.x -> " + str(EEPose.x) + " / ObjectPose.x -> " + str(ObjectPose.x))
             self.Gripper_CLIENT.get_logger().info("[R3M Cell] - EEPose.y -> " + str(EEPose.y) + " / ObjectPose.y -> " + str(ObjectPose.y))
             self.Gripper_CLIENT.get_logger().info("[R3M Cell] - EEPose.z -> " + str(EEPose.z) + " / ObjectPose.z -> " + str(ObjectPose.z))
@@ -322,7 +322,7 @@ class ParallelGripper():
             if Check == True:
 
                 RESULT["Success"] = True
-                RESULT["Model"] = x["Model"]
+                RESULT["Name"] = x["Name"]
                 RESULT["Link"] = x["Link"]
 
         return(RESULT)
@@ -432,7 +432,7 @@ class LinkAttacher_Client(Node):
 
         self.AttachRequest.model1_name = Robot["Model"]
         self.AttachRequest.link1_name = Robot["Link"]
-        self.AttachRequest.model2_name = Object["Model"]
+        self.AttachRequest.model2_name = Object["Name"]
         self.AttachRequest.link2_name = Object["Link"]
 
         self.AttachFuture = self.AttachClient.call_async(self.AttachRequest)
@@ -441,7 +441,7 @@ class LinkAttacher_Client(Node):
 
         self.DetachRequest.model1_name = Robot["Model"]
         self.DetachRequest.link1_name = Robot["Link"]
-        self.DetachRequest.model2_name = Object["Model"]
+        self.DetachRequest.model2_name = Object["Name"]
         self.DetachRequest.link2_name = Object["Link"]
 
         self.DetachFuture = self.DetachClient.call_async(self.DetachRequest)
@@ -500,7 +500,7 @@ class LinkAttacher():
                         self.CLIENT.get_logger().info("[R3M Cell] - (LinkAttacher): /DETACHLINK successful -> " + str(DetachRES.message))
 
                         AttachCheck.Attached = False
-                        AttachCheck.Object = {"Model": "", "Link": ""}
+                        AttachCheck.Object = {"Name": "", "Link": ""}
 
                         # We wait Xs in order to give time to the ObjectPose() subscriber to wait until the object is dropped.
                         time.sleep(1)
