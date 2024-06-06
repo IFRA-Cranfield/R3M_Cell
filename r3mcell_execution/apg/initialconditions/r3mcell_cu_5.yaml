@@ -61,9 +61,22 @@ ObjectList:
 
 # Liaison:
 Liaison:
-  - Parent: "BlackCube"
-  - Child: "RedCube"
-  - Transform:
+  - Name: "Black Cube is placed on a fixed position on top of the workspace."
+    Parent: "GLOBAL"
+    Child: "BlackCube"
+    Transform:
+      x: 0.225
+      y: 0.875
+      z: 0.875
+      qx: 0.0
+      qy: 0.0
+      qz: 0.0
+      qw: 1.0
+    DiffMax: 0.01
+  - Name: "Red Cube is placed on top of the Black Cube."
+    Parent: "BlackCube"
+    Child: "RedCube"
+    Transform:
       x: 0.0
       y: 0.0
       z: 0.03
@@ -71,4 +84,4 @@ Liaison:
       qy: 0.0
       qz: 0.0
       qw: 0.0
-  - DiffMax: 0.01
+    DiffMax: 0.01
