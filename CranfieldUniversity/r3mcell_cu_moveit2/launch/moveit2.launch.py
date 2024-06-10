@@ -28,7 +28,7 @@
 # You can cite our work with the following statement:
 # IFRA-Cranfield (2023) ROS 2 Sim-to-Real Robot Control. URL: https://github.com/IFRA-Cranfield/ros2_SimRealRobotControl.
 
-# irb120_interface.launch.py:
+# moveit2.launch.py:
 # Launch file for the ABB-IRB120 Robot GAZEBO + MoveIt!2 SIMULATION (+ Robot/Gripper triggers) in ROS2 Humble:
 
 # Import libraries:
@@ -139,7 +139,7 @@ def generate_launch_description():
     elif layout == "r3mcell_cu_5":
         LYT = "R3M Cell (Cranfield University): Cube Stacking Use-Case."
         EE = "Schunk EGP-64 parallel gripper."
-        r3mcell_cu_1 = "true"
+        r3mcell_cu_1 = "false"
         r3mcell_cu_2 = "false"
         r3mcell_cu_3 = "false"
         r3mcell_cu_4 = "false"
