@@ -41,7 +41,6 @@ install(PROGRAMS
   python/ResetGazebo.py
 
   apg/apg_MATLAB.py
-  apg/getRecipe.py
 
   python/GzSim_Test.py
   python/m6d_test.py
