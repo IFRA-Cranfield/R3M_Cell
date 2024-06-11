@@ -76,8 +76,8 @@ class MatlabAgent():
         super().__init__()
         self.MATLAB = matlab.engine.start_matlab()
         
-        self.PATH = os.path.join(get_package_share_directory('r3mcell_execution'), 'apg', 'agents', UseCase)
-        self.AGENT = "agentData.mat"
+        self.PATH = os.path.join(get_package_share_directory('r3mcell_execution'), 'apg', 'agents')
+        self.AGENT = UseCase + ".mat"
         
     def Execute(self, ID, RobState, EEState, ObjState, ObjectNO):
         
@@ -134,15 +134,12 @@ def main(args=None):
         
         print("RECIPE EXECUTION: Getting Recipe ID from RLA...")
         
-        print("Robot State:")
-        print(RobState)
-        
-        print("End Effector State:")
-        print(EEState)
+        print("Robot State: " + str(RobState))
+        print("End Effector State: " + str(EEState))
 
         print("Object State:")
         for i in range(ObjectNO):
-            print("- Object N" + str(i+1) + "" + skillRESULT.product[i].name + " -> " + str(ObjState[i]))
+            print("- Object N" + str(i+1) + ", " + skillRESULT.product[i].name + " -> " + str(ObjState[i]))
 
         print("")
         
@@ -174,9 +171,10 @@ def main(args=None):
 
             if x.liaison_met:
                 print("LIAISON MET! -> " + x.name)
-                print("")
             else:
                 LI_MET = False
+
+        print("")
 
         if ID == 1 and LI_MET == True:
             print("SUCCESS! All liaisons have been met and the Robot has returned to Home Position.")
