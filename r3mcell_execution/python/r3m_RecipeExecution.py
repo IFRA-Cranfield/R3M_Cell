@@ -32,6 +32,7 @@ from Gripper_Gz import ParallelGripper
 from Gripper_Gz import VacuumGripper
 from ObjectState import OBJECT
 from ResetGazebo import GzRESET
+from liaison import LiaisonCheck
 
 # Global VAR: 
 EEState = 1
@@ -92,7 +93,7 @@ def GetIC_YAML(NAME):
 
     global ProdStep
 
-    RESULT = {"UseCaseInfo": None, "Robot": None, "ObjectList": None, "Success": True}
+    RESULT = {"UseCaseInfo": None, "Robot": None, "ObjectList": None, "Liaison": None, "Success": True}
     
     PATH = os.path.join(get_package_share_directory('r3mcell_execution'), 'apg', 'initialconditions')
     YAML_PATH = PATH + "/" + NAME + ".yaml"
@@ -107,10 +108,14 @@ def GetIC_YAML(NAME):
     
     RESULT["UseCaseInfo"] = icYAML["Information"]
     RESULT["Robot"] = icYAML["Robot"]
-    RESULT["ObjectList"] = icYAML["ObjectList"]
     
+    RESULT["ObjectList"] = icYAML["ObjectList"]
     if RESULT["ObjectList"] == "":
         RESULT["ObjectList"] = []
+
+    RESULT["Liaison"] = icYAML["Liaison"]
+    if RESULT["Liaison"] == "":
+        RESULT["Liaison"] = []
 
     # Initialise ProdStep vector:
     else:
@@ -163,7 +168,7 @@ def CalculateDif_PROD(A,B):
 # ExecuteSkill_SERVER CLASS:
 class ExecuteSkill_SERVER(Node):
     
-    def __init__(self, INFO, ROB, OL):
+    def __init__(self, INFO, ROB, OL, LI):
         
         # Robot -> {Model - Link - EEType - Package - InitialPose - HomePose}
         # ObjectList -> [{Name - Link - CADFile - Package - InitialPose - CurrentPose - PreviousPose}, ..]
@@ -190,6 +195,9 @@ class ExecuteSkill_SERVER(Node):
         # Initialise SERVICE SERVER:
         super().__init__('r3mcell_SkillExecution_ServiceServer')                                              
         self.srv = self.create_service(SkillExecution, "/r3m_SkillExecution", self.EXECUTE)
+
+        # Initialise -> LIAISON CLASS:
+        self.Liaison = LiaisonCheck(LI)
     
     def EXECUTE(self, request, response):
         
@@ -326,6 +334,10 @@ class ExecuteSkill_SERVER(Node):
 
                 response.result.product = PRODUCTS
 
+                # GET LIAISON VECTOR:
+                LV = self.Liaison.CHECK(self.ObjectList)
+                response.result.liaison = LV
+
                 return(response)
 
             else:
@@ -458,7 +470,7 @@ def main(args=None):
     IC = GetIC_YAML(PARAM_IC)
 
     # Initialise NODE:
-    r3mNode = ExecuteSkill_SERVER(IC["UseCaseInfo"], IC["Robot"], IC["ObjectList"])
+    r3mNode = ExecuteSkill_SERVER(IC["UseCaseInfo"], IC["Robot"], IC["ObjectList"], IC["Liaison"])
     r3mNode.get_logger().info("[R3M Cell] - /ExecuteSkill ROS2 Service Server running, ROS2 node generated.")
 
     rclpy.spin(r3mNode)                                                                     

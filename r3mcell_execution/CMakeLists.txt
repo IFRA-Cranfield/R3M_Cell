@@ -39,6 +39,7 @@ install(PROGRAMS
   python/Gripper_Gz.py
   python/ObjectState.py
   python/ResetGazebo.py
+  python/liaison.py
 
   apg/apg_MATLAB.py
 

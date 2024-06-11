@@ -76,8 +76,8 @@ class MatlabAgent():
         super().__init__()
         self.MATLAB = matlab.engine.start_matlab()
         
-        self.PATH = os.path.join(get_package_share_directory('r3mcell_execution'), 'apg', 'agents')
-        self.AGENT = UseCase + ".mat"
+        self.PATH = os.path.join(get_package_share_directory('r3mcell_execution'), 'apg', 'agents', UseCase)
+        self.AGENT = "agentData.mat"
         
     def Execute(self, ID, RobState, EEState, ObjState, ObjectNO):
         
@@ -134,12 +134,15 @@ def main(args=None):
         
         print("RECIPE EXECUTION: Getting Recipe ID from RLA...")
         
-        print("Robot State: " + str(RobState))
-        print("End Effector State: " + str(EEState))
+        print("Robot State:")
+        print(RobState)
+        
+        print("End Effector State:")
+        print(EEState)
 
         print("Object State:")
         for i in range(ObjectNO):
-            print("- Object N" + str(i+1) + ", " + skillRESULT.product[i].name + " -> " + str(ObjState[i]))
+            print("- Object N" + str(i+1) + "" + skillRESULT.product[i].name + " -> " + str(ObjState[i]))
 
         print("")
         
@@ -158,15 +161,29 @@ def main(args=None):
             
         ID = float(skillRESULT.id)
 
-        # Check if -> LIAISON MET + ID=1, then FINISH!
-        # TBD.
-        
         RobState = skillRESULT.robstate.step
         EEState = skillRESULT.robstate.endeffector
         
         ObjState = []
         for i in range(ObjectNO):
             ObjState.append(skillRESULT.product[i].step)
+
+        # Check if -> LIAISON MET + ID=1, then FINISH!
+        LI_MET = True
+        for x in skillRESULT.liaison:
+
+            if x.liaison_met:
+                print("LIAISON MET! -> " + x.name)
+                print("")
+            else:
+                LI_MET = False
+
+        if ID == 1 and LI_MET == True:
+            print("SUCCESS! All liaisons have been met and the Robot has returned to Home Position.")
+            print("PROGRAM EXECUTION SUCCESSFULLY FINISHED!")
+            print("")
+            print("Closing program... BYE!")
+            CONTINUE = False
 
     # FINISH:
     rclpy.shutdown()
