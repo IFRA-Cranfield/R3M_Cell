@@ -4,5 +4,6 @@ float64 error
 Rob robstate
 Product[] product 
 Liaison[] liaison
+int32 finish
 string message
 bool success
