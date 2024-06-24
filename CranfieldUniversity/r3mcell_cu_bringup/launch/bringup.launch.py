@@ -28,8 +28,8 @@
 # You can cite our work with the following statement:
 # IFRA-Cranfield (2023) ROS 2 Sim-to-Real Robot Control. URL: https://github.com/IFRA-Cranfield/ros2_SimRealRobotControl.
 
-# irb120_bringup.launch.py:
-# Launch file for the ABB-IRB120 Robot CONTROL BRINGUP in ROS2 Humble:
+# bringup.launch.py:
+# Launch file for the ABB-IRB120 Robot Bringup + MoveIt!2 Framework in ROS2 Humble:
 
 # Import libraries:
 import os
@@ -37,9 +37,7 @@ import sys
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration
 from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler, DeclareLaunchArgument, TimerAction
-from launch.conditions import IfCondition, UnlessCondition
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 import xacro
@@ -65,26 +63,65 @@ def load_yaml(package_name, file_path):
     except EnvironmentError:
         # parent of IOError, OSError *and* WindowsError where available.
         return None
-    
-# ========== **INPUT ARGUMENTS** ========== #
-#  layout -> Cell layout.
+
+# ===== REQUIRED TO GET THE ROBOT CONFIGURATION === #
 
 # EVALUATE INPUT ARGUMENTS:
 def AssignArgument(ARGUMENT):
-    
     ARGUMENTS = sys.argv
     for y in ARGUMENTS:
         if (ARGUMENT + ":=") in y:
             ARG = y.replace((ARGUMENT + ":="),"")
             return(ARG)
 
+# GET CONFIGURATION from YAML:
+def GetCONFIG(CONFIGURATION):
+    
+    RESULT = {"Success": False, "ID": "", "Name": "", "urdf": "", "ee": ""}
+
+    PATH = os.path.join(os.path.expanduser('~'), 'dev_ws', 'src', 'R3M_Cell', 'CranfieldUniversity')
+    YAML_PATH = PATH + "/configurations.yaml"
+    
+    if not os.path.exists(YAML_PATH):
+        return (RESULT)
+    
+    with open(YAML_PATH, 'r') as YAML:
+        cYAML = yaml.safe_load(YAML)
+
+    for x in cYAML["Configurations"]:
+
+        if x["ID"] == CONFIGURATION:
+            RESULT["Success"] = True
+            RESULT["ID"] = x["ID"]
+            RESULT["Name"] = x["Name"]
+            RESULT["urdf"] = x["urdf"]
+            RESULT["ee"] = x["ee"]
+
+    return(RESULT)
+
+# GET EE-Controllers LIST:
+def GetEEctr(EEName):
+    
+    RESULT = []
+
+    PATH = os.path.join(os.path.expanduser('~'), 'dev_ws', 'src', 'ros2_SimRealRobotControl', 'ros2srrc_endeffectors', EEName, 'config')
+    YAML_PATH = PATH + "/controller_moveit2.yaml"
+    
+    with open(YAML_PATH, 'r') as YAML:
+        cYAML = yaml.safe_load(YAML)
+
+    for x in cYAML["controller_names"]:
+        RESULT.append(x)
+
+    return(RESULT)
+
 # ========== **GENERATE LAUNCH DESCRIPTION** ========== #
 def generate_launch_description():
 
-    # ========== INPUT ARGUMENTS ========== #
+    LD = LaunchDescription()
 
-    # Robot IP:
-    robot_ip = AssignArgument("ip_address")
+    # === INPUT ARGUMENT: robot_ip === #
+    robot_ip = AssignArgument("robot_ip")
     if robot_ip != None:
         None
     else:
@@ -92,93 +129,41 @@ def generate_launch_description():
         print("ERROR: robot_ip INPUT ARGUMENT has not been defined. Please try again.")
         print("Closing... BYE!")
         exit()
-
-    # Cell layout:
-    layout = AssignArgument("layout")
-    if layout != None:
-        None
-    else:
-        print("")
-        print("ERROR: layout INPUT ARGUMENT has not been defined. Please try again.")
-        print("Closing... BYE!")
-        exit()
     
-    if layout == "r3mcell_cu_1":
-        LYT = "R3M Cell (Cranfield University): Simple Cube Pick-and-Place."
-        EE = "Schunk EGP-64 parallel gripper."
-        r3mcell_cu_1 = "true"
-        r3mcell_cu_2 = "false"
-        r3mcell_cu_3 = "false"
-        r3mcell_cu_4 = "false"
-        endeffector = "egp64"
-        EE_no = "false"
-        EE_egp64 = "true"
-        EE_vgr = "false"
-    elif layout == "r3mcell_cu_2":
-        LYT = "R3M Cell (Cranfield University): Lamination Sheet Pick-and-Place."
-        EE = "Custom R3M Vacuum Gripper."
-        r3mcell_cu_1 = "false"
-        r3mcell_cu_2 = "true"
-        r3mcell_cu_3 = "false"
-        r3mcell_cu_4 = "false"
-        endeffector = "vgr"
-        EE_no = "false"
-        EE_egp64 = "false"
-        EE_vgr = "true"
-    elif layout == "r3mcell_cu_3":
-        LYT = "R3M Cell (Cranfield University): Simple Can Pick-and-Place."
-        EE = "Schunk EGP-64 parallel gripper."
-        r3mcell_cu_1 = "false"
-        r3mcell_cu_2 = "false"
-        r3mcell_cu_3 = "true"
-        r3mcell_cu_4 = "false"
-        endeffector = "egp64"
-        EE_no = "false"
-        EE_egp64 = "true"
-        EE_vgr = "false"
-    elif layout == "r3mcell_cu_4":
-        LYT = "R3M Cell (Cranfield University): R3M-Perception Testing."
-        EE = "Schunk EGP-64 parallel gripper."
-        r3mcell_cu_1 = "false"
-        r3mcell_cu_2 = "false"
-        r3mcell_cu_3 = "false"
-        r3mcell_cu_4 = "true"
-        endeffector = "egp64"
-        EE_no = "false"
-        EE_egp64 = "true"
-        EE_vgr = "false"
-    else:
-        print("")
-        print("ERROR: layout INPUT ARGUMENT has not been defined properly. Please try again.")
-        print("Options: {r3mcell_cu_1, r3mcell_cu_2, r3mcell_cu_3, r3mcell_cu_4}")
-        print("Closing... BYE!")
-        exit()
+    # === INPUT ARGUMENT: CONFIGURATION === #
+    CONFIG = AssignArgument("config")
+    CONFIGURATION = GetCONFIG(CONFIG)
 
-    # Automatic Operation:
+    if CONFIGURATION["Success"] == False:
+        print("")
+        print("ERROR: config INPUT ARGUMENT has not been correctly defined. Please try again.")
+        print("Closing... BYE!")
+        exit()   
+
+    if CONFIGURATION["ee"] == "none":
+        EE = "false"
+    else: 
+        EE = "true"
+
+    # === INPUT ARGUMENT: autoOP === #
     autoOP = AssignArgument("autoOP")
-
     if autoOP == "True" or autoOP == "true":
-        AUTO = "True"
+        AUTO = True
     elif autoOP == "False" or autoOP == "false" or autoOP == None:
-        AUTO = "False"
+        AUTO = False
     else:
         print("")
-        print("ERROR: layout INPUT ARGUMENT has not been defined properly. Please try again.")
-        print("Options: true / false")
+        print("ERROR: autoOP INPUT ARGUMENT has not been defined properly. Please try again.")
+        print("Options: True / False")
         print("Closing... BYE!")
         exit()
 
-    # ========== COMMAND LINE ARGUMENTS ========== #
+    # ========== CELL INFORMATION ========== #
     print("")
     print("===== ABB IRB-120: Robot Bringup (r3mcell_cu_bringup) =====")
+    print("Robot IP Address -> " + robot_ip)
     print("Robot configuration:")
-    print("")
-    # robot_ip:
-    print("- IP Address: " + robot_ip)
-    # Cell Layout:
-    print("- Cell layout: " + LYT)
-    # End-Effector:
-    print("- End-effector: " + EE)
+    print(CONFIGURATION["ID"] + " -> " + CONFIGURATION["Name"])
     print("")
 
     # ***** ROBOT DESCRIPTION ***** #
@@ -186,23 +171,21 @@ def generate_launch_description():
     irb120_description_path = os.path.join(
         get_package_share_directory('r3mcell_cu_gazebo'))
     # ABB-IRB120 ROBOT urdf file path:
-    xacro_file = os.path.join(irb120_description_path,
-                              'urdf',
-                              'irb120.urdf.xacro')
+    xacro_file = os.path.join(irb120_description_path,'urdf',CONFIGURATION["urdf"])
     # Generate ROBOT_DESCRIPTION for ABB-IRB120:
     doc = xacro.parse(open(xacro_file))
     
+    if CONFIGURATION["ee"] == "none":
+        EE = "false"
+    else: 
+        EE = "true"
+    
     xacro.process_doc(doc, mappings={
-        "robot_ip": robot_ip, 
-        "bringup": "true",
+        "EE": EE,
+        "EE_name": CONFIGURATION["ee"],
 
-        "r3mcell_cu_1": r3mcell_cu_1,
-        "r3mcell_cu_2": r3mcell_cu_2,
-        "r3mcell_cu_3": r3mcell_cu_3,
-        "r3mcell_cu_4": r3mcell_cu_4,
-        "EE_no": EE_no,
-        "EE_egp64": EE_egp64,
-        "EE_vgr": EE_vgr,
+        "robot_ip": robot_ip,
+        "bringup": "true"
     })
     
     robot_description_config = doc.toxml()
@@ -213,9 +196,11 @@ def generate_launch_description():
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='both',
-        parameters=[robot_description]
+        parameters=[
+            robot_description,
+            {"use_sim_time": True}
+        ]
     )
-    # Static TF:
     static_tf = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
@@ -225,18 +210,16 @@ def generate_launch_description():
     )
 
     # ***** CONTROLLERS ***** #
+
     # ros2_control:
-    ros2_controllers_path = os.path.join(
-        get_package_share_directory("r3mcell_cu_bringup"),
-        "config",
-        "abb_controllers.yaml",
-    )
+    ros2_controllers_path = os.path.join(get_package_share_directory("ros2srrc_robots"), "irb120", "config", "controller.yaml")
     ros2_control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
         parameters=[robot_description, ros2_controllers_path],
-        output="both",
+        output="both"
     )
+
     # Joint STATE BROADCASTER:
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
@@ -250,32 +233,23 @@ def generate_launch_description():
         arguments=["joint_trajectory_controller", "-c", "/controller_manager"],
     )
 
-
-    # ***** MoveIt!2 ***** #
-
-    # Command-line argument: RVIZ file?
-    rviz_arg = DeclareLaunchArgument(
-        "rviz_file", default_value="False", description="Load RVIZ file."
-    )
+    # *********************** MoveIt!2 *********************** #   
 
     # *** PLANNING CONTEXT *** #
     # Robot description, SRDF:
-
-    # === SCHUNK EGP-64 === #
-    if endeffector == "egp64":
-        robot_description_semantic_config = load_file("r3mcell_cu_moveit2", "config/irb120egp64.srdf")
-    # === R3M VACUUM GRIPPER === #
-    elif endeffector == "vgr":
-        robot_description_semantic_config = load_file("r3mcell_cu_moveit2", "config/irb120vgr.srdf")
+    if EE == "false":
+        robot_description_semantic_config = load_file("r3mcell_cu_moveit2", "config/irb120.srdf")
+    else:
+        robot_description_semantic_config = load_file("r3mcell_cu_moveit2", "config/irb120" + CONFIGURATION["ee"] + ".srdf")
     
     robot_description_semantic = {"robot_description_semantic": robot_description_semantic_config}
 
     # Kinematics.yaml file:
-    kinematics_yaml = load_yaml("r3mcell_cu_moveit2", "config/kinematics.yaml")
+    kinematics_yaml = load_yaml("ros2srrc_robots", "irb120/config/kinematics.yaml")
     robot_description_kinematics = {"robot_description_kinematics": kinematics_yaml}
 
     # joint_limits.yaml file:
-    joint_limits_yaml = load_yaml("r3mcell_cu_moveit2", "config/joint_limits_bringup.yaml")
+    joint_limits_yaml = load_yaml("ros2srrc_robots", "irb120/config/joint_limits.yaml")
     joint_limits = {'robot_description_planning': joint_limits_yaml}
 
     # pilz_planning_pipeline_config.yaml file:
@@ -287,22 +261,22 @@ def generate_launch_description():
             "default_planner_config": "PTP",
         }
     }
-    pilz_cartesian_limits_yaml = load_yaml("r3mcell_cu_moveit2", "config/pilz_cartesian_limits.yaml")
+    pilz_cartesian_limits_yaml = load_yaml("ros2srrc_robots", "irb120/config/pilz_cartesian_limits.yaml")
     pilz_cartesian_limits = {'robot_description_planning': pilz_cartesian_limits_yaml}
 
     # MoveIt!2 Controllers:
-    moveit_simple_controllers_yaml = load_yaml(
-        "r3mcell_cu_bringup", "config/moveit_controllers.yaml"
-    )
+    moveit_simple_controllers_yaml = load_yaml("ros2srrc_robots", "irb120/config/controller_moveit2.yaml")
+
+    # MoveIt!2 Parameters:
     moveit_controllers = {
         "moveit_simple_controller_manager": moveit_simple_controllers_yaml,
         "moveit_controller_manager": "moveit_simple_controller_manager/MoveItSimpleControllerManager",
     }
     trajectory_execution = {
-        "moveit_manage_controllers": False,
+        "moveit_manage_controllers": True,
         "trajectory_execution.allowed_execution_duration_scaling": 1.2,
         "trajectory_execution.allowed_goal_duration_margin": 0.5,
-        "trajectory_execution.allowed_start_tolerance": 0.1,
+        "trajectory_execution.allowed_start_tolerance": 0.01,
     }
     planning_scene_monitor_parameters = {
         "publish_planning_scene": True,
@@ -310,23 +284,21 @@ def generate_launch_description():
         "publish_state_updates": True,
         "publish_transforms_updates": True,
     }
-
     move_group_capabilities = {
         "capabilities": """pilz_industrial_motion_planner/MoveGroupSequenceAction \
             pilz_industrial_motion_planner/MoveGroupSequenceService"""
     }
 
-    # START NODE -> MOVE GROUP:
+    # MoveGroup Node:
     run_move_group_node = Node(
         package="moveit_ros_move_group",
         executable="move_group",
         output="screen",
         parameters=[
-            
             robot_description,
             robot_description_semantic,
             kinematics_yaml,
-
+            
             pilz_planning_pipeline_config,
 
             joint_limits,
@@ -336,21 +308,16 @@ def generate_launch_description():
             moveit_controllers,
             planning_scene_monitor_parameters,
             move_group_capabilities,
-
         ],
     )
 
     # RVIZ:
-    load_RVIZfile = LaunchConfiguration("rviz_file")
     rviz_base = os.path.join(get_package_share_directory("r3mcell_cu_moveit2"), "config")
-    
-    # === SCHUNK EGP-64 === #
-    if endeffector == "egp64":
-        rviz_full_config = os.path.join(rviz_base, "irb120egp64_moveit2.rviz")
-    # === R3M VACUUM GRIPPER === #
-    elif endeffector == "vgr":
-        rviz_full_config = os.path.join(rviz_base, "irb120vgr_moveit2.rviz")
-    
+    if EE == "false":
+        rviz_full_config = os.path.join(rviz_base, "irb120_moveit2.rviz")
+    else:
+        rviz_full_config = os.path.join(rviz_base, "irb120" + CONFIGURATION["ee"] + "_moveit2.rviz")
+
     rviz_node_full = Node(
         package="rviz2",
         executable="rviz2",
@@ -358,11 +325,10 @@ def generate_launch_description():
         output="log",
         arguments=["-d", rviz_full_config],
         parameters=[
-        
             robot_description,
             robot_description_semantic,
             kinematics_yaml,
-
+            
             pilz_planning_pipeline_config,
 
             joint_limits,
@@ -372,78 +338,11 @@ def generate_launch_description():
             moveit_controllers,
             planning_scene_monitor_parameters,
             move_group_capabilities,
-        ],
-        condition=UnlessCondition(load_RVIZfile),
-    )
-    
-    RobPoseInterface = Node(
-        name="robpose",
-        package="ros2srrc_execution",
-        executable="robpose",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}],
+        ]
     )
 
-    
-    if endeffector == "egp64":
-        
-        RobMoveInterface = Node(
-            name="robmove",
-            package="ros2srrc_execution",
-            executable="robmove",
-            output="screen",
-            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"ENV_PARAM": "bringup"}],
-        )
-        MoveInterface = Node(
-            name="move",
-            package="ros2srrc_execution",
-            executable="move",
-            output="screen",
-            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"ENV_PARAM": "bringup"}],
-        )
-        SequenceInterface = Node(
-            name="sequence",
-            package="ros2srrc_execution",
-            executable="sequence",
-            output="screen",
-            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "egp64"}, {"ENV_PARAM": "bringup"}],
-        )
-    
-    elif endeffector == "vgr":
-       
-        RobMoveInterface = Node(
-            name="robmove",
-            package="ros2srrc_execution",
-            executable="robmove",
-            output="screen",
-            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "none"}, {"ENV_PARAM": "bringup"}],
-        )
-        MoveInterface = Node(
-            name="move",
-            package="ros2srrc_execution",
-            executable="move",
-            output="screen",
-            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "none"}, {"ENV_PARAM": "bringup"}],
-        )
-        SequenceInterface = Node(
-            name="sequence",
-            package="ros2srrc_execution",
-            executable="sequence",
-            output="screen",
-            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "none"}, {"ENV_PARAM": "bringup"}],
-        )
-    
-
-    R3MautoOP = Node(
-        name="r3m_RecipeExecution",
-        package="r3mcell_execution",
-        executable="r3m_RecipeExecution.py",
-        output="screen",
-        parameters=[{"InitialConditions": layout}, {"use_sim_time": True}, {"AUTO": AUTO}],
-    )
-
-    # ========== ABB RWS CLIENT ========== #
-    
+    # ============================================= #
+    # ============== ABB: RWS CLIENT ============== #
     rws_client = Node(
         package="abb_rws_client",
         executable="rws_client",
@@ -458,38 +357,140 @@ def generate_launch_description():
         ],
     )
 
-    # ***** RETURN LAUNCH DESCRIPTION ***** #
-    return LaunchDescription([
-        
-        # 1. Step: Connect to ROBOT:
-        ros2_control_node,
-        node_robot_state_publisher,
-        static_tf,
-        joint_state_broadcaster_spawner,
-        joint_trajectory_controller_spawner,
-        rws_client,
-        
-        # 2. Step: Launch MoveIt!2:
-        RegisterEventHandler(
+    # =================================================================================================== #
+    # ============================= ros2srrc_execution -> CUSTOM INTERFACES ============================= #
+
+    # Move and Sequence:
+    if EE == "false":
+
+        MoveInterface = Node(
+            name="move",
+            package="ros2srrc_execution",
+            executable="move",
+            output="screen",
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "none"}, {"ENV_PARAM": "bringup"}],
+        )
+        SequenceInterface = Node(
+            name="sequence",
+            package="ros2srrc_execution",
+            executable="sequence",
+            output="screen",
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "none"}, {"ENV_PARAM": "bringup"}],
+        )
+
+    else:
+
+        MoveInterface = Node(
+            name="move",
+            package="ros2srrc_execution",
+            executable="move",
+            output="screen",
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"ROB_PARAM": "irb120"}, {"EE_PARAM": CONFIGURATION["ee"]}, {"ENV_PARAM": "bringup"}],
+        )
+        SequenceInterface = Node(
+            name="sequence",
+            package="ros2srrc_execution",
+            executable="sequence",
+            output="screen",
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"ROB_PARAM": "irb120"}, {"EE_PARAM": CONFIGURATION["ee"]}, {"ENV_PARAM": "bringup"}],
+        )
+
+    # RobMove and RobPose:
+    RobMoveInterface = Node(
+        name="robmove",
+        package="ros2srrc_execution",
+        executable="robmove",
+        output="screen",
+        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"ROB_PARAM": "irb120"}],
+    )
+    RobPoseInterface = Node(
+        name="robpose",
+        package="ros2srrc_execution",
+        executable="robpose",
+        output="screen",
+        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"ROB_PARAM": "irb120"}],
+    )
+
+    # R3M -> Recipe Execution ROS 2 NODE:
+    R3MautoOP = Node(
+        name="r3m_RecipeExecution",
+        package="r3mcell_execution",
+        executable="r3m_RecipeExecution.py",
+        output="screen",
+        parameters=[{"InitialConditions": CONFIG}],
+    )
+
+    # =============================================== #
+    # ========== RETURN LAUNCH DESCRIPTION ========== #
+
+    # Add ROS 2 Nodes to LaunchDescription() element:
+    LD.add_action(node_robot_state_publisher)
+    LD.add_action(static_tf)
+    LD.add_action(rws_client)
+    
+    LD.add_action(ros2_control_node)
+    LD.add_action(joint_state_broadcaster_spawner)
+    LD.add_action(joint_trajectory_controller_spawner)
+
+    LD.add_action(RegisterEventHandler(
+        OnProcessExit(
+            target_action = joint_trajectory_controller_spawner,
+            on_exit = [
+                
+                # MoveIt!2:
+                TimerAction(
+                    period=2.0,
+                    actions=[
+                        rviz_node_full,
+                        run_move_group_node,
+                    ]
+                ),
+                
+                ]
+            )
+        )
+    )
+
+    LD.add_action(RegisterEventHandler(
+        OnProcessExit(
+            target_action = joint_trajectory_controller_spawner,
+            on_exit = [
+                
+                # Interfaces:
+                TimerAction(
+                    period=5.0,
+                    actions=[
+                        MoveInterface,
+                        SequenceInterface,
+                        RobMoveInterface,
+                        RobPoseInterface,
+                    ]
+                ),
+                
+                ]
+            )
+        )
+    )
+
+    if AUTO:
+
+        LD.add_action(RegisterEventHandler(
             OnProcessExit(
                 target_action = joint_trajectory_controller_spawner,
                 on_exit = [
-                    rviz_arg,
-                    run_move_group_node,
-
+                    
+                    # Interfaces:
                     TimerAction(
                         period=5.0,
-                        actions=[rviz_node_full],
+                        actions=[
+                            R3MautoOP,
+                        ]
                     ),
-
-                    RobPoseInterface,
-                    RobMoveInterface,
-                    MoveInterface,
-                    SequenceInterface,
                     
-                    R3MautoOP,
-                ]
+                    ]
+                )
             )
-        ),
-    ]
-)
+        )
+
+    # ***** RETURN  ***** #
+    return(LD)

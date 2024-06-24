@@ -37,7 +37,7 @@ import sys
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler
+from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler, TimerAction
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 import xacro
@@ -63,138 +63,110 @@ def load_yaml(package_name, file_path):
     except EnvironmentError:
         # parent of IOError, OSError *and* WindowsError where available.
         return None
-    
-# ========== **INPUT ARGUMENTS** ========== #
-#  layout -> Cell layout.
+
+# ===== REQUIRED TO GET THE ROBOT CONFIGURATION === #
 
 # EVALUATE INPUT ARGUMENTS:
 def AssignArgument(ARGUMENT):
-    
     ARGUMENTS = sys.argv
     for y in ARGUMENTS:
         if (ARGUMENT + ":=") in y:
             ARG = y.replace((ARGUMENT + ":="),"")
             return(ARG)
 
+# GET CONFIGURATION from YAML:
+def GetCONFIG(CONFIGURATION):
+    
+    RESULT = {"Success": False, "ID": "", "Name": "", "urdf": "", "ee": ""}
+
+    PATH = os.path.join(os.path.expanduser('~'), 'dev_ws', 'src', 'R3M_Cell', 'CranfieldUniversity')
+    YAML_PATH = PATH + "/configurations.yaml"
+    
+    if not os.path.exists(YAML_PATH):
+        return (RESULT)
+    
+    with open(YAML_PATH, 'r') as YAML:
+        cYAML = yaml.safe_load(YAML)
+
+    for x in cYAML["Configurations"]:
+
+        if x["ID"] == CONFIGURATION:
+            RESULT["Success"] = True
+            RESULT["ID"] = x["ID"]
+            RESULT["Name"] = x["Name"]
+            RESULT["urdf"] = x["urdf"]
+            RESULT["ee"] = x["ee"]
+
+    return(RESULT)
+
+# GET EE-Controllers LIST:
+def GetEEctr(EEName):
+    
+    RESULT = []
+
+    PATH = os.path.join(os.path.expanduser('~'), 'dev_ws', 'src', 'ros2_SimRealRobotControl', 'ros2srrc_endeffectors', EEName, 'config')
+    YAML_PATH = PATH + "/controller_moveit2.yaml"
+    
+    with open(YAML_PATH, 'r') as YAML:
+        cYAML = yaml.safe_load(YAML)
+
+    for x in cYAML["controller_names"]:
+        RESULT.append(x)
+
+    return(RESULT)
+
 # ========== **GENERATE LAUNCH DESCRIPTION** ========== #
 def generate_launch_description():
-
-    # ========== INPUT ARGUMENTS ========== #
-    # Cell layout:
-    layout = AssignArgument("layout")
-    if layout != None:
-        None
-    else:
-        print("")
-        print("ERROR: layout INPUT ARGUMENT has not been defined. Please try again.")
-        print("Closing... BYE!")
-        exit()
-
-    if layout == "r3mcell_cu_1":
-        LYT = "R3M Cell (Cranfield University): Simple Cube Pick-and-Place."
-        EE = "Schunk EGP-64 parallel gripper."
-        r3mcell_cu_1 = "true"
-        r3mcell_cu_2 = "false"
-        r3mcell_cu_3 = "false"
-        r3mcell_cu_4 = "false"
-        endeffector = "egp64"
-        EE_no = "false"
-        EE_egp64 = "true"
-        EE_vgr = "false"
-    elif layout == "r3mcell_cu_2":
-        LYT = "R3M Cell (Cranfield University): Lamination Sheet Pick-and-Place."
-        EE = "Custom R3M Vacuum Gripper."
-        r3mcell_cu_1 = "false"
-        r3mcell_cu_2 = "true"
-        r3mcell_cu_3 = "false"
-        r3mcell_cu_4 = "false"
-        endeffector = "vgr"
-        EE_no = "false"
-        EE_egp64 = "false"
-        EE_vgr = "true"
-    elif layout == "r3mcell_cu_3":
-        LYT = "R3M Cell (Cranfield University): Simple Can Pick-and-Place."
-        EE = "Schunk EGP-64 parallel gripper."
-        r3mcell_cu_1 = "false"
-        r3mcell_cu_2 = "false"
-        r3mcell_cu_3 = "true"
-        r3mcell_cu_4 = "false"
-        endeffector = "egp64"
-        EE_no = "false"
-        EE_egp64 = "true"
-        EE_vgr = "false"
-    elif layout == "r3mcell_cu_4":
-        LYT = "R3M Cell (Cranfield University): R3M-Perception Testing."
-        EE = "Schunk EGP-64 parallel gripper."
-        r3mcell_cu_1 = "false"
-        r3mcell_cu_2 = "false"
-        r3mcell_cu_3 = "false"
-        r3mcell_cu_4 = "true"
-        endeffector = "egp64"
-        EE_no = "false"
-        EE_egp64 = "true"
-        EE_vgr = "false"
-    elif layout == "r3mcell_cu_5":
-        LYT = "R3M Cell (Cranfield University): Cube Stacking Use-Case."
-        EE = "Schunk EGP-64 parallel gripper."
-        r3mcell_cu_1 = "false"
-        r3mcell_cu_2 = "false"
-        r3mcell_cu_3 = "false"
-        r3mcell_cu_4 = "false"
-        endeffector = "egp64"
-        EE_no = "false"
-        EE_egp64 = "true"
-        EE_vgr = "false"
-    else:
-        print("")
-        print("ERROR: layout INPUT ARGUMENT has not been defined properly. Please try again.")
-        print("Options: {r3mcell_cu_1, r3mcell_cu_2, r3mcell_cu_3, r3mcell_cu_4}")
-        print("Closing... BYE!")
-        exit()
-
-    # ========== CELL INFORMATION ========== #
-    print("")
-    print("===== ABB IRB-120: Robot Simulation (r3mcell_cu_gazebo) =====")
-    print("Robot configuration:")
-    print("")
-    # Cell Layout:
-    print("- Cell layout: " + LYT)
-    # End-Effector:
-    print("- End-effector: " + EE)
-    print("")
+    
+    LD = LaunchDescription()
 
     # ***** GAZEBO ***** #   
     # DECLARE Gazebo WORLD file:
     r3mcell_cu_gazebo = os.path.join(
         get_package_share_directory('r3mcell_cu_gazebo'),
         'worlds',
-        'irb120.world')
+        'r3mcell.world')
     # DECLARE Gazebo LAUNCH file:
     gazebo = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
                     get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
                 launch_arguments={'world': r3mcell_cu_gazebo}.items(),
              )
+    
+    # === INPUT ARGUMENT: CONFIGURATION === #
+    CONFIG = AssignArgument("config")
+    CONFIGURATION = GetCONFIG(CONFIG)
+
+    if CONFIGURATION["Success"] == False:
+        print("")
+        print("ERROR: config INPUT ARGUMENT has not been correctly defined. Please try again.")
+        print("Closing... BYE!")
+        exit()   
+
+    # ========== CELL INFORMATION ========== #
+    print("")
+    print("===== ABB IRB-120: Robot Simulation (r3mcell_cu_gazebo) =====")
+    print("Robot configuration:")
+    print(CONFIGURATION["ID"] + " -> " + CONFIGURATION["Name"])
+    print("")
 
     # ***** ROBOT DESCRIPTION ***** #
     # ABB-IRB120 Description file package:
     irb120_description_path = os.path.join(
         get_package_share_directory('r3mcell_cu_gazebo'))
     # ABB-IRB120 ROBOT urdf file path:
-    xacro_file = os.path.join(irb120_description_path,
-                              'urdf',
-                              'irb120.urdf.xacro')
+    xacro_file = os.path.join(irb120_description_path,'urdf',CONFIGURATION["urdf"])
     # Generate ROBOT_DESCRIPTION for ABB-IRB120:
     doc = xacro.parse(open(xacro_file))
     
+    if CONFIGURATION["ee"] == "none":
+        EE = "false"
+    else: 
+        EE = "true"
+    
     xacro.process_doc(doc, mappings={
-        "r3mcell_cu_1": r3mcell_cu_1,
-        "r3mcell_cu_2": r3mcell_cu_2,
-        "r3mcell_cu_3": r3mcell_cu_3,
-        "r3mcell_cu_4": r3mcell_cu_4,
-        "EE_no": EE_no,
-        "EE_egp64": EE_egp64,
-        "EE_vgr": EE_vgr,
+        "EE": EE,
+        "EE_name": CONFIGURATION["ee"],
     })
     
     robot_description_config = doc.toxml()
@@ -228,60 +200,64 @@ def generate_launch_description():
     joint_trajectory_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["irb120_controller", "-c", "/controller_manager"],
+        arguments=["joint_trajectory_controller", "-c", "/controller_manager"],
     )
 
-    # === SCHUNK EGP-64 === #
-    egp64left_controller_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["egp64_finger_left_controller", "-c", "/controller_manager"],
+    # EE CONTROLLERS:
+    if EE == "true":
+        CONTROLLERS = GetEEctr(CONFIGURATION["ee"])
+        CONTROLLER_NODES = []
+
+        for x in CONTROLLERS:
+            CONTROLLER_NODES.append(
+                Node(
+                    package="controller_manager",
+                    executable="spawner",
+                    arguments=[x, "-c", "/controller_manager"],
+                )
+            )
+
+    # =============================================== #
+    # ========== RETURN LAUNCH DESCRIPTION ========== #
+
+    # Add ROS 2 Nodes to LaunchDescription() element:
+    LD.add_action(gazebo)
+    LD.add_action(node_robot_state_publisher)
+    LD.add_action(spawn_entity)
+
+    LD.add_action(RegisterEventHandler(
+        OnProcessExit(
+            target_action = spawn_entity,
+            on_exit = [
+                joint_state_broadcaster_spawner,
+                ]
+            )
+        )
     )
-    egp64right_controller_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["egp64_finger_right_controller", "-c", "/controller_manager"],
+
+    LD.add_action(RegisterEventHandler(
+        OnProcessExit(
+            target_action = spawn_entity,
+            on_exit = [
+                joint_trajectory_controller_spawner,
+                ]
+            )
+        )
     )
-    # === SCHUNK EGP-64 === #
 
-    # ***** RETURN LAUNCH DESCRIPTION ***** #
-    return LaunchDescription([
-        
-        gazebo, 
-        node_robot_state_publisher,
-        spawn_entity,
+    if EE == "true":
 
-        RegisterEventHandler(
-            OnProcessExit(
-                target_action = spawn_entity,
-                on_exit = [
-                    joint_state_broadcaster_spawner,
-                ]
-            )
-        ),
-        RegisterEventHandler(
-            OnProcessExit(
-                target_action = joint_state_broadcaster_spawner,
-                on_exit = [
-                    joint_trajectory_controller_spawner,
-                ]
-            )
-        ),
-        RegisterEventHandler(
-            OnProcessExit(
-                target_action = joint_trajectory_controller_spawner,
-                on_exit = [
-                    egp64left_controller_spawner,
-                ]
-            )
-        ),
-        RegisterEventHandler(
-            OnProcessExit(
-                target_action = egp64left_controller_spawner,
-                on_exit = [
-                    egp64right_controller_spawner,
-                ]
-            )
-        ),
+        for x in CONTROLLER_NODES:
 
-    ])
+            LD.add_action(RegisterEventHandler(
+                OnProcessExit(
+                    target_action = joint_trajectory_controller_spawner,
+                    on_exit = [
+                        x,
+                        ]
+                    )
+                )
+            )
+
+    # ***** RETURN  ***** #
+    return(LD)

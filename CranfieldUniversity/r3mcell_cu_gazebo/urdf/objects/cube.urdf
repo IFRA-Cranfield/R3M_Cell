@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<robot name="Cube" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot name="cube" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <!-- Input parameters: -->
   <xacro:arg name="name" default="none"/>

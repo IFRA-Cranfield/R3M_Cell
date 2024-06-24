@@ -67,8 +67,4 @@
   <disable_collisions link1="link_4" link2="link_6" reason="Default" />
   <disable_collisions link1="link_5" link2="link_6" reason="Adjacent" />
 
-  <!-- R3M VACUUM GRIPPER -->
-  <disable_collisions link1="link_5" link2="vgr_link" reason="Default" />
-  <disable_collisions link1="link_6" link2="vgr_link" reason="Default" />
-
 </robot>
