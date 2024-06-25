@@ -6,6 +6,11 @@ Configurations:
     urdf: "r3mcell_cu_1.urdf.xacro"
     ee: "egp64"
 
+  - ID: "r3mcell_cu_11"
+    Name: "ABB IRB-120 Robot + Schunk EGP-64 Gripper on Cranfield University (IA Lab) Cell: CUBE STACKING use-case."
+    urdf: "r3mcell_cu_1.urdf.xacro"
+    ee: "egp64"
+
   - ID: "r3mcell_cu_2"
     Name: "UR3 Robot + Robotiq HandE Gripper on Cranfield University (IA Lab) Stand."
     urdf: "r3mcell_cu_2.urdf.xacro"
