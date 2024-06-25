@@ -32,7 +32,7 @@ Robot:
 ObjectList:
   - Name: "BlackCube"
     Link: "BlackCube"
-    CADFile: "Cube"
+    CADFile: "cube"
     Package: "r3mcell_cu_gazebo"
     InitialPose: 
       x: "{'min': 0.45, 'max': 0.8}"
@@ -46,7 +46,7 @@ ObjectList:
     PreviousPose: None
   - Name: "RedCube"
     Link: "RedCube"
-    CADFile: "Cube"
+    CADFile: "cube"
     Package: "r3mcell_cu_gazebo"
     InitialPose:   
       x: "{'min': 0.4, 'max': 0.75}"

@@ -29,7 +29,7 @@
 # IFRA-Cranfield (2023) ROS 2 Sim-to-Real Robot Control. URL: https://github.com/IFRA-Cranfield/ros2_SimRealRobotControl.
 
 # moveit2.launch.py:
-# Launch file for the ABB-IRB120 Robot GAZEBO SIMULATION + MoveIt!2 Framework in ROS2 Humble:
+# Launch file for the Robot's GAZEBO SIMULATION + MoveIt!2 Framework in ROS2 Humble:
 
 # Import libraries:
 import os
@@ -95,6 +95,7 @@ def GetCONFIG(CONFIGURATION):
             RESULT["ID"] = x["ID"]
             RESULT["Name"] = x["Name"]
             RESULT["urdf"] = x["urdf"]
+            RESULT["rob"] = x["rob"]
             RESULT["ee"] = x["ee"]
 
     return(RESULT)
@@ -163,18 +164,17 @@ def generate_launch_description():
 
     # ========== CELL INFORMATION ========== #
     print("")
-    print("===== ABB IRB-120: Robot Simulation + MoveIt!2 Framework (r3mcell_cu_moveit2) =====")
+    print("===== R3M Cell - Cranfield University: Robot Simulation + MoveIt!2 Framework (r3mcell_cu_moveit2) =====")
     print("Robot configuration:")
     print(CONFIGURATION["ID"] + " -> " + CONFIGURATION["Name"])
     print("")
 
     # ***** ROBOT DESCRIPTION ***** #
-    # ABB-IRB120 Description file package:
-    irb120_description_path = os.path.join(
-        get_package_share_directory('r3mcell_cu_gazebo'))
-    # ABB-IRB120 ROBOT urdf file path:
-    xacro_file = os.path.join(irb120_description_path,'urdf',CONFIGURATION["urdf"])
-    # Generate ROBOT_DESCRIPTION for ABB-IRB120:
+    # Robot Description file package:
+    robot_description_path = os.path.join(get_package_share_directory('r3mcell_cu_gazebo'))
+    # ROBOT urdf file path:
+    xacro_file = os.path.join(robot_description_path,'urdf',CONFIGURATION["urdf"])
+    # Generate ROBOT_DESCRIPTION for the robot:
     doc = xacro.parse(open(xacro_file))
     
     if CONFIGURATION["ee"] == "none":
@@ -210,8 +210,7 @@ def generate_launch_description():
 
     # SPAWN ROBOT TO GAZEBO:
     spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
-                        arguments=['-topic', 'robot_description',
-                                   '-entity', 'irb120'],
+                        arguments=['-topic', 'robot_description','-entity', CONFIGURATION["rob"]],
                         output='both')
 
     # ***** CONTROLLERS ***** #
@@ -247,21 +246,21 @@ def generate_launch_description():
     # *** PLANNING CONTEXT *** #
     # Robot description, SRDF:
     if EE == "false":
-        robot_description_semantic_config = load_file("r3mcell_cu_moveit2", "config/irb120.srdf")
+        robot_description_semantic_config = load_file("r3mcell_cu_moveit2", "config/" + CONFIGURATION["rob"] + ".srdf")
     else:
-        robot_description_semantic_config = load_file("r3mcell_cu_moveit2", "config/irb120" + CONFIGURATION["ee"] + ".srdf")
+        robot_description_semantic_config = load_file("r3mcell_cu_moveit2", "config/" + CONFIGURATION["rob"] + CONFIGURATION["ee"] + ".srdf")
     
     robot_description_semantic = {"robot_description_semantic": robot_description_semantic_config}
 
     # Kinematics.yaml file:
-    kinematics_yaml = load_yaml("ros2srrc_robots", "irb120/config/kinematics.yaml")
+    kinematics_yaml = load_yaml("ros2srrc_robots", CONFIGURATION["rob"] + "/config/kinematics.yaml")
     robot_description_kinematics = {"robot_description_kinematics": kinematics_yaml}
 
     # joint_limits.yaml file:
     if EE == "false":
-        joint_limits_yaml = load_yaml("ros2srrc_robots", "irb120/config/joint_limits.yaml")
+        joint_limits_yaml = load_yaml("ros2srrc_robots", CONFIGURATION["rob"] + "/config/joint_limits.yaml")
     else:
-        YAML_ROB = load_yaml("ros2srrc_robots", "irb120/config/joint_limits.yaml")["joint_limits"]
+        YAML_ROB = load_yaml("ros2srrc_robots", CONFIGURATION["rob"] + "/config/joint_limits.yaml")["joint_limits"]
         YAML_EE = load_yaml("ros2srrc_endeffectors", CONFIGURATION["ee"] + "/config/joint_limits.yaml")["joint_limits"]
         joint_limits_yaml = {}
         joint_limits_yaml["joint_limits"] = YAML_ROB | YAML_EE
@@ -277,14 +276,14 @@ def generate_launch_description():
             "default_planner_config": "PTP",
         }
     }
-    pilz_cartesian_limits_yaml = load_yaml("ros2srrc_robots", "irb120/config/pilz_cartesian_limits.yaml")
+    pilz_cartesian_limits_yaml = load_yaml("ros2srrc_robots", CONFIGURATION["rob"] + "/config/pilz_cartesian_limits.yaml")
     pilz_cartesian_limits = {'robot_description_planning': pilz_cartesian_limits_yaml}
 
     # MoveIt!2 Controllers:
     if EE == "false":
-        moveit_simple_controllers_yaml = load_yaml("ros2srrc_robots", "irb120/config/controller_moveit2.yaml")
+        moveit_simple_controllers_yaml = load_yaml("ros2srrc_robots", CONFIGURATION["rob"] + "/config/controller_moveit2.yaml")
     else:
-        YAML_ROB = load_yaml("ros2srrc_robots", "irb120/config/controller_moveit2.yaml")
+        YAML_ROB = load_yaml("ros2srrc_robots", CONFIGURATION["rob"] + "/config/controller_moveit2.yaml")
         YAML_EE = load_yaml("ros2srrc_endeffectors", CONFIGURATION["ee"] + "/config/controller_moveit2.yaml")
         for x in YAML_ROB["controller_names"]:
             YAML_EE["controller_names"].append(x)
@@ -338,9 +337,9 @@ def generate_launch_description():
     # RVIZ:
     rviz_base = os.path.join(get_package_share_directory("r3mcell_cu_moveit2"), "config")
     if EE == "false":
-        rviz_full_config = os.path.join(rviz_base, "irb120_moveit2.rviz")
+        rviz_full_config = os.path.join(rviz_base, CONFIGURATION["rob"] + "_moveit2.rviz")
     else:
-        rviz_full_config = os.path.join(rviz_base, "irb120" + CONFIGURATION["ee"] + "_moveit2.rviz")
+        rviz_full_config = os.path.join(rviz_base, CONFIGURATION["rob"] + CONFIGURATION["ee"] + "_moveit2.rviz")
 
     rviz_node_full = Node(
         package="rviz2",
@@ -377,14 +376,14 @@ def generate_launch_description():
             package="ros2srrc_execution",
             executable="move",
             output="screen",
-            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "none"}, {"ENV_PARAM": "gazebo"}],
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": CONFIGURATION["rob"]}, {"EE_PARAM": "none"}, {"ENV_PARAM": "gazebo"}],
         )
         SequenceInterface = Node(
             name="sequence",
             package="ros2srrc_execution",
             executable="sequence",
             output="screen",
-            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": "none"}, {"ENV_PARAM": "gazebo"}],
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": CONFIGURATION["rob"]}, {"EE_PARAM": "none"}, {"ENV_PARAM": "gazebo"}],
         )
 
     else:
@@ -394,14 +393,14 @@ def generate_launch_description():
             package="ros2srrc_execution",
             executable="move",
             output="screen",
-            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": CONFIGURATION["ee"]}, {"ENV_PARAM": "gazebo"}],
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": CONFIGURATION["rob"]}, {"EE_PARAM": CONFIGURATION["ee"]}, {"ENV_PARAM": "gazebo"}],
         )
         SequenceInterface = Node(
             name="sequence",
             package="ros2srrc_execution",
             executable="sequence",
             output="screen",
-            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}, {"EE_PARAM": CONFIGURATION["ee"]}, {"ENV_PARAM": "gazebo"}],
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": CONFIGURATION["rob"]}, {"EE_PARAM": CONFIGURATION["ee"]}, {"ENV_PARAM": "gazebo"}],
         )
 
     # RobMove and RobPose:
@@ -410,14 +409,14 @@ def generate_launch_description():
         package="ros2srrc_execution",
         executable="robmove",
         output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}],
+        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": CONFIGURATION["rob"]}],
     )
     RobPoseInterface = Node(
         name="robpose",
         package="ros2srrc_execution",
         executable="robpose",
         output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": "irb120"}],
+        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": CONFIGURATION["rob"]}],
     )
 
     # R3M -> Recipe Execution ROS 2 NODE:

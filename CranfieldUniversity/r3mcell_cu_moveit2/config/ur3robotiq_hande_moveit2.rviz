@@ -84,37 +84,36 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
+          base_link_inertia:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
             Value: true
           flange:
             Alpha: 1
             Show Axes: false
             Show Trail: false
-          link_1:
+          forearm_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
-          link_2:
+          robotiq_hande_base_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
-          link_3:
+          robotiq_hande_left_finger:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
-          link_4:
+          robotiq_hande_right_finger:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
-          link_5:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          link_6:
+          shoulder_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -123,6 +122,26 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
+          upper_arm_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_1_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_2_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_3_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
         Loop Animation: false
         Robot Alpha: 0.5
         Robot Color: 150; 50; 150
@@ -176,37 +195,21 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
+          base_link_inertia:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
             Value: true
           flange:
             Alpha: 1
             Show Axes: false
             Show Trail: false
-          link_1:
+          forearm_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
-          link_2:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          link_3:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          link_4:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          link_5:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          link_6:
+          shoulder_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -215,6 +218,26 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
+          upper_arm_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_1_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_2_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_3_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
         Robot Alpha: 1
         Show Robot Collision: false
         Show Robot Visual: true

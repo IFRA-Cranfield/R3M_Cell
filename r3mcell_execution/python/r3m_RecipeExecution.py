@@ -43,9 +43,6 @@ sys.path.append(PATH_endeffector_gz)
 from parallelGripper import parallelGR
 
 # Import CLASSES/Functions:
-from Robot import RobotClient
-from Gripper_Gz import ParallelGripper
-from Gripper_Gz import VacuumGripper
 from ObjectState import OBJECT
 from ResetGazebo import GzRESET
 from liaison import LiaisonCheck
@@ -464,10 +461,13 @@ def main(args=None):
     IC = GetIC_YAML(PARAM_IC)
 
     # Initialise NODE:
-    r3mNode = ExecuteSkill_SERVER(IC["UseCaseInfo"], IC["Robot"], IC["ObjectList"], IC["Liaison"])
-    r3mNode.get_logger().info("[R3M Cell] - /ExecuteSkill ROS2 Service Server running, ROS2 node generated.")
-
-    rclpy.spin(r3mNode)                                                                     
+    if IC["Success"]:
+        r3mNode = ExecuteSkill_SERVER(IC["UseCaseInfo"], IC["Robot"], IC["ObjectList"], IC["Liaison"])
+        r3mNode.get_logger().info("[R3M Cell] - /ExecuteSkill ROS2 Service Server running, ROS2 node generated.")
+        rclpy.spin(r3mNode)        
+    else:
+        r3mNode = rclpy.create_node('R3M_RecipeExecution_Node')
+        r3mNode.get_logger().info("[R3M Cell] - InitialConditions file not existing for the ROBOT CONFIGURATION selected. Closing r3m_RecipeExecution node.")                                                          
 
     r3mNode.destroy_node
     rclpy.shutdown()

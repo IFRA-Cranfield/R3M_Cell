@@ -29,7 +29,7 @@
 # IFRA-Cranfield (2023) ROS 2 Sim-to-Real Robot Control. URL: https://github.com/IFRA-Cranfield/ros2_SimRealRobotControl.
 
 # simulation.launch.py:
-# Launch file for the ABB-IRB120 Robot GAZEBO SIMULATION in ROS2 Humble:
+# Launch file for the ROBOT GAZEBO SIMULATION in ROS2 Humble:
 
 # Import libraries:
 import os
@@ -95,6 +95,7 @@ def GetCONFIG(CONFIGURATION):
             RESULT["ID"] = x["ID"]
             RESULT["Name"] = x["Name"]
             RESULT["urdf"] = x["urdf"]
+            RESULT["rob"] = x["rob"]
             RESULT["ee"] = x["ee"]
 
     return(RESULT)
@@ -145,18 +146,17 @@ def generate_launch_description():
 
     # ========== CELL INFORMATION ========== #
     print("")
-    print("===== ABB IRB-120: Robot Simulation (r3mcell_cu_gazebo) =====")
+    print("===== R3M Cell - Cranfield University: Robot Simulation (r3mcell_cu_gazebo) =====")
     print("Robot configuration:")
     print(CONFIGURATION["ID"] + " -> " + CONFIGURATION["Name"])
     print("")
 
     # ***** ROBOT DESCRIPTION ***** #
-    # ABB-IRB120 Description file package:
-    irb120_description_path = os.path.join(
-        get_package_share_directory('r3mcell_cu_gazebo'))
-    # ABB-IRB120 ROBOT urdf file path:
-    xacro_file = os.path.join(irb120_description_path,'urdf',CONFIGURATION["urdf"])
-    # Generate ROBOT_DESCRIPTION for ABB-IRB120:
+    # Robot Description file package:
+    robot_description_path = os.path.join(get_package_share_directory('r3mcell_cu_gazebo'))
+    # ROBOT urdf file path:
+    xacro_file = os.path.join(robot_description_path,'urdf',CONFIGURATION["urdf"])
+    # Generate ROBOT_DESCRIPTION for the ROBOT:
     doc = xacro.parse(open(xacro_file))
     
     if CONFIGURATION["ee"] == "none":
@@ -185,8 +185,7 @@ def generate_launch_description():
 
     # SPAWN ROBOT TO GAZEBO:
     spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
-                        arguments=['-topic', 'robot_description',
-                                   '-entity', 'irb120'],
+                        arguments=['-topic', 'robot_description','-entity', CONFIGURATION["rob"]],
                         output='both')
 
     # ***** CONTROLLERS ***** #
