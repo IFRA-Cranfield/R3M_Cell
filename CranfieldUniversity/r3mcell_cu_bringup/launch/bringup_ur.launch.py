@@ -28,17 +28,16 @@
 # You can cite our work with the following statement:
 # IFRA-Cranfield (2023) ROS 2 Sim-to-Real Robot Control. URL: https://github.com/IFRA-Cranfield/ros2_SimRealRobotControl.
 
-# moveit2.launch.py:
-# Launch file for the Robot's GAZEBO SIMULATION + MoveIt!2 Framework in ROS2 Humble:
+# bringup.launch.py:
+# Launch file for the Robot's BRINGUP ROS 2 DRIVER + MoveIt!2 Framework in ROS2 Humble:
 
 # Import libraries:
 import os, sys, xacro, yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import IncludeLaunchDescription, RegisterEventHandler, TimerAction
+from launch.actions import RegisterEventHandler, TimerAction
 from launch.event_handlers import OnProcessExit
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 # INFORMATION -> LAUNCH FILE PARAMETERS:
 PACKAGE_NAME = "r3mcell_cu"
@@ -121,18 +120,16 @@ def GetEEctr(EEName):
 def generate_launch_description():
 
     LD = LaunchDescription()
-    
-    # ***** GAZEBO ***** #   
-    # DECLARE Gazebo WORLD file:
-    robot_gazebo = os.path.join(
-        get_package_share_directory(PACKAGE_NAME + '_gazebo'),
-        'worlds',
-        PACKAGE_NAME + '.world')
-    # DECLARE Gazebo LAUNCH file:
-    gazebo = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-                launch_arguments={'world': robot_gazebo}.items(),
-            )
+
+    # === INPUT ARGUMENT: robot_ip === #
+    robot_ip = AssignArgument("robot_ip")
+    if robot_ip != None:
+        None
+    else:
+        print("")
+        print("ERROR: robot_ip INPUT ARGUMENT has not been defined. Please try again.")
+        print("Closing... BYE!")
+        exit()
     
     # === INPUT ARGUMENT: CONFIGURATION === #
     CONFIG = AssignArgument("config")
@@ -164,10 +161,24 @@ def generate_launch_description():
 
     # ========== CELL INFORMATION ========== #
     print("")
-    print("===== GAZEBO: Robot Simulation + MoveIt!2 Framework (" + PACKAGE_NAME + "_moveit2) =====")
+    print("===== " + CONFIGURATION["rob"] + ": Robot Bringup + MoveIt!2 Framework (" + PACKAGE_NAME + "_bringup) =====")
+    print("Robot IP Address -> " + robot_ip)
     print("Robot configuration:")
     print(CONFIGURATION["ID"] + " -> " + CONFIGURATION["Name"])
     print("")
+
+    # UR_ROBOT_DRIVER variables: 
+    urcl_path = os.path.join(get_package_share_directory('ur_client_library'))
+    script_filename = os.path.join(urcl_path,
+                              'resources',
+                              'external_control.urscript')
+    ur_path = os.path.join(get_package_share_directory('ur_robot_driver'))
+    input_recipe_filename = os.path.join(ur_path,
+                              'resources',
+                              'rtde_input_recipe.txt')
+    output_recipe_filename = os.path.join(ur_path,
+                              'resources',
+                              'rtde_output_recipe.txt')
 
     # ***** ROBOT DESCRIPTION ***** #
     # Robot Description file package:
@@ -185,6 +196,13 @@ def generate_launch_description():
     xacro.process_doc(doc, mappings={
         "EE": EE,
         "EE_name": CONFIGURATION["ee"],
+
+        "robot_ip": robot_ip,
+        "bringup": "true",
+
+        "script_filename": script_filename,
+        "input_recipe_filename": input_recipe_filename,
+        "output_recipe_filename": output_recipe_filename,
     })
     
     robot_description_config = doc.toxml()
@@ -208,17 +226,34 @@ def generate_launch_description():
         arguments=["0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "world", "base_link"],
     )
 
-    # SPAWN ROBOT TO GAZEBO:
-    spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
-                        arguments=['-topic', 'robot_description', '-entity', CONFIGURATION["rob"]],
-                        output='both')
-
     # ***** CONTROLLERS ***** #
+
+    # ros2_control:
+    ros2_controllers_path = os.path.join(get_package_share_directory("ros2srrc_robots"), CONFIGURATION["rob"], "config", "controller_ur.yaml")
+    ros2_control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[robot_description, ros2_controllers_path],
+        output="both"
+    )
+
+    # IO and STATUS CONTROLLER:
+    io_and_status_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["io_and_status_controller", "--controller-manager", "/controller_manager"],
+    )
     # Joint STATE BROADCASTER:
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+    )
+    # Speed scaling STATE BROADCASTER:
+    speed_scaling_state_broadcaster_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["speed_scaling_state_broadcaster", "--controller-manager", "/controller_manager"],
     )
     # Joint TRAJECTORY Controller:
     joint_trajectory_controller_spawner = Node(
@@ -226,20 +261,12 @@ def generate_launch_description():
         executable="spawner",
         arguments=["joint_trajectory_controller", "-c", "/controller_manager"],
     )
-
-    # EE CONTROLLERS:
-    if EE == "true":
-        CONTROLLERS = GetEEctr(CONFIGURATION["ee"])
-        CONTROLLER_NODES = []
-
-        for x in CONTROLLERS:
-            CONTROLLER_NODES.append(
-                Node(
-                    package="controller_manager",
-                    executable="spawner",
-                    arguments=[x, "-c", "/controller_manager"],
-                )
-            )
+    # Joint (SCALED) TRAJECTORY Controller:
+    scaled_joint_trajectory_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["scaled_joint_trajectory_controller", "-c", "/controller_manager"],
+    )
 
     # *********************** MoveIt!2 *********************** #   
 
@@ -257,14 +284,7 @@ def generate_launch_description():
     robot_description_kinematics = {"robot_description_kinematics": kinematics_yaml}
 
     # joint_limits.yaml file:
-    if EE == "false":
-        joint_limits_yaml = load_yaml("ros2srrc_robots", CONFIGURATION["rob"] + "/config/joint_limits.yaml")
-    else:
-        YAML_ROB = load_yaml("ros2srrc_robots", CONFIGURATION["rob"] + "/config/joint_limits.yaml")["joint_limits"]
-        YAML_EE = load_yaml("ros2srrc_endeffectors", CONFIGURATION["ee"] + "/config/joint_limits.yaml")["joint_limits"]
-        joint_limits_yaml = {}
-        joint_limits_yaml["joint_limits"] = YAML_ROB | YAML_EE
-    
+    joint_limits_yaml = load_yaml("ros2srrc_robots", CONFIGURATION["rob"] + "/config/joint_limits.yaml")
     joint_limits = {'robot_description_planning': joint_limits_yaml}
 
     # pilz_planning_pipeline_config.yaml file:
@@ -280,14 +300,9 @@ def generate_launch_description():
     pilz_cartesian_limits = {'robot_description_planning': pilz_cartesian_limits_yaml}
 
     # MoveIt!2 Controllers:
-    if EE == "false":
-        moveit_simple_controllers_yaml = load_yaml("ros2srrc_robots", CONFIGURATION["rob"] + "/config/controller_moveit2.yaml")
-    else:
-        YAML_ROB = load_yaml("ros2srrc_robots", CONFIGURATION["rob"] + "/config/controller_moveit2.yaml")
-        YAML_EE = load_yaml("ros2srrc_endeffectors", CONFIGURATION["ee"] + "/config/controller_moveit2.yaml")
-        for x in YAML_ROB["controller_names"]:
-            YAML_EE["controller_names"].append(x)
-        moveit_simple_controllers_yaml = YAML_ROB | YAML_EE
+    moveit_simple_controllers_yaml = load_yaml("ros2srrc_robots", CONFIGURATION["rob"] + "/config/controller_moveit2.yaml")
+    moveit_simple_controllers_yaml["joint_trajectory_controller"]["default"] = False
+    moveit_simple_controllers_yaml["scaled_joint_trajectory_controller"]["default"] = True
 
     # MoveIt!2 Parameters:
     moveit_controllers = {
@@ -296,7 +311,7 @@ def generate_launch_description():
     }
     trajectory_execution = {
         "moveit_manage_controllers": True,
-        "trajectory_execution.allowed_execution_duration_scaling": 1.2,
+        "trajectory_execution.allowed_execution_duration_scaling": 5.0, # Value increased to accommodate the "decreased" joint limits.
         "trajectory_execution.allowed_goal_duration_margin": 0.5,
         "trajectory_execution.allowed_start_tolerance": 0.01,
     }
@@ -330,7 +345,6 @@ def generate_launch_description():
             moveit_controllers,
             planning_scene_monitor_parameters,
             move_group_capabilities,
-            {"use_sim_time": True},
         ],
     )
 
@@ -361,7 +375,6 @@ def generate_launch_description():
             moveit_controllers,
             planning_scene_monitor_parameters,
             move_group_capabilities,
-            {"use_sim_time": True},
         ]
     )
 
@@ -376,14 +389,14 @@ def generate_launch_description():
             package="ros2srrc_execution",
             executable="move",
             output="screen",
-            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": CONFIGURATION["rob"]}, {"EE_PARAM": "none"}, {"ENV_PARAM": "gazebo"}],
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"ROB_PARAM": CONFIGURATION["rob"]}, {"EE_PARAM": "none"}, {"ENV_PARAM": "bringup"}],
         )
         SequenceInterface = Node(
             name="sequence",
             package="ros2srrc_execution",
             executable="sequence",
             output="screen",
-            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": CONFIGURATION["rob"]}, {"EE_PARAM": "none"}, {"ENV_PARAM": "gazebo"}],
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"ROB_PARAM": CONFIGURATION["rob"]}, {"EE_PARAM": "none"}, {"ENV_PARAM": "bringup"}],
         )
 
     else:
@@ -393,14 +406,14 @@ def generate_launch_description():
             package="ros2srrc_execution",
             executable="move",
             output="screen",
-            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": CONFIGURATION["rob"]}, {"EE_PARAM": CONFIGURATION["ee"]}, {"ENV_PARAM": "gazebo"}],
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"ROB_PARAM": CONFIGURATION["rob"]}, {"EE_PARAM": CONFIGURATION["ee"]}, {"ENV_PARAM": "bringup"}],
         )
         SequenceInterface = Node(
             name="sequence",
             package="ros2srrc_execution",
             executable="sequence",
             output="screen",
-            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": CONFIGURATION["rob"]}, {"EE_PARAM": CONFIGURATION["ee"]}, {"ENV_PARAM": "gazebo"}],
+            parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"ROB_PARAM": CONFIGURATION["rob"]}, {"EE_PARAM": CONFIGURATION["ee"]}, {"ENV_PARAM": "bringup"}],
         )
 
     # RobMove and RobPose:
@@ -409,14 +422,14 @@ def generate_launch_description():
         package="ros2srrc_execution",
         executable="robmove",
         output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": CONFIGURATION["rob"]}],
+        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"ROB_PARAM": CONFIGURATION["rob"]}],
     )
     RobPoseInterface = Node(
         name="robpose",
         package="ros2srrc_execution",
         executable="robpose",
         output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": CONFIGURATION["rob"]}],
+        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"ROB_PARAM": CONFIGURATION["rob"]}],
     )
 
     # R3M -> Recipe Execution ROS 2 NODE:
@@ -425,55 +438,26 @@ def generate_launch_description():
         package="r3mcell_execution",
         executable="r3m_RecipeExecution.py",
         output="screen",
-        parameters=[{"InitialConditions": CONFIG}, {"use_sim_time": True},],
+        parameters=[{"InitialConditions": CONFIG}],
     )
 
     # =============================================== #
     # ========== RETURN LAUNCH DESCRIPTION ========== #
 
     # Add ROS 2 Nodes to LaunchDescription() element:
-    LD.add_action(gazebo)
     LD.add_action(node_robot_state_publisher)
     LD.add_action(static_tf)
-    LD.add_action(spawn_entity)
+    
+    LD.add_action(ros2_control_node)
+    LD.add_action(io_and_status_controller_spawner)
+    LD.add_action(joint_state_broadcaster_spawner)
+    LD.add_action(speed_scaling_state_broadcaster_spawner)
+    #LD.add_action(joint_trajectory_controller_spawner)
+    LD.add_action(scaled_joint_trajectory_controller_spawner)
 
     LD.add_action(RegisterEventHandler(
         OnProcessExit(
-            target_action = spawn_entity,
-            on_exit = [
-                joint_state_broadcaster_spawner,
-                ]
-            )
-        )
-    )
-
-    LD.add_action(RegisterEventHandler(
-        OnProcessExit(
-            target_action = spawn_entity,
-            on_exit = [
-                joint_trajectory_controller_spawner,
-                ]
-            )
-        )
-    )
-
-    if EE == "true":
-
-        for x in CONTROLLER_NODES:
-
-            LD.add_action(RegisterEventHandler(
-                OnProcessExit(
-                    target_action = joint_trajectory_controller_spawner,
-                    on_exit = [
-                        x,
-                        ]
-                    )
-                )
-            )
-
-    LD.add_action(RegisterEventHandler(
-        OnProcessExit(
-            target_action = spawn_entity,
+            target_action = scaled_joint_trajectory_controller_spawner,
             on_exit = [
                 
                 # MoveIt!2:
@@ -492,7 +476,7 @@ def generate_launch_description():
 
     LD.add_action(RegisterEventHandler(
         OnProcessExit(
-            target_action = spawn_entity,
+            target_action = scaled_joint_trajectory_controller_spawner,
             on_exit = [
                 
                 # Interfaces:
@@ -515,7 +499,7 @@ def generate_launch_description():
 
         LD.add_action(RegisterEventHandler(
             OnProcessExit(
-                target_action = spawn_entity,
+                target_action = joint_trajectory_controller_spawner,
                 on_exit = [
                     
                     # Interfaces:

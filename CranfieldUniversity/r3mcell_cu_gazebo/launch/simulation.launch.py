@@ -29,19 +29,20 @@
 # IFRA-Cranfield (2023) ROS 2 Sim-to-Real Robot Control. URL: https://github.com/IFRA-Cranfield/ros2_SimRealRobotControl.
 
 # simulation.launch.py:
-# Launch file for the ROBOT GAZEBO SIMULATION in ROS2 Humble:
+# Launch file for the ROBOT's GAZEBO SIMULATION in ROS2 Humble:
 
 # Import libraries:
-import os
-import sys
+import os, sys, xacro, yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler, TimerAction
+from launch.actions import IncludeLaunchDescription, RegisterEventHandler
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-import xacro
-import yaml
+
+# INFORMATION -> LAUNCH FILE PARAMETERS:
+PACKAGE_NAME = "r3mcell_cu"
+CONFIG_PATH = os.path.join(os.path.expanduser('~'), 'dev_ws', 'src', 'R3M_Cell', 'CranfieldUniversity')
 
 # LOAD FILE:
 def load_file(package_name, file_path):
@@ -78,9 +79,9 @@ def AssignArgument(ARGUMENT):
 def GetCONFIG(CONFIGURATION):
     
     RESULT = {"Success": False, "ID": "", "Name": "", "urdf": "", "ee": ""}
-
-    PATH = os.path.join(os.path.expanduser('~'), 'dev_ws', 'src', 'R3M_Cell', 'CranfieldUniversity')
-    YAML_PATH = PATH + "/configurations.yaml"
+    
+    global CONFIG_PATH
+    YAML_PATH = CONFIG_PATH + "/configurations.yaml"
     
     if not os.path.exists(YAML_PATH):
         return (RESULT)
@@ -123,16 +124,15 @@ def generate_launch_description():
 
     # ***** GAZEBO ***** #   
     # DECLARE Gazebo WORLD file:
-    r3mcell_cu_gazebo = os.path.join(
-        get_package_share_directory('r3mcell_cu_gazebo'),
+    robot_gazebo = os.path.join(
+        get_package_share_directory(PACKAGE_NAME + '_gazebo'),
         'worlds',
-        'r3mcell.world')
+        PACKAGE_NAME + '.world')
     # DECLARE Gazebo LAUNCH file:
     gazebo = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-                launch_arguments={'world': r3mcell_cu_gazebo}.items(),
-             )
+                PythonLaunchDescriptionSource([os.path.join(get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
+                launch_arguments={'world': robot_gazebo}.items(),
+            )
     
     # === INPUT ARGUMENT: CONFIGURATION === #
     CONFIG = AssignArgument("config")
@@ -146,17 +146,17 @@ def generate_launch_description():
 
     # ========== CELL INFORMATION ========== #
     print("")
-    print("===== R3M Cell - Cranfield University: Robot Simulation (r3mcell_cu_gazebo) =====")
+    print("===== GAZEBO: Robot Simulation (" + PACKAGE_NAME + "_gazebo) =====")
     print("Robot configuration:")
     print(CONFIGURATION["ID"] + " -> " + CONFIGURATION["Name"])
     print("")
 
     # ***** ROBOT DESCRIPTION ***** #
     # Robot Description file package:
-    robot_description_path = os.path.join(get_package_share_directory('r3mcell_cu_gazebo'))
+    robot_description_path = os.path.join(get_package_share_directory(PACKAGE_NAME + '_gazebo'))
     # ROBOT urdf file path:
     xacro_file = os.path.join(robot_description_path,'urdf',CONFIGURATION["urdf"])
-    # Generate ROBOT_DESCRIPTION for the ROBOT:
+    # Generate ROBOT_DESCRIPTION variable:
     doc = xacro.parse(open(xacro_file))
     
     if CONFIGURATION["ee"] == "none":

@@ -29,19 +29,19 @@
 # IFRA-Cranfield (2023) ROS 2 Sim-to-Real Robot Control. URL: https://github.com/IFRA-Cranfield/ros2_SimRealRobotControl.
 
 # bringup.launch.py:
-# Launch file for the Robot Bringup + MoveIt!2 Framework in ROS2 Humble:
+# Launch file for the Robot's BRINGUP ROS 2 DRIVER + MoveIt!2 Framework in ROS2 Humble:
 
 # Import libraries:
-import os
-import sys
+import os, sys, xacro, yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler, DeclareLaunchArgument, TimerAction
+from launch.actions import RegisterEventHandler, TimerAction
 from launch.event_handlers import OnProcessExit
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-import xacro
-import yaml
+
+# INFORMATION -> LAUNCH FILE PARAMETERS:
+PACKAGE_NAME = "r3mcell_cu"
+CONFIG_PATH = os.path.join(os.path.expanduser('~'), 'dev_ws', 'src', 'R3M_Cell', 'CranfieldUniversity')
 
 # LOAD FILE:
 def load_file(package_name, file_path):
@@ -79,8 +79,8 @@ def GetCONFIG(CONFIGURATION):
     
     RESULT = {"Success": False, "ID": "", "Name": "", "urdf": "", "ee": ""}
 
-    PATH = os.path.join(os.path.expanduser('~'), 'dev_ws', 'src', 'R3M_Cell', 'CranfieldUniversity')
-    YAML_PATH = PATH + "/configurations.yaml"
+    global CONFIG_PATH
+    YAML_PATH = CONFIG_PATH + "/configurations.yaml"
     
     if not os.path.exists(YAML_PATH):
         return (RESULT)
@@ -161,7 +161,7 @@ def generate_launch_description():
 
     # ========== CELL INFORMATION ========== #
     print("")
-    print("===== R3M Cell - Cranfield University: Robot Bringup (r3mcell_cu_bringup) =====")
+    print("===== " + CONFIGURATION["rob"] + ": Robot Bringup + MoveIt!2 Framework (" + PACKAGE_NAME + "_bringup) =====")
     print("Robot IP Address -> " + robot_ip)
     print("Robot configuration:")
     print(CONFIGURATION["ID"] + " -> " + CONFIGURATION["Name"])
@@ -169,10 +169,10 @@ def generate_launch_description():
 
     # ***** ROBOT DESCRIPTION ***** #
     # Robot Description file package:
-    robot_description_path = os.path.join(get_package_share_directory('r3mcell_cu_gazebo'))
+    robot_description_path = os.path.join(get_package_share_directory(PACKAGE_NAME + '_gazebo'))
     # ROBOT urdf file path:
     xacro_file = os.path.join(robot_description_path,'urdf',CONFIGURATION["urdf"])
-    # Generate ROBOT_DESCRIPTION for the robot:
+    # Generate ROBOT_DESCRIPTION variable:
     doc = xacro.parse(open(xacro_file))
     
     if CONFIGURATION["ee"] == "none":
@@ -238,9 +238,9 @@ def generate_launch_description():
     # *** PLANNING CONTEXT *** #
     # Robot description, SRDF:
     if EE == "false":
-        robot_description_semantic_config = load_file("r3mcell_cu_moveit2", "config/" + CONFIGURATION["rob"] + ".srdf")
+        robot_description_semantic_config = load_file(PACKAGE_NAME + "_moveit2", "config/" + CONFIGURATION["rob"] + ".srdf")
     else:
-        robot_description_semantic_config = load_file("r3mcell_cu_moveit2", "config/" + CONFIGURATION["rob"] + CONFIGURATION["ee"] + ".srdf")
+        robot_description_semantic_config = load_file(PACKAGE_NAME + "_moveit2", "config/" + CONFIGURATION["rob"] + CONFIGURATION["ee"] + ".srdf")
     
     robot_description_semantic = {"robot_description_semantic": robot_description_semantic_config}
 
@@ -312,7 +312,7 @@ def generate_launch_description():
     )
 
     # RVIZ:
-    rviz_base = os.path.join(get_package_share_directory("r3mcell_cu_moveit2"), "config")
+    rviz_base = os.path.join(get_package_share_directory(PACKAGE_NAME + "_moveit2"), "config")
     if EE == "false":
         rviz_full_config = os.path.join(rviz_base, CONFIGURATION["rob"] + "_moveit2.rviz")
     else:
