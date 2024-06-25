@@ -35,18 +35,13 @@ install(
 install(PROGRAMS
   
   python/r3m_RecipeExecution.py
-  python/Robot.py
-  python/Gripper_Gz.py
+
   python/ObjectState.py
+  python/CalculateRP.py
   python/ResetGazebo.py
   python/liaison.py
 
   apg/apg_MATLAB.py
-
-  python/GzSim_Test.py
-  python/m6d_test.py
-
-  python/SpawnObject.py
 
   DESTINATION lib/${PROJECT_NAME} 
 )

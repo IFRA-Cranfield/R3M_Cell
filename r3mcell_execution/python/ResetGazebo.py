@@ -11,7 +11,7 @@
 # ========================================================================================= #
 
 # System:
-import os
+import os, sys
 import xacro
 import ast
 import random
@@ -22,18 +22,21 @@ from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
 
 # ROS2 MSG/SRV/ACTION:
-from std_srvs.srv import Empty
 from gazebo_msgs.srv import SpawnEntity
 from gazebo_msgs.srv import DeleteEntity
-from controller_manager_msgs.srv import LoadController
-from controller_manager_msgs.srv import ConfigureController
-from controller_manager_msgs.srv import SwitchController
 
 # CUSTOM ROS2 MSG/SRV/ACTION:
-from r3mcell_data.msg import Pose
+from ros2srrc_data.msg import Robpose
 
-# Import CLASSES/FUNCTIONS:
-from Robot import RobotClient
+# IMPORT Python classes:
+PATH = os.path.join(get_package_share_directory("ros2srrc_execution"), 'python')
+PATH_robot = PATH + "/robot"
+PATH_endeffector_gz = PATH + "/endeffector_gz"
+# ROBOT CLASS:
+sys.path.append(PATH_robot)
+from robot import RBT
+sys.path.append(PATH_endeffector_gz)
+from parallelGripper import parallelGR
 
 # ========================================================================================= #
 # =================================== CLASSES/FUNCTIONS =================================== #
@@ -47,13 +50,19 @@ class GzRESET():
 
         # Initialise ROS2 Clients:
         self.ENTITY_CLIENT = EntityClient()
-        self.ROBOT_CLIENT = RobotClient()
-
-        self.ResetCond = ResetCondition
+        self.ROBOT_CLIENT = RBT()
+        
+        self.EEType = ResetCondition["Robot"]["EEType"]
+        
+        if self.EEType == "ParallelGripper":
+            self.EE_CLIENT = parallelGR([], ResetCondition["Robot"]["Model"],ResetCondition["Robot"]["Link"])
+        elif self.EEType == "VacuumGripper":
+            None #TBD
 
         # InitialCondition: dict() with:
         # "Robot": {Model - Link - EEType - Package - InitialPose - HomePose}
         # "ObjectList": [{Name - Link - CADFile - Package - InitialPose - CurrentPose - PreviousPose}, ..]
+        self.ResetCond = ResetCondition
 
         # Spawn OBJECTS IN INITIAL CONDITIONS:
         for x in self.ResetCond["ObjectList"]:
@@ -72,7 +81,13 @@ class GzRESET():
                     break
 
     def RESET(self):
-
+        
+        # Reset End-Effector:
+        if self.EEType == "ParallelGripper":
+            self.EE_CLIENT.OPEN()
+        elif self.EEType == "VacuumGripper":
+            None #TBD
+            
         # Delete any object that could be in the workspace:
         for x in self.ResetCond["ObjectList"]:
 
@@ -90,26 +105,16 @@ class GzRESET():
                     break
 
         # Reset Robot's position:
-        HomePose = {}
-        HomePose["position"] = {}
-        HomePose["orientation"] ={}
+        HomePose = Robpose()
+        HomePose.x = self.ResetCond["Robot"]["HomePose"]["x"]
+        HomePose.y = self.ResetCond["Robot"]["HomePose"]["y"]
+        HomePose.z = self.ResetCond["Robot"]["HomePose"]["z"]
+        HomePose.qx = self.ResetCond["Robot"]["HomePose"]["qx"]
+        HomePose.qy = self.ResetCond["Robot"]["HomePose"]["qy"]
+        HomePose.qz = self.ResetCond["Robot"]["HomePose"]["qz"]
+        HomePose.qw = self.ResetCond["Robot"]["HomePose"]["qw"]
         
-        HomePose["position"]["type"] = "STATIC"
-        HomePose_P = Pose()
-        HomePose_P.x = self.ResetCond["Robot"]["HomePose"]["x"]
-        HomePose_P.y = self.ResetCond["Robot"]["HomePose"]["y"]
-        HomePose_P.z = self.ResetCond["Robot"]["HomePose"]["z"]
-        HomePose["position"]["pose"] = HomePose_P
-
-        HomePose["orientation"]["type"] = "STATIC"
-        HomePose_O = Pose()
-        HomePose_O.qx = self.ResetCond["Robot"]["HomePose"]["qx"]
-        HomePose_O.qy = self.ResetCond["Robot"]["HomePose"]["qy"]
-        HomePose_O.qz = self.ResetCond["Robot"]["HomePose"]["qz"]
-        HomePose_O.qw = self.ResetCond["Robot"]["HomePose"]["qw"]
-        HomePose["orientation"]["pose"] = HomePose_O
-        
-        HP_RES = self.ROBOT_CLIENT.Execute("PTP", 1.0, HomePose, [])
+        HP_RES = self.ROBOT_CLIENT.RobMove_EXECUTE("PTP", 1.0, HomePose)
         
         if HP_RES["Success"]:
             self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - Robot moved back to HOME POSITION. Ready to start again!")

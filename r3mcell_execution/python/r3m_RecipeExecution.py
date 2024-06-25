@@ -11,10 +11,7 @@
 # ========================================================================================= #
 
 # System:
-import os
-import time
-import yaml
-import math
+import os, sys, time, yaml
 
 # ROS2:
 import rclpy
@@ -25,6 +22,25 @@ from ament_index_python.packages import get_package_share_directory
 from r3mcell_data.srv import SkillExecution
 from r3mcell_data.msg import Product
 from r3mcell_data.msg import Pose
+
+# Import -> CalculateRP function:
+from CalculateRP import CALCULATE_RobPose
+
+# IMPORT Python classes:
+PATH = os.path.join(get_package_share_directory("ros2srrc_execution"), 'python')
+PATH_robot = PATH + "/robot"
+PATH_endeffector = PATH + "/endeffector"
+PATH_endeffector_gz = PATH + "/endeffector_gz"
+# ROBOT CLASS:
+sys.path.append(PATH_robot)
+from robot import RBT
+# END EFFECTOR CLASSES (Gazebo):
+sys.path.append(PATH_endeffector)
+from robotiq_ur import RobotiqGRIPPER
+from schunk_abb import SchunkGRIPPER
+# END EFFECTOR CLASSES (Gazebo):
+sys.path.append(PATH_endeffector_gz)
+from parallelGripper import parallelGR
 
 # Import CLASSES/Functions:
 from Robot import RobotClient
@@ -43,29 +59,6 @@ ProdStep = []
 # ========================================================================================= #
 # ================================ ROS2 - INPUT PARAMETERS ================================ #
 # ========================================================================================= #
-
-# ========================================================================================= #
-# Get AUTO CLASS:
-PARAM_AUTO = "default"
-P_CHECK_AUTO = False
-
-class getAUTO(Node):
-
-    def __init__(self):
-        
-        global PARAM_AUTO
-        global P_CHECK_AUTO
-        
-        super().__init__('r3mcell_AUTO_PARAM')
-        self.declare_parameter('AUTO', "default")
-        PARAM_AUTO = self.get_parameter('AUTO').get_parameter_value().string_value
-        if (PARAM_AUTO == "default"):
-            self.get_logger().info('[R3M Cell] - AUTO ROS2 Parameter was not defined.')
-            exit()
-        else:    
-            self.get_logger().info('[R3M Cell] - AUTO ROS2 Parameter received: ' + PARAM_AUTO)
-        
-        P_CHECK_AUTO = True
 
 # Get InitialConditions CLASS:
 PARAM_IC = "default"
@@ -165,189 +158,6 @@ def CalculateDif_PROD(A,B):
     return(RES)
 
 # ========================================================================================= #
-# ExecuteSkill_SERVER CLASS:
-class ExecuteSkill_SERVER(Node):
-    
-    def __init__(self, INFO, ROB, OL, LI):
-        
-        # Robot -> {Model - Link - EEType - Package - InitialPose - HomePose}
-        # ObjectList -> [{Name - Link - CADFile - Package - InitialPose - CurrentPose - PreviousPose}, ..]
-
-        # INITIALISE -> CLASSES needed for the Skill Execution:
-        self.OBJECTS = OBJECT(OL)
-        self.ROBOT = RobotClient()
-        if ROB["EEType"] == "ParallelGripper":
-            self.GRIPPER = ParallelGripper(ROB)
-        elif ROB["EEType"] == "VacuumGripper":
-            self.GRIPPER = VacuumGripper(ROB)
-
-        # INITIALISE -> GAZEBO SIMULATION ENVIRONMENT:
-        self.ResetCond = {}
-        self.ResetCond["Robot"] = ROB
-        self.ResetCond["ObjectList"] = OL
-        self.RESET = GzRESET(self.ResetCond)
-
-        # Initialise VARIABLES using the information from the INPUT PARAMETERS:
-        self.RecipeFolder = INFO["Name"]       # FOLDER to get the recipes from!
-        self.RBT = ROB                         
-        self.ObjectList = self.OBJECTS.GetObjectPose()                 
-        
-        # Initialise SERVICE SERVER:
-        super().__init__('r3mcell_SkillExecution_ServiceServer')                                              
-        self.srv = self.create_service(SkillExecution, "/r3m_SkillExecution", self.EXECUTE)
-
-        # Initialise -> LIAISON CLASS:
-        self.Liaison = LiaisonCheck(LI)
-    
-    def EXECUTE(self, request, response):
-        
-        global EEState, RobStep, ProdStep
-        
-        # Get RECIPE ID:
-        ID = request.id
-
-        # EXECUTE RECIPE:
-        if (ID == 0):
-
-            if self.RBT["EEType"] == "ParallelGripper":
-                self.GRIPPER.Execute(None, None, "OPEN", 1.0)
-            elif self.RBT["EEType"] == "VacuumGripper":
-                self.GRIPPER.Execute(None, None, "VacuumOFF")
-
-            RES = self.RESET.RESET()
-            self.OBJECTS.ResetObjectList()
-            response.result.id = 0
-            
-            EEState = 1
-            response.result.robstate.endeffector = EEState
-            
-            response.result.robstate.step = 0
-
-            ProdStep = []
-            for x in self.ObjectList:
-                ProdStep.append({"Name": x["Name"], "Step": 0})
-
-            self.ObjectList = self.OBJECTS.GetObjectPose()
-
-            if RES == True:
-                response.result.message = "ROS2 Environment RESET successful."
-                response.result.success = True
-                return(response)
-            else:
-                response.result.message = "ROS2 Environment RESET failed."
-                response.result.success = False
-                return(response)
-            
-        else:
-
-            # Get RECIPE VALUES:
-            RECIPE = GetRecipe(self.RecipeFolder, ID)
-
-            if RECIPE["Exists"] == True:
-
-                # Check MOVEMENT TYPE and EXECUTE ACCORDINGLY:
-                
-                # ROBOT:
-                if (RECIPE["type"] == "PTP" or RECIPE["type"] == "LIN"):
-
-                    RES = self.ROBOT.Execute(RECIPE["type"], RECIPE["speed"], RECIPE["pose"], self.ObjectList)
-
-                    if RES["Success"]:
-                        RobStep = ID
-
-                # ParallelGripper:
-                elif (RECIPE["type"] == "GRIP"):
-
-                    RES = self.GRIPPER.Execute(self.RBT, self.ObjectList, RECIPE["action"], RECIPE["speed"])
-
-                    EEState = RES["EEState"]
-                
-                # VacuumGripper:
-                elif (RECIPE["type"] == "VACUUM"):
-                    
-                    RES = self.GRIPPER.Execute(self.RBT, self.ObjectList, RECIPE["action"])
-
-                    EEState = RES["EEState"]
-
-                # ============================================ #
-                # ========== SKILL EXECUTION RESULT ========== #
-
-                # RESULT -> ID, exectime, error, message and success:
-                response.result.id = ID
-                response.result.exectime = RES["ExecTime"]
-                response.result.error = RES["Error"]
-                response.result.message = RES["Message"]
-                response.result.success = RES["Success"]
-
-                # RESULT -> Robot + EndEffector:
-                #response.result.robstate.robpose = TBD
-                response.result.robstate.step = RobStep
-                response.result.robstate.endeffector = EEState
-
-                # GET ObjectList -> OBJECT POSES:
-                OL = self.OBJECTS.GetObjectPose()
-                self.ObjectList = OL
-                PRODUCTS = []
-
-                for x in OL:
-
-                    P = Product()
-                    P.name = x["Name"]
-
-                    P.currentpose = Pose()
-                    P.currentpose.x = x["CurrentPose"].x
-                    P.currentpose.y = x["CurrentPose"].y
-                    P.currentpose.z = x["CurrentPose"].z
-                    P.currentpose.qx = x["CurrentPose"].qx
-                    P.currentpose.qy = x["CurrentPose"].qy
-                    P.currentpose.qz = x["CurrentPose"].qz
-                    P.currentpose.qw = x["CurrentPose"].qw
-
-                    P.previouspose = Pose()
-                    P.previouspose.x = x["PreviousPose"].x
-                    P.previouspose.y = x["PreviousPose"].y
-                    P.previouspose.z = x["PreviousPose"].z
-                    P.previouspose.qx = x["PreviousPose"].qx
-                    P.previouspose.qy = x["PreviousPose"].qy
-                    P.previouspose.qz = x["PreviousPose"].qz
-                    P.previouspose.qw = x["PreviousPose"].qw
-
-                    P.error = 0.0 # Error when retrieving from Gazebo is null.
-
-                    DIF = CalculateDif_PROD(P.currentpose,P.previouspose)
-                    if (DIF == True):
-
-                        for y in ProdStep:
-                            if P.name == y["Name"]:
-                                y["Step"] = y["Step"] + 1
-                                P.step = y["Step"]
-                                break
-
-                    else:
-                        
-                        for y in ProdStep:
-                            if P.name == y["Name"]:
-                                P.step = y["Step"]
-                                break
-
-                    PRODUCTS.append(P)
-
-                response.result.product = PRODUCTS
-
-                # GET LIAISON VECTOR:
-                LV = self.Liaison.CHECK(self.ObjectList)
-                response.result.liaison = LV
-
-                return(response)
-
-            else:
-
-                response.result.id = ID
-                response.result.message = "ERROR. Recipe N -> " + str(ID) + " does not exist."
-                response.result.success = False
-                return(response)
-        
-# ========================================================================================= #
 # GetRecipe FUNCTION:
 def GetRecipe(FOLDER, RECIPE_ID):
     
@@ -430,6 +240,7 @@ def GetRecipe(FOLDER, RECIPE_ID):
     elif RECIPE["type"] == "GRIP":
         
         RECIPE["action"] = RecipeYAML["action"]
+        RECIPE["value"] = RecipeYAML["value"]
 
     elif RECIPE["type"] == "VACUUM":
         
@@ -438,25 +249,208 @@ def GetRecipe(FOLDER, RECIPE_ID):
     return(RECIPE)
 
 # ========================================================================================= #
+# ExecuteSkill_SERVER CLASS:
+class ExecuteSkill_SERVER(Node):
+    
+    def __init__(self, INFO, ROB, OL, LI):
+        
+        # Robot -> {Model - Link - EEType - Package - InitialPose - HomePose}
+        # ObjectList -> [{Name - Link - CADFile - Package - InitialPose - CurrentPose - PreviousPose}, ..]
+
+        # INITIALISE -> CLASSES needed for the Skill Execution:
+        
+        # ===== OBJECTS (R3M_Perception) ===== #
+        self.OBJECTS = OBJECT(OL)
+        
+        # ===== ROBOT CLASS ===== #
+        self.ROBOT = RBT()
+        
+        # ===== END-EFFECTOR CLASS ===== #
+        objects = []
+        for x in OL:
+            objects.append(x["Name"])
+            
+        if ROB["EEType"] == "ParallelGripper":
+            self.GRIPPER = parallelGR(objects, ROB["Model"], ROB["Link"])
+        elif ROB["EEType"] == "VacuumGripper":
+            None #TBD
+
+        # INITIALISE -> GAZEBO SIMULATION ENVIRONMENT:
+        self.ResetCond = {}
+        self.ResetCond["Robot"] = ROB
+        self.ResetCond["ObjectList"] = OL
+        self.RESET = GzRESET(self.ResetCond)
+
+        # Initialise VARIABLES using the information from the INPUT PARAMETERS:
+        self.RecipeFolder = INFO["Name"]       # FOLDER to get the recipes from!
+        self.RBT = ROB                         
+        self.ObjectList = self.OBJECTS.GetObjectPose()                 
+        
+        # Initialise SERVICE SERVER:
+        super().__init__('r3mcell_SkillExecution_ServiceServer')                                              
+        self.srv = self.create_service(SkillExecution, "/r3m_SkillExecution", self.EXECUTE)
+
+        # Initialise -> LIAISON CLASS:
+        self.Liaison = LiaisonCheck(LI)
+    
+    def EXECUTE(self, request, response):
+        
+        global EEState, RobStep, ProdStep
+        
+        # Get RECIPE ID:
+        ID = request.id
+
+        # EXECUTE RECIPE:
+        if (ID == 0):
+
+            RES = self.RESET.RESET()
+            self.OBJECTS.ResetObjectList()
+            response.result.id = 0
+            
+            EEState = 1
+            response.result.robstate.endeffector = EEState
+            
+            response.result.robstate.step = 0
+
+            ProdStep = []
+            for x in self.ObjectList:
+                ProdStep.append({"Name": x["Name"], "Step": 0})
+
+            self.ObjectList = self.OBJECTS.GetObjectPose()
+
+            if RES == True:
+                response.result.message = "ROS2 Environment RESET successful."
+                response.result.success = True
+                return(response)
+            else:
+                response.result.message = "ROS2 Environment RESET failed."
+                response.result.success = False
+                return(response)
+            
+        else:
+
+            # Get RECIPE VALUES:
+            RECIPE = GetRecipe(self.RecipeFolder, ID)
+
+            if RECIPE["Exists"] == True:
+
+                # Check MOVEMENT TYPE and EXECUTE ACCORDINGLY:
+                
+                # ROBOT:
+                if (RECIPE["type"] == "PTP" or RECIPE["type"] == "LIN"):
+
+                    RES = CALCULATE_RobPose(RECIPE["pose"], self.ObjectList)
+                    if RES["Success"]:
+                        RES = self.ROBOT.RobMove_EXECUTE(RECIPE["type"], RECIPE["speed"], RES["Pose"])
+
+                    if RES["Success"]:
+                        RobStep = ID
+
+                # ParallelGripper:
+                elif (RECIPE["type"] == "GRIP"):
+
+                    if RECIPE["action"] == "CLOSE":
+                        RES = self.GRIPPER.CLOSE(RECIPE["value"])
+                        
+                        if RES["Success"]:
+                            EEState = 0
+                        
+                    else:
+                        RES = self.GRIPPER.OPEN()
+                        
+                        if RES["Success"]:
+                            EEState = 1
+                
+                # VacuumGripper:
+                elif (RECIPE["type"] == "VACUUM"):
+                    None #TBD
+                    #RES = self.GRIPPER.Execute(self.RBT, self.ObjectList, RECIPE["action"])
+                    #EEState = RES["EEState"]
+
+                # ============================================ #
+                # ========== SKILL EXECUTION RESULT ========== #
+
+                # RESULT -> ID, exectime, error, message and success:
+                response.result.id = ID
+                response.result.success = RES["Success"]
+                response.result.message = RES["Message"]
+                response.result.exectime = RES["ExecTime"]
+
+                # RESULT -> Robot + EndEffector:
+                #response.result.robstate.robpose = TBD
+                response.result.robstate.step = RobStep
+                response.result.robstate.endeffector = EEState
+
+                # GET ObjectList -> OBJECT POSES:
+                OL = self.OBJECTS.GetObjectPose()
+                self.ObjectList = OL
+                PRODUCTS = []
+
+                for x in OL:
+
+                    P = Product()
+                    P.name = x["Name"]
+
+                    P.currentpose = Pose()
+                    P.currentpose.x = x["CurrentPose"].x
+                    P.currentpose.y = x["CurrentPose"].y
+                    P.currentpose.z = x["CurrentPose"].z
+                    P.currentpose.qx = x["CurrentPose"].qx
+                    P.currentpose.qy = x["CurrentPose"].qy
+                    P.currentpose.qz = x["CurrentPose"].qz
+                    P.currentpose.qw = x["CurrentPose"].qw
+
+                    P.previouspose = Pose()
+                    P.previouspose.x = x["PreviousPose"].x
+                    P.previouspose.y = x["PreviousPose"].y
+                    P.previouspose.z = x["PreviousPose"].z
+                    P.previouspose.qx = x["PreviousPose"].qx
+                    P.previouspose.qy = x["PreviousPose"].qy
+                    P.previouspose.qz = x["PreviousPose"].qz
+                    P.previouspose.qw = x["PreviousPose"].qw
+
+                    P.error = 0.0 # Error when retrieving from Gazebo is null.
+
+                    DIF = CalculateDif_PROD(P.currentpose,P.previouspose)
+                    if (DIF == True):
+
+                        for y in ProdStep:
+                            if P.name == y["Name"]:
+                                y["Step"] = y["Step"] + 1
+                                P.step = y["Step"]
+                                break
+
+                    else:
+                        
+                        for y in ProdStep:
+                            if P.name == y["Name"]:
+                                P.step = y["Step"]
+                                break
+
+                    PRODUCTS.append(P)
+
+                response.result.product = PRODUCTS
+
+                # GET LIAISON VECTOR:
+                LV = self.Liaison.CHECK(self.ObjectList)
+                response.result.liaison = LV
+
+                return(response)
+
+            else:
+
+                response.result.id = ID
+                response.result.message = "ERROR. Recipe N -> " + str(ID) + " does not exist."
+                response.result.success = False
+                return(response)
+
+# ========================================================================================= #
 # ========================================= MAIN ========================================== #
 # ========================================================================================= #
 
 def main(args=None):
     
     rclpy.init(args=args)
-
-    # Check if NODE is going to be EXECUTED:
-    global PARAM_AUTO
-    global P_CHECK_AUTO
-    paramAUTO = getAUTO()
-    while (P_CHECK_AUTO == False):
-        rclpy.spin_once(paramAUTO)
-
-    if PARAM_AUTO == "False":
-        paramAUTO.get_logger().info("[R3M Cell] - R3M AutomaticOperation is not required for this simulation. Shutting down node!")
-        exit()
-    
-    paramAUTO.destroy_node()
 
     # === INITIAL CONDITIONS === #
     # Get ROS2 Parameter value:
