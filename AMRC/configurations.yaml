@@ -1,0 +1,26 @@
+# R3M Cell - AMRC-Sheffield.
+Configurations:
+
+  - ID: "r3mcell_amrc_1"
+    Name: "ABB IRB-1200 Robot + TBD Gripper on AMRC-Sheffield ReconCell."
+    urdf: "r3mcell_amrc_1.urdf.xacro"
+    rob: "irb1200"
+    ee: "TBD"
+
+  - ID: "r3mcell_amrc_11"
+    Name: "ABB IRB-1200 Robot + TBD Gripper on AMRC-Sheffield ReconCell: CUBE STACKING use-case."
+    urdf: "r3mcell_amrc_11.urdf.xacro"
+    rob: "irb1200"
+    ee: "TBD"
+
+  - ID: "r3mcell_amrc_2"
+    Name: "ABB IRB-6640 Robot + TBD Gripper on AMRC-Sheffield ReconCell."
+    urdf: "r3mcell_amrc_2.urdf.xacro"
+    rob: "irb6640"
+    ee: "TBD"
+
+  - ID: "r3mcell_amrc_21"
+    Name: "ABB IRB-6640 Robot + TBD Gripper on AMRC-Sheffield ReconCell: BATTERY DISSASEMBLY use-case."
+    urdf: "r3mcell_amrc_21.urdf.xacro"
+    rob: "irb6640"
+    ee: "TBD"
