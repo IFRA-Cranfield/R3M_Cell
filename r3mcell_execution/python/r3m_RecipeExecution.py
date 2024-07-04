@@ -429,8 +429,14 @@ class ExecuteSkill_SERVER(Node):
                 response.result.product = PRODUCTS
 
                 # GET LIAISON VECTOR:
-                LV = self.Liaison.CHECK(self.ObjectList)
-                response.result.liaison = LV
+                liRES = self.Liaison.CHECK(self.ObjectList)
+                response.result.liaison = liRES["LiaisonVector"]
+                
+                # GET -> TASK FINISHED?
+                if liRES["allMET"] and (ID == 1):
+                    response.result.finish = 1
+                else:
+                    None
 
                 return(response)
 

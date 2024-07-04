@@ -64,6 +64,9 @@ class LiaisonCheck():
 
     def CHECK(self, ObjectList):
 
+        # Flag to check if ALL LIAISONS are met:
+        allMET = True
+
         for x in self.LiaisonVECTOR:
 
             # Get OBJECT POSE for -> PARENT:
@@ -107,8 +110,13 @@ class LiaisonCheck():
                 x.liaison_met = 1
             else:
                 x.liaison_met = 0
+                allMET = False
 
-        return(self.LiaisonVECTOR)
+        RES = {}
+        RES["LiaisonVector"] = self.LiaisonVECTOR
+        RES["allMET"] = allMET
+
+        return(RES)
     
     def calculateGOAL(self, poseCHILD, posePARENT, TR):
 
