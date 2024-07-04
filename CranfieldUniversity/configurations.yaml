@@ -8,10 +8,28 @@ Configurations:
     ee: "egp64"
 
   - ID: "r3mcell_cu_11"
-    Name: "ABB IRB-120 Robot + Schunk EGP-64 Gripper on Cranfield University (IA Lab) Cell: CUBE STACKING use-case."
+    Name: "ABB IRB-120 Robot + Schunk EGP-64 Gripper on Cranfield University (IA Lab) Cell: Cube Stacking use-case."
     urdf: "r3mcell_cu_1.urdf.xacro"
     rob: "irb120"
     ee: "egp64"
+
+  - ID: "r3mcell_cu_12"
+    Name: "ABB IRB-120 Robot + Schunk EGP-64 Gripper on Cranfield University (IA Lab) Cell: Can Pick-and-Place use-case."
+    urdf: "r3mcell_cu_canPP.urdf.xacro"
+    rob: "irb120"
+    ee: "egp64"
+
+  - ID: "r3mcell_cu_13"
+    Name: "ABB IRB-120 Robot + Schunk EGP-64 Gripper on Cranfield University (IA Lab) Cell: Lamination Sheet Pick-and-Place use-case."
+    urdf: "r3mcell_cu_LamStack.urdf.xacro"
+    rob: "irb120"
+    ee: "vgr_ls"
+
+  - ID: "r3mcell_cu_14"
+    Name: "ABB IRB-120 Robot on Cranfield University (IA Lab) Cell: R3M Perception Testing Pipeline."
+    urdf: "r3mcell_cu_PerceptionTesting.urdf.xacro"
+    rob: "irb120"
+    ee: "none"
 
   - ID: "r3mcell_cu_2"
     Name: "UR3 Robot + Robotiq HandE Gripper on Cranfield University (IA Lab) Stand."

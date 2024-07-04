@@ -8,7 +8,7 @@ Configurations:
     ee: "TBD"
 
   - ID: "r3mcell_amrc_11"
-    Name: "ABB IRB-1200 Robot + TBD Gripper on AMRC-Sheffield ReconCell: CUBE STACKING use-case."
+    Name: "ABB IRB-1200 Robot + TBD Gripper on AMRC-Sheffield ReconCell: Cube Stacking use-case."
     urdf: "r3mcell_amrc_11.urdf.xacro"
     rob: "irb1200"
     ee: "TBD"
@@ -20,7 +20,7 @@ Configurations:
     ee: "TBD"
 
   - ID: "r3mcell_amrc_21"
-    Name: "ABB IRB-6640 Robot + TBD Gripper on AMRC-Sheffield ReconCell: BATTERY DISSASEMBLY use-case."
+    Name: "ABB IRB-6640 Robot + TBD Gripper on AMRC-Sheffield ReconCell: Battery Disassembly use-case."
     urdf: "r3mcell_amrc_21.urdf.xacro"
     rob: "irb6640"
     ee: "TBD"
