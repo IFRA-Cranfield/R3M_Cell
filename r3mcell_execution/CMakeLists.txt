@@ -34,7 +34,7 @@ install(
 )
 install(PROGRAMS
   
-  python/r3m_RecipeExecution.py
+  python/r3m_APG.py
 
   python/ObjectState.py
   python/CalculateRP.py

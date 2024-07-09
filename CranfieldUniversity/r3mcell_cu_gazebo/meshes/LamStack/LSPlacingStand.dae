@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <asset>
+    <contributor>
+      <author>Blender User</author>
+      <authoring_tool>Blender 4.0.2 commit date:2023-12-05, commit time:07:41, hash:9be62e85b727</authoring_tool>
+    </contributor>
+    <created>2024-01-25T17:50:33</created>
+    <modified>2024-01-25T17:50:33</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_images/>
+  <library_geometries>
+    <geometry id="shape0-mesh" name="shape0">
+      <mesh>
+        <source id="shape0-mesh-positions">
+          <float_array id="shape0-mesh-positions-array" count="129">0 200 210 0 200 0 0 5 210 0 5 0 200 200 0 200 200 210 200 5 0 200 5 210 0 5 0 195 5 210 195 195 210 5 195 210 5 5 210 0 5 210 5 195 10 5 5 10 195 5 10 195 195 10 95 91.3397 10 100 90 10 105 91.3397 10 91.3397 95 10 90 100 10 91.3397 105 10 95 108.66 10 100 110 10 105 108.66 10 108.66 105 10 110 100 10 108.66 95 10 91.3397 105 110 95 108.66 110 100 110 110 105 108.66 110 108.66 105 110 110 100 110 108.66 95 110 105 91.3397 110 100 90 110 95 91.3397 110 91.3397 95 110 90 100 110 100 100 110</float_array>
+          <technique_common>
+            <accessor source="#shape0-mesh-positions-array" count="43" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="shape0-mesh-normals">
+          <float_array id="shape0-mesh-normals-array" count="87">-1 0 0 1 0 0 0 0 -1 0 0 1 0 1 0 0 -1 0 0 0 1 0 0 1 0 0 1 -0.9659277 0.258812 0 -0.7070781 0.7071355 0 -0.7070763 0.7071374 0 -0.2588655 0.9659135 0 0.2588655 0.9659135 0 0.7071064 0.7071072 0 0.7071064 0.7071072 0 0.9659136 0.2588648 0 0.9659136 -0.2588648 0 0.7071359 -0.7070778 0 0.7071359 -0.7070777 0 0.2588105 -0.9659281 0 -0.2588105 -0.9659281 0 -0.7071056 -0.7071079 0 -0.7071076 -0.707106 0 -0.9659277 -0.258812 0 -0.9659287 -0.2588085 0 -0.9659287 0.2588085 0 -6.10352e-7 0 1 6.10352e-7 0 1</float_array>
+          <technique_common>
+            <accessor source="#shape0-mesh-normals-array" count="29" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="shape0-mesh-vertices">
+          <input semantic="POSITION" source="#shape0-mesh-positions"/>
+        </vertices>
+        <triangles count="78">
+          <input semantic="VERTEX" source="#shape0-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#shape0-mesh-normals" offset="1"/>
+          <p>0 0 1 0 2 0 2 0 1 0 3 0 4 1 5 1 6 1 6 1 5 1 7 1 8 2 1 2 6 2 6 2 1 2 4 2 9 3 7 3 10 3 10 3 7 3 5 3 10 3 5 3 11 3 11 3 5 3 0 3 11 3 0 3 12 3 12 3 0 3 13 3 0 4 5 4 1 4 1 4 5 4 4 4 11 1 12 1 14 1 14 1 12 1 15 1 9 0 10 0 16 0 16 0 10 0 17 0 10 5 11 5 17 5 17 5 11 5 14 5 18 3 15 3 19 3 19 3 15 3 16 3 19 3 16 3 20 3 18 3 21 3 15 3 15 3 21 3 22 3 15 3 22 3 14 3 14 3 22 3 23 3 23 3 24 3 14 3 14 6 24 6 25 6 14 3 25 3 17 3 17 7 25 7 26 7 26 3 27 3 17 3 17 3 27 3 28 3 17 3 28 3 16 3 16 3 28 3 29 3 16 8 29 8 20 8 12 5 13 5 15 5 15 5 13 5 8 5 15 5 8 5 16 5 16 5 8 5 6 5 16 5 6 5 9 5 9 5 6 5 7 5 22 9 30 9 23 9 23 10 30 10 31 10 23 11 31 11 24 11 24 12 31 12 32 12 24 12 32 12 25 12 25 13 32 13 33 13 25 13 33 13 26 13 26 14 33 14 34 14 26 15 34 15 27 15 27 16 34 16 35 16 27 16 35 16 28 16 28 17 35 17 36 17 28 17 36 17 29 17 29 18 36 18 37 18 29 19 37 19 20 19 20 20 37 20 38 20 20 20 38 20 19 20 19 21 38 21 39 21 19 21 39 21 18 21 18 22 39 22 40 22 18 23 40 23 21 23 21 24 40 24 41 24 21 25 41 25 22 25 22 26 41 26 30 26 37 3 36 3 42 3 42 3 36 3 35 3 42 3 35 3 34 3 40 3 39 3 42 3 42 27 39 27 38 27 42 28 38 28 37 28 31 3 30 3 42 3 42 3 30 3 41 3 42 3 41 3 40 3 34 3 33 3 42 3 42 28 33 28 32 28 42 27 32 27 31 27</p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="node" name="node" type="NODE">
+        <matrix sid="transform">0.001 0 0 0 0 0.001 0 0 0 0 0.001 0 0 0 0 1</matrix>
+        <instance_geometry url="#shape0-mesh" name="node"/>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>

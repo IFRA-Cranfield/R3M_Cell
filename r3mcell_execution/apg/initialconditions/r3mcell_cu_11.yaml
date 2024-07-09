@@ -11,14 +11,6 @@ Robot:
   Link: "EE_egp64"
   EEType: "ParallelGripper"
   Package: "r3mcell_cu_gazebo"
-  InitialPose:
-    x: 0.0
-    y: 0.0
-    z: 0.0
-    qx: 0.0
-    qy: 0.0
-    qz: 0.0
-    qw: 0.0
   HomePose:
     x: 0.577
     y: 0.525

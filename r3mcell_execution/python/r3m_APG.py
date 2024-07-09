@@ -41,6 +41,7 @@ from schunk_abb import SchunkGRIPPER
 # END EFFECTOR CLASSES (Gazebo):
 sys.path.append(PATH_endeffector_gz)
 from parallelGripper import parallelGR
+from vacuumGripper import vacuumGR
 
 # Import CLASSES/Functions:
 from ObjectState import OBJECT
@@ -56,28 +57,6 @@ ProdStep = []
 # ========================================================================================= #
 # ================================ ROS2 - INPUT PARAMETERS ================================ #
 # ========================================================================================= #
-
-# Get InitialConditions CLASS:
-PARAM_IC = "default"
-P_CHECK_IC = False
-
-class getIC(Node):
-
-    def __init__(self):
-        
-        global PARAM_IC
-        global P_CHECK_IC
-        
-        super().__init__('r3mcell_IC_PARAM')
-        self.declare_parameter('InitialConditions', "default")
-        PARAM_IC = self.get_parameter('InitialConditions').get_parameter_value().string_value
-        if (PARAM_IC == "default"):
-            self.get_logger().info('[R3M Cell] - InitialConditions ROS2 Parameter was not defined.')
-            exit()
-        else:    
-            self.get_logger().info('[R3M Cell] - InitialConditions ROS2 Parameter received: ' + PARAM_IC)
-        
-        P_CHECK_IC = True
 
 def GetIC_YAML(NAME):
 
@@ -270,7 +249,7 @@ class ExecuteSkill_SERVER(Node):
         if ROB["EEType"] == "ParallelGripper":
             self.GRIPPER = parallelGR(objects, ROB["Model"], ROB["Link"])
         elif ROB["EEType"] == "VacuumGripper":
-            None #TBD
+            self.GRIPPER = vacuumGR(objects, ROB["Model"], ROB["Link"])
 
         # INITIALISE -> GAZEBO SIMULATION ENVIRONMENT:
         self.ResetCond = {}
@@ -360,9 +339,18 @@ class ExecuteSkill_SERVER(Node):
                 
                 # VacuumGripper:
                 elif (RECIPE["type"] == "VACUUM"):
-                    None #TBD
-                    #RES = self.GRIPPER.Execute(self.RBT, self.ObjectList, RECIPE["action"])
-                    #EEState = RES["EEState"]
+                    
+                    if RECIPE["action"] == "ACTIVATE":
+                        RES = self.GRIPPER.ACTIVATE()
+                        
+                        if RES["Success"]:
+                            EEState = 0
+                        
+                    elif RECIPE["action"] == "DEACTIVATE":
+                        RES = self.GRIPPER.DEACTIVATE()
+                        
+                        if RES["Success"]:
+                            EEState = 1
 
                 # ============================================ #
                 # ========== SKILL EXECUTION RESULT ========== #
@@ -446,25 +434,36 @@ class ExecuteSkill_SERVER(Node):
                 response.result.message = "ERROR. Recipe N -> " + str(ID) + " does not exist."
                 response.result.success = False
                 return(response)
+            
+# ========================================================================================= #           
+# EVALUATE INPUT ARGUMENTS:
+def AssignArgument(ARGUMENT):
+    ARGUMENTS = sys.argv
+    for y in ARGUMENTS:
+        if (ARGUMENT + ":=") in y:
+            ARG = y.replace((ARGUMENT + ":="),"")
+            return(ARG)
 
 # ========================================================================================= #
 # ========================================= MAIN ========================================== #
 # ========================================================================================= #
-
 def main(args=None):
     
     rclpy.init(args=args)
 
     # === INITIAL CONDITIONS === #
     # Get ROS2 Parameter value:
-    global PARAM_IC
-    global P_CHECK_IC
-    paramIC = getIC()
-    while (P_CHECK_IC == False):
-        rclpy.spin_once(paramIC)
-    paramIC.destroy_node()
+    CONFIG = AssignArgument("config")
+    if CONFIG != None:
+        None
+    else:
+        print("")
+        print("ERROR: config INPUT ARGUMENT has not been defined. Please try again.")
+        print("Closing... BYE!")
+        exit()
+
     # Get InitialConditions from yaml file:
-    IC = GetIC_YAML(PARAM_IC)
+    IC = GetIC_YAML(CONFIG)
 
     # Initialise NODE:
     if IC["Success"]:

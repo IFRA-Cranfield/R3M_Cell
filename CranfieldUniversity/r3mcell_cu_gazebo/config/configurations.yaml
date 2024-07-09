@@ -20,10 +20,10 @@ Configurations:
     ee: "egp64"
 
   - ID: "r3mcell_cu_13"
-    Name: "ABB IRB-120 Robot + Schunk EGP-64 Gripper on Cranfield University (IA Lab) Cell: Lamination Sheet Pick-and-Place use-case."
+    Name: "ABB IRB-120 Robot + LS Vacuum Gripper on Cranfield University (IA Lab) Cell: Lamination Sheet Pick-and-Place use-case."
     urdf: "r3mcell_cu_LamStack.urdf.xacro"
     rob: "irb120"
-    ee: "vgr_ls"
+    ee: "ls_vgr"
 
   - ID: "r3mcell_cu_14"
     Name: "ABB IRB-120 Robot on Cranfield University (IA Lab) Cell: R3M Perception Testing Pipeline."
