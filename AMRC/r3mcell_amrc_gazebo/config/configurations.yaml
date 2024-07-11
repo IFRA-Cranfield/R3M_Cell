@@ -2,25 +2,31 @@
 Configurations:
 
   - ID: "r3mcell_amrc_1"
-    Name: "ABB IRB-1200 Robot + TBD Gripper on AMRC-Sheffield ReconCell."
+    Name: "ABB IRB-1200 Robot on AMRC-Sheffield ReconCell."
     urdf: "r3mcell_amrc_1.urdf.xacro"
     rob: "irb1200"
-    ee: "TBD"
+    ee: "none"
 
   - ID: "r3mcell_amrc_11"
     Name: "ABB IRB-1200 Robot + TBD Gripper on AMRC-Sheffield ReconCell: Cube Stacking use-case."
-    urdf: "r3mcell_amrc_11.urdf.xacro"
+    urdf: "r3mcell_amrc_CubeStacking.urdf.xacro"
+    rob: "irb1200"
+    ee: "TBD"
+  
+  - ID: "r3mcell_amrc_12"
+    Name: "ABB IRB-1200 Robot + Vacuum Gripper on AMRC-Sheffield ReconCell: Lamination Sheet Pick and Place use-case."
+    urdf: "r3mcell_amrc_LamStack.urdf.xacro"
     rob: "irb1200"
     ee: "TBD"
 
   - ID: "r3mcell_amrc_2"
-    Name: "ABB IRB-6640 Robot + TBD Gripper on AMRC-Sheffield ReconCell."
+    Name: "ABB IRB-6640 Robot on AMRC-Sheffield ReconCell."
     urdf: "r3mcell_amrc_2.urdf.xacro"
     rob: "irb6640"
-    ee: "TBD"
+    ee: "none"
 
   - ID: "r3mcell_amrc_21"
     Name: "ABB IRB-6640 Robot + TBD Gripper on AMRC-Sheffield ReconCell: Battery Disassembly use-case."
-    urdf: "r3mcell_amrc_21.urdf.xacro"
+    urdf: "r3mcell_amrc_BD.urdf.xacro"
     rob: "irb6640"
-    ee: "TBD"
+    ee: "none"
