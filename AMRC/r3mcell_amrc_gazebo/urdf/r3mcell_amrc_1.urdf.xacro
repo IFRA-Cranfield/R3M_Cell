@@ -77,13 +77,13 @@
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/ReconCell/floor_simplified.dae" scale="1 1 1" />
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/ReconCell/floor.dae" scale="1 1 1" />
       </geometry>
     </visual>
     <collision>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/ReconCell/floor_simplified.dae" scale="1 1 1" />
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/ReconCell/floor.dae" scale="1 1 1" />
       </geometry>
     </collision>
     <inertial>
