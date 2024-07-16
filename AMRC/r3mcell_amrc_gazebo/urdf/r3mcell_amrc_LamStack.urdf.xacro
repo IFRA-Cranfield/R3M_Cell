@@ -84,13 +84,13 @@
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/ReconCell/floor.dae" scale="1 1 1" />
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/ReconCell/floor_irb1200.dae" scale="1 1 1" />
       </geometry>
     </visual>
     <collision>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/ReconCell/floor.dae" scale="1 1 1" />
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/ReconCell/floor_irb1200.dae" scale="1 1 1" />
       </geometry>
     </collision>
     <inertial>
@@ -98,6 +98,11 @@
       <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
     </inertial>
   </link>
+  <joint name="world-floor-fixed" type="fixed">
+    <parent link="world"/>
+    <child link="floor"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
 
   <!-- IRB1200 - Adapter Plate -->
   <link name="adapter_plate">
@@ -114,22 +119,61 @@
       </geometry>
     </collision>
     <inertial>
-      <mass value="1000.0"/>
+      <mass value="100.0"/>
       <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
     </inertial>
   </link>
-
-  <!-- FLOOR: FIXED JOINT -->
-  <joint name="world-floor-fixed" type="fixed">
-    <parent link="world"/>
-    <child link="floor"/>
-    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
-  </joint>
-
-  <!-- Floor+Adapter JOINT -->
   <joint name="floor-adapter-fixed" type="fixed">
     <parent link="floor"/>
     <child link="adapter_plate"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
+
+  <!-- LamStack - PICK and PLACE FIXTURES -->
+  <link name="LS_PICK">
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/LamStack/LamStack_PickingBase.dae" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/LamStack/LamStack_PickingBase.dae" scale="1 1 1" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="100.0"/>
+      <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
+    </inertial>
+  </link>
+  <joint name="floor-LSPick-fixed" type="fixed">
+    <parent link="floor"/>
+    <child link="LS_PICK"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
+  <link name="LS_PLACE">
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/LamStack/LamStack_PlacingFixture.dae" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/LamStack/LamStack_PlacingFixture.dae" scale="1 1 1" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="100.0"/>
+      <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
+    </inertial>
+  </link>
+  <joint name="floor-LSPlace-fixed" type="fixed">
+    <parent link="floor"/>
+    <child link="LS_PLACE"/>
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
@@ -137,7 +181,7 @@
   <joint name="adapter-base_link-fixed" type="fixed">
     <parent link="adapter_plate"/>
     <child link="base_link"/>
-    <origin xyz="2.55 4.4 0.139" rpy="0.0 0.0 -1.571" />
+    <origin xyz="0.0 0.0 0.139" rpy="0.0 0.0 0.0" />
   </joint>
 
 </robot>
