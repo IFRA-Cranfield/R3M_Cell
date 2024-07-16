@@ -28,16 +28,6 @@ from gazebo_msgs.srv import DeleteEntity
 # CUSTOM ROS2 MSG/SRV/ACTION:
 from ros2srrc_data.msg import Robpose
 
-# IMPORT Python classes:
-PATH = os.path.join(get_package_share_directory("ros2srrc_execution"), 'python')
-PATH_robot = PATH + "/robot"
-PATH_endeffector_gz = PATH + "/endeffector_gz"
-# ROBOT CLASS:
-sys.path.append(PATH_robot)
-from robot import RBT
-sys.path.append(PATH_endeffector_gz)
-from parallelGripper import parallelGR
-
 # ========================================================================================= #
 # =================================== CLASSES/FUNCTIONS =================================== #
 # ========================================================================================= #
@@ -46,18 +36,18 @@ from parallelGripper import parallelGR
 # CLASS -> RESET GAZEBO:
 class GzRESET():
 
-    def __init__(self,  ResetCondition):
+    def __init__(self,  ResetCondition, ROBOT_CLIENT, EE_CLIENT):
 
         # Initialise ROS2 Clients:
         self.ENTITY_CLIENT = EntityClient()
-        self.ROBOT_CLIENT = RBT()
+        self.ROBOT_CLIENT = ROBOT_CLIENT
         
         self.EEType = ResetCondition["Robot"]["EEType"]
         
         if self.EEType == "ParallelGripper":
-            self.EE_CLIENT = parallelGR([], ResetCondition["Robot"]["Model"],ResetCondition["Robot"]["Link"])
+            self.EE_CLIENT = EE_CLIENT
         elif self.EEType == "VacuumGripper":
-            None #TBD
+            self.EE_CLIENT = EE_CLIENT
 
         # InitialCondition: dict() with:
         # "Robot": {Model - Link - EEType - Package - InitialPose - HomePose}
@@ -86,7 +76,7 @@ class GzRESET():
         if self.EEType == "ParallelGripper":
             self.EE_CLIENT.OPEN()
         elif self.EEType == "VacuumGripper":
-            None #TBD
+            self.EE_CLIENT.DEACTIVATE()
             
         # Delete any object that could be in the workspace:
         for x in self.ResetCond["ObjectList"]:

@@ -255,7 +255,7 @@ class ExecuteSkill_SERVER(Node):
         self.ResetCond = {}
         self.ResetCond["Robot"] = ROB
         self.ResetCond["ObjectList"] = OL
-        self.RESET = GzRESET(self.ResetCond)
+        self.RESET = GzRESET(self.ResetCond, self.ROBOT, self.GRIPPER)
 
         # Initialise VARIABLES using the information from the INPUT PARAMETERS:
         self.RecipeFolder = INFO["Name"]       # FOLDER to get the recipes from!
