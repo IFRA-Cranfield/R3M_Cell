@@ -26,7 +26,7 @@ Configurations:
     ee: "none"
 
   - ID: "r3mcell_amrc_21"
-    Name: "ABB IRB-6640 Robot + TBD Gripper on AMRC-Sheffield ReconCell: Battery Disassembly use-case."
+    Name: "ABB IRB-6640 Robot + Zimmer GP5010NC-00-A Gripper on AMRC-Sheffield ReconCell: Battery Disassembly use-case."
     urdf: "r3mcell_amrc_BD.urdf.xacro"
     rob: "irb6640"
-    ee: "none"
+    ee: "gpp5010nc"

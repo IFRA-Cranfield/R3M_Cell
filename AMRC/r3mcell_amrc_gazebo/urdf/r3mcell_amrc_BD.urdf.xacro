@@ -54,6 +54,37 @@
     EE_name="${EE_name}"
   />
 
+  <!-- Include: IRB6640/GPP5010NC ADAPTER -->
+  <link name="adapter">
+    <visual>
+      <geometry>
+        <mesh filename="file://$(find ros2srrc_endeffectors)/gpp5010nc/meshes/gpp5010nc_irb6640_Adapter.dae" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="file://$(find ros2srrc_endeffectors)/gpp5010nc/meshes/gpp5010nc_irb6640_Adapter.dae" />
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.001" />
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+    </inertial>
+  </link>
+  <joint name="adapter_joint" type="fixed">
+    <origin xyz="0.0 0 0.023" rpy="0 ${pi/2} ${pi}" />
+    <parent link="tool0"/>
+    <child link="adapter"/>
+  </joint>
+
+  <!-- Include XACRO-MACRO file of the GPP5010NC: -->
+  <xacro:include filename="$(find ros2srrc_endeffectors)/gpp5010nc/urdf/gpp5010nc_macro.urdf.xacro"/>	
+  <xacro:gpp5010nc 
+    bringup="${bringup}"
+    parent_link="adapter"
+  />
+
   <!-- Load ROS 2 Gazebo Plugin -->
   <xacro:unless value="${bringup}">
     
@@ -63,6 +94,9 @@
 
         <!-- IRB6640 Controller -->
         <parameters>$(find ros2srrc_robots)/irb6640/config/controller.yaml</parameters>
+
+        <!-- End-Effector Controller (if needed) -->
+        <parameters>$(find ros2srrc_endeffectors)/${EE_name}/config/controller.yaml</parameters>
 
       </plugin>
     </gazebo>
@@ -105,5 +139,81 @@
     <child link="base_link"/>
     <origin xyz="0.0 0.0 0.148" rpy="0.0 0.0 0.0" />
   </joint>
+
+  <!-- BATTERY DISASSEMBLY USE-CASE -->
+  <link name="BD_fixture">
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/BatteryDisassembly/BD_Fixture.dae" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/BatteryDisassembly/BD_Fixture.dae" scale="1 1 1" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1000.0"/>
+      <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
+    </inertial>
+  </link>
+  <joint name="fixture-floor-fixed" type="fixed">
+    <parent link="floor"/>
+    <child link="BD_fixture"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
+
+  <link name="BD_PlasticBin">
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/BatteryDisassembly/BD_PlasticBin.dae" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/BatteryDisassembly/BD_PlasticBin.dae" scale="1 1 1" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1000.0"/>
+      <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
+    </inertial>
+  </link>
+  <joint name="PlasticBin-floor-fixed" type="fixed">
+    <parent link="floor"/>
+    <child link="BD_PlasticBin"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
+
+  <link name="BD_CaseBottom">
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/BatteryDisassembly/BD_CaseBottom.dae" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/BatteryDisassembly/BD_CaseBottom_collisions.dae" scale="1 1 1" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1000.0"/>
+      <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
+    </inertial>
+  </link>
+  <joint name="CaseBottom-floor-fixed" type="fixed">
+    <parent link="floor"/>
+    <child link="BD_CaseBottom"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
+  <gazebo reference="BD_CaseBottom">
+    <material>Gazebo/Grey</material>
+  </gazebo>
 
 </robot>
