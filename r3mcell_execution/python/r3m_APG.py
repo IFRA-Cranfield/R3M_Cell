@@ -79,17 +79,14 @@ def GetIC_YAML(NAME):
     RESULT["Robot"] = icYAML["Robot"]
     
     RESULT["ObjectList"] = icYAML["ObjectList"]
-    if RESULT["ObjectList"] == "":
-        RESULT["ObjectList"] = []
 
-    RESULT["Liaison"] = icYAML["Liaison"]
-    if RESULT["Liaison"] == "":
-        RESULT["Liaison"] = []
-
-    # Initialise ProdStep vector:
-    else:
+    if RESULT["ObjectList"] != None:
+        
+        # Initialise ProdStep vector:
         for x in RESULT["ObjectList"]:
             ProdStep.append({"Name": x["Name"], "Step": 0})
+
+    RESULT["Liaison"] = icYAML["Liaison"]
 
     return(RESULT)
 
@@ -230,26 +227,40 @@ class ExecuteSkill_SERVER(Node):
     
     def __init__(self, INFO, ROB, OL, LI):
         
+        # CHECK if Object and Liaison arrays are not NULL:
+        self.OLCheck = False
+        if OL != None:
+            self.OLCheck = True
+        self.LICheck = False
+        if LI != None:
+            self.LICheck = True
+        
         # Robot -> {Model - Link - EEType - Package - InitialPose - HomePose}
         # ObjectList -> [{Name - Link - CADFile - Package - InitialPose - CurrentPose - PreviousPose}, ..]
 
         # INITIALISE -> CLASSES needed for the Skill Execution:
         
         # ===== OBJECTS (R3M_Perception) ===== #
-        self.OBJECTS = OBJECT(OL)
+        if self.OLCheck:
+            self.OBJECTS = OBJECT(OL)
         
         # ===== ROBOT CLASS ===== #
         self.ROBOT = RBT()
         
         # ===== END-EFFECTOR CLASS ===== #
-        objects = []
-        for x in OL:
-            objects.append(x["Name"])
+        if self.OLCheck:
+            objects = []
+            for x in OL:
+                objects.append(x["Name"])
+        else:
+            objects = None
             
         if ROB["EEType"] == "ParallelGripper":
             self.GRIPPER = parallelGR(objects, ROB["Model"], ROB["Link"])
         elif ROB["EEType"] == "VacuumGripper":
             self.GRIPPER = vacuumGR(objects, ROB["Model"], ROB["Link"])
+        else:
+            self.GRIPPER = None
 
         # INITIALISE -> GAZEBO SIMULATION ENVIRONMENT:
         self.ResetCond = {}
@@ -259,15 +270,18 @@ class ExecuteSkill_SERVER(Node):
 
         # Initialise VARIABLES using the information from the INPUT PARAMETERS:
         self.RecipeFolder = INFO["Name"]       # FOLDER to get the recipes from!
-        self.RBT = ROB                         
-        self.ObjectList = self.OBJECTS.GetObjectPose()                 
+        self.RBT = ROB     
+        
+        if self.OLCheck:                
+            self.ObjectList = self.OBJECTS.GetObjectPose()                 
         
         # Initialise SERVICE SERVER:
         super().__init__('r3mcell_SkillExecution_ServiceServer')                                              
         self.srv = self.create_service(SkillExecution, "/r3m_SkillExecution", self.EXECUTE)
 
         # Initialise -> LIAISON CLASS:
-        self.Liaison = LiaisonCheck(LI)
+        if self.LICheck:
+            self.Liaison = LiaisonCheck(LI)
     
     def EXECUTE(self, request, response):
         
@@ -280,19 +294,21 @@ class ExecuteSkill_SERVER(Node):
         if (ID == 0):
 
             RES = self.RESET.RESET()
-            self.OBJECTS.ResetObjectList()
             response.result.id = 0
+            
+            if self.OLCheck:
+                self.OBJECTS.ResetObjectList()
             
             EEState = 1
             response.result.robstate.endeffector = EEState
-            
             response.result.robstate.step = 0
 
-            ProdStep = []
-            for x in self.ObjectList:
-                ProdStep.append({"Name": x["Name"], "Step": 0})
+            if self.OLCheck:
+                ProdStep = []
+                for x in self.ObjectList:
+                    ProdStep.append({"Name": x["Name"], "Step": 0})
 
-            self.ObjectList = self.OBJECTS.GetObjectPose()
+                self.ObjectList = self.OBJECTS.GetObjectPose()
 
             if RES == True:
                 response.result.message = "ROS2 Environment RESET successful."
@@ -366,65 +382,68 @@ class ExecuteSkill_SERVER(Node):
                 response.result.robstate.step = RobStep
                 response.result.robstate.endeffector = EEState
 
-                # GET ObjectList -> OBJECT POSES:
-                OL = self.OBJECTS.GetObjectPose()
-                self.ObjectList = OL
-                PRODUCTS = []
+                if self.OLCheck:
+                    # GET ObjectList -> OBJECT POSES:
+                    OL = self.OBJECTS.GetObjectPose()
+                    self.ObjectList = OL
+                    PRODUCTS = []
 
-                for x in OL:
+                    for x in OL:
 
-                    P = Product()
-                    P.name = x["Name"]
+                        P = Product()
+                        P.name = x["Name"]
 
-                    P.currentpose = Pose()
-                    P.currentpose.x = x["CurrentPose"].x
-                    P.currentpose.y = x["CurrentPose"].y
-                    P.currentpose.z = x["CurrentPose"].z
-                    P.currentpose.qx = x["CurrentPose"].qx
-                    P.currentpose.qy = x["CurrentPose"].qy
-                    P.currentpose.qz = x["CurrentPose"].qz
-                    P.currentpose.qw = x["CurrentPose"].qw
+                        P.currentpose = Pose()
+                        P.currentpose.x = x["CurrentPose"].x
+                        P.currentpose.y = x["CurrentPose"].y
+                        P.currentpose.z = x["CurrentPose"].z
+                        P.currentpose.qx = x["CurrentPose"].qx
+                        P.currentpose.qy = x["CurrentPose"].qy
+                        P.currentpose.qz = x["CurrentPose"].qz
+                        P.currentpose.qw = x["CurrentPose"].qw
 
-                    P.previouspose = Pose()
-                    P.previouspose.x = x["PreviousPose"].x
-                    P.previouspose.y = x["PreviousPose"].y
-                    P.previouspose.z = x["PreviousPose"].z
-                    P.previouspose.qx = x["PreviousPose"].qx
-                    P.previouspose.qy = x["PreviousPose"].qy
-                    P.previouspose.qz = x["PreviousPose"].qz
-                    P.previouspose.qw = x["PreviousPose"].qw
+                        P.previouspose = Pose()
+                        P.previouspose.x = x["PreviousPose"].x
+                        P.previouspose.y = x["PreviousPose"].y
+                        P.previouspose.z = x["PreviousPose"].z
+                        P.previouspose.qx = x["PreviousPose"].qx
+                        P.previouspose.qy = x["PreviousPose"].qy
+                        P.previouspose.qz = x["PreviousPose"].qz
+                        P.previouspose.qw = x["PreviousPose"].qw
 
-                    P.error = 0.0 # Error when retrieving from Gazebo is null.
+                        P.error = 0.0 # Error when retrieving from Gazebo is null.
 
-                    DIF = CalculateDif_PROD(P.currentpose,P.previouspose)
-                    if (DIF == True):
+                        DIF = CalculateDif_PROD(P.currentpose,P.previouspose)
+                        if (DIF == True):
 
-                        for y in ProdStep:
-                            if P.name == y["Name"]:
-                                y["Step"] = y["Step"] + 1
-                                P.step = y["Step"]
-                                break
+                            for y in ProdStep:
+                                if P.name == y["Name"]:
+                                    y["Step"] = y["Step"] + 1
+                                    P.step = y["Step"]
+                                    break
 
-                    else:
-                        
-                        for y in ProdStep:
-                            if P.name == y["Name"]:
-                                P.step = y["Step"]
-                                break
+                        else:
+                            
+                            for y in ProdStep:
+                                if P.name == y["Name"]:
+                                    P.step = y["Step"]
+                                    break
 
-                    PRODUCTS.append(P)
+                        PRODUCTS.append(P)
 
-                response.result.product = PRODUCTS
+                    response.result.product = PRODUCTS
 
-                # GET LIAISON VECTOR:
-                liRES = self.Liaison.CHECK(self.ObjectList)
-                response.result.liaison = liRES["LiaisonVector"]
+                if self.LICheck:
+                    
+                    # GET LIAISON VECTOR:
+                    liRES = self.Liaison.CHECK(self.ObjectList)
+                    response.result.liaison = liRES["LiaisonVector"]
                 
-                # GET -> TASK FINISHED?
-                if liRES["allMET"] and (ID == 1):
-                    response.result.finish = 1
-                else:
-                    None
+                    # GET -> TASK FINISHED?
+                    if liRES["allMET"] and (ID == 1):
+                        response.result.finish = 1
+                    else:
+                        None
 
                 return(response)
 

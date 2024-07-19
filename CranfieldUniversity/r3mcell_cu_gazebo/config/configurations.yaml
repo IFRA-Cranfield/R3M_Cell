@@ -26,8 +26,8 @@ Configurations:
     ee: "ls_vgr"
 
   - ID: "r3mcell_cu_14"
-    Name: "ABB IRB-120 Robot on Cranfield University (IA Lab) Cell: R3M Perception Testing Pipeline."
-    urdf: "r3mcell_cu_PerceptionTesting.urdf.xacro"
+    Name: "ABB IRB-120 Robot on Cranfield University (IA Lab) Cell: R3M Perception Testing set-up."
+    urdf: "r3mcell_cu_PerceptionTest.urdf.xacro"
     rob: "irb120"
     ee: "none"
 

@@ -37,6 +37,15 @@ from ros2srrc_data.msg import Robpose
 class GzRESET():
 
     def __init__(self,  ResetCondition, ROBOT_CLIENT, EE_CLIENT):
+        
+        # InitialCondition: dict() with:
+        # "Robot": {Model - Link - EEType - Package - InitialPose - HomePose}
+        # "ObjectList": [{Name - Link - CADFile - Package - InitialPose - CurrentPose - PreviousPose}, ..]
+        self.ResetCond = ResetCondition
+        
+        self.OLCheck = False
+        if self.ResetCond["ObjectList"] != None:
+            self.OLCheck = True
 
         # Initialise ROS2 Clients:
         self.ENTITY_CLIENT = EntityClient()
@@ -48,27 +57,24 @@ class GzRESET():
             self.EE_CLIENT = EE_CLIENT
         elif self.EEType == "VacuumGripper":
             self.EE_CLIENT = EE_CLIENT
+        
+        if self.OLCheck:
 
-        # InitialCondition: dict() with:
-        # "Robot": {Model - Link - EEType - Package - InitialPose - HomePose}
-        # "ObjectList": [{Name - Link - CADFile - Package - InitialPose - CurrentPose - PreviousPose}, ..]
-        self.ResetCond = ResetCondition
+            # Spawn OBJECTS IN INITIAL CONDITIONS:
+            for x in self.ResetCond["ObjectList"]:
 
-        # Spawn OBJECTS IN INITIAL CONDITIONS:
-        for x in self.ResetCond["ObjectList"]:
-
-            self.ENTITY_CLIENT.spawn_REQUEST("OBJECT", x)
-            while rclpy.ok():
-                rclpy.spin_once(self.ENTITY_CLIENT)
-                if self.ENTITY_CLIENT.future_SPAWN.done():
-                    try:
-                        spawnRES = self.ENTITY_CLIENT.future_SPAWN.result()
-                    except Exception as exc:
-                        self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - /SpawnEntity ROS2 Service call failed. ERROR: " + str(exc))
-                        return(False)
-                    else:
-                        self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - /SpawnEntity RESULT: " + str(spawnRES.status_message))
-                    break
+                self.ENTITY_CLIENT.spawn_REQUEST("OBJECT", x)
+                while rclpy.ok():
+                    rclpy.spin_once(self.ENTITY_CLIENT)
+                    if self.ENTITY_CLIENT.future_SPAWN.done():
+                        try:
+                            spawnRES = self.ENTITY_CLIENT.future_SPAWN.result()
+                        except Exception as exc:
+                            self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - /SpawnEntity ROS2 Service call failed. ERROR: " + str(exc))
+                            return(False)
+                        else:
+                            self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - /SpawnEntity RESULT: " + str(spawnRES.status_message))
+                        break
 
     def RESET(self):
         
@@ -78,21 +84,23 @@ class GzRESET():
         elif self.EEType == "VacuumGripper":
             self.EE_CLIENT.DEACTIVATE()
             
-        # Delete any object that could be in the workspace:
-        for x in self.ResetCond["ObjectList"]:
+        if self.OLCheck:
+            
+            # Delete any object that could be in the workspace:
+            for x in self.ResetCond["ObjectList"]:
 
-            self.ENTITY_CLIENT.delete_REQUEST("OBJECT", x)
-            while rclpy.ok():
-                rclpy.spin_once(self.ENTITY_CLIENT)
-                if self.ENTITY_CLIENT.future_DELETE.done():
-                    try:
-                        deleteRES = self.ENTITY_CLIENT.future_DELETE.result()
-                    except Exception as exc:
-                        self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - /DeleteEntity ROS2 Service call failed. ERROR: " + str(exc))
-                        return(False)
-                    else:
-                        self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - /DeleteEntity RESULT: " + str(deleteRES.status_message))
-                    break
+                self.ENTITY_CLIENT.delete_REQUEST("OBJECT", x)
+                while rclpy.ok():
+                    rclpy.spin_once(self.ENTITY_CLIENT)
+                    if self.ENTITY_CLIENT.future_DELETE.done():
+                        try:
+                            deleteRES = self.ENTITY_CLIENT.future_DELETE.result()
+                        except Exception as exc:
+                            self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - /DeleteEntity ROS2 Service call failed. ERROR: " + str(exc))
+                            return(False)
+                        else:
+                            self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - /DeleteEntity RESULT: " + str(deleteRES.status_message))
+                        break
 
         # Reset Robot's position:
         HomePose = Robpose()
@@ -112,21 +120,23 @@ class GzRESET():
             self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - ERROR moving the Robot back to HOME POSITION.")
             return(False)
         
-        # Spawn the OBJECTS back:
-        for x in self.ResetCond["ObjectList"]:
+        if self.OLCheck:
+        
+            # Spawn the OBJECTS back:
+            for x in self.ResetCond["ObjectList"]:
 
-            self.ENTITY_CLIENT.spawn_REQUEST("OBJECT", x)
-            while rclpy.ok():
-                rclpy.spin_once(self.ENTITY_CLIENT)
-                if self.ENTITY_CLIENT.future_SPAWN.done():
-                    try:
-                        spawnRES = self.ENTITY_CLIENT.future_SPAWN.result()
-                    except Exception as exc:
-                        self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - /SpawnEntity ROS2 Service call failed. ERROR: " + str(exc))
-                        return(False)
-                    else:
-                        self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - /SpawnEntity RESULT: " + str(spawnRES.status_message))
-                    break
+                self.ENTITY_CLIENT.spawn_REQUEST("OBJECT", x)
+                while rclpy.ok():
+                    rclpy.spin_once(self.ENTITY_CLIENT)
+                    if self.ENTITY_CLIENT.future_SPAWN.done():
+                        try:
+                            spawnRES = self.ENTITY_CLIENT.future_SPAWN.result()
+                        except Exception as exc:
+                            self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - /SpawnEntity ROS2 Service call failed. ERROR: " + str(exc))
+                            return(False)
+                        else:
+                            self.ENTITY_CLIENT.get_logger().info("[R3M Cell] - /SpawnEntity RESULT: " + str(spawnRES.status_message))
+                        break
     
         return(True)
 
