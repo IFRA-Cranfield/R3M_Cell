@@ -21,7 +21,7 @@ Robot:
     qw: 0.0
 
 # Object List:
-ObjectList: 
+ObjectList: None 
 
 # Liaison:
-Liaison: 
+Liaison: None
