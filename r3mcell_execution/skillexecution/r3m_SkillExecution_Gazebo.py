@@ -44,6 +44,8 @@ from parallelGripper import parallelGR
 from vacuumGripper import vacuumGR
 
 # Import CLASSES/Functions:
+PATH_F = os.path.join(get_package_share_directory("r3mcell_execution"), 'skillexecution', 'functions')
+sys.path.append(PATH_F)
 from ObjectState import OBJECT
 from ResetGazebo import GzRESET
 from liaison import LiaisonCheck
@@ -52,7 +54,6 @@ from liaison import LiaisonCheck
 EEState = 1
 RobStep = 0
 ProdStep = []
-
 
 # ========================================================================================= #
 # ================================ ROS2 - INPUT PARAMETERS ================================ #
@@ -229,10 +230,10 @@ class ExecuteSkill_SERVER(Node):
         
         # CHECK if Object and Liaison arrays are not NULL:
         self.OLCheck = False
-        if OL != None:
+        if OL != "None":
             self.OLCheck = True
         self.LICheck = False
-        if LI != None:
+        if LI != "None":
             self.LICheck = True
         
         # Robot -> {Model - Link - EEType - Package - InitialPose - HomePose}
@@ -270,18 +271,18 @@ class ExecuteSkill_SERVER(Node):
 
         # Initialise VARIABLES using the information from the INPUT PARAMETERS:
         self.RecipeFolder = INFO["Name"]       # FOLDER to get the recipes from!
-        self.RBT = ROB     
         
-        if self.OLCheck:                
-            self.ObjectList = self.OBJECTS.GetObjectPose()                 
-        
-        # Initialise SERVICE SERVER:
-        super().__init__('r3mcell_SkillExecution_ServiceServer')                                              
-        self.srv = self.create_service(SkillExecution, "/r3m_SkillExecution", self.EXECUTE)
-
         # Initialise -> LIAISON CLASS:
         if self.LICheck:
             self.Liaison = LiaisonCheck(LI)
+
+        # Initialise -> ObjectList class:
+        if self.OLCheck:                
+            self.ObjectList = self.OBJECTS.GetObjectPose() 
+
+        # Initialise SERVICE SERVER:
+        super().__init__('r3mcell_SkillExecution_ServiceServer')                                              
+        self.srv = self.create_service(SkillExecution, "/r3m_SkillExecution", self.EXECUTE)
     
     def EXECUTE(self, request, response):
         
@@ -319,6 +320,37 @@ class ExecuteSkill_SERVER(Node):
                 response.result.success = False
                 return(response)
             
+        elif (ID == 100):
+
+            # RESULT -> ID, exectime, error, message and success:
+            response.result.id = 100
+            response.result.success = True
+            response.result.message = "R3M Perception ACTIVE SKILL executed. Liaison UPDATED."
+            response.result.exectime = 0.0
+
+            # RESULT -> Robot + EndEffector:
+            #response.result.robstate.robpose = TBD
+            response.result.robstate.step = RobStep
+            response.result.robstate.endeffector = EEState
+
+            # PRODUCT:
+            # No need to update ObjectPose values.
+
+            # LIAISON:
+            if self.LICheck:
+                    
+                # GET LIAISON VECTOR:
+                liRES = self.Liaison.CHECK(self.ObjectList)
+                response.result.liaison = liRES["LiaisonVector"]
+            
+                # GET -> TASK FINISHED?
+                if liRES["allMET"] and (ID == 1):
+                    response.result.finish = 1
+                else:
+                    None
+
+            return(response)
+            
         else:
 
             # Get RECIPE VALUES:
@@ -326,15 +358,14 @@ class ExecuteSkill_SERVER(Node):
 
             if RECIPE["Exists"] == True:
 
-                # Check MOVEMENT TYPE and EXECUTE ACCORDINGLY:
-                
-                # ROBOT:
+                # Robot -> Check MOVEMENT TYPE and EXECUTE ACCORDINGLY:
                 if (RECIPE["type"] == "PTP" or RECIPE["type"] == "LIN"):
 
                     RES = CALCULATE_RobPose(RECIPE["pose"], self.ObjectList)
                     if RES["Success"]:
                         RES = self.ROBOT.RobMove_EXECUTE(RECIPE["type"], RECIPE["speed"], RES["Pose"])
 
+                    # If movement is successful:
                     if RES["Success"]:
                         RobStep = ID
 
