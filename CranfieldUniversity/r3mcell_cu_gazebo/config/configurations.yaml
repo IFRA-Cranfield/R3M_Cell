@@ -30,6 +30,12 @@ Configurations:
     urdf: "r3mcell_cu_PerceptionTest.urdf.xacro"
     rob: "irb120"
     ee: "none"
+  
+  - ID: "r3mcell_cu_15"
+    Name: "ABB IRB-120 Robot + Schunk EGP-64 Gripper on Cranfield University (IA Lab) Cell: Cylinder Stacking use-case."
+    urdf: "r3mcell_cu_cylinderstacking.urdf.xacro"
+    rob: "irb120"
+    ee: "egp64"
 
   - ID: "r3mcell_cu_2"
     Name: "UR3 Robot + Robotiq HandE Gripper on Cranfield University (IA Lab) Stand."
