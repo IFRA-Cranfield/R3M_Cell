@@ -160,7 +160,7 @@
     </joint>
 
     <gazebo reference="camera_link">
-      <sensor name="camera" type="camera">
+      <sensor name="lenovoFHD_gazebo" type="camera">
         <update_rate>30</update_rate>
         <camera name="head">
           <horizontal_fov>1.22</horizontal_fov>
@@ -183,7 +183,7 @@
           <robotNamespace/>
           <alwaysOn>true</alwaysOn>
           <updateRate>0.0</updateRate>
-          <cameraName>camera</cameraName>
+          <cameraName>lenovoFHD_gazebo</cameraName>
           <imageTopicName>image_raw</imageTopicName>
           <cameraInfoTopicName>camera_info</cameraInfoTopicName>
           <frameName>camera</frameName>
