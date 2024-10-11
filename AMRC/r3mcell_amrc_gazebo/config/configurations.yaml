@@ -8,10 +8,10 @@ Configurations:
     ee: "none"
 
   - ID: "r3mcell_amrc_11"
-    Name: "ABB IRB-1200 Robot + TBD Gripper on AMRC-Sheffield ReconCell: Cube Stacking use-case."
-    urdf: "r3mcell_amrc_CubeStacking.urdf.xacro"
+    Name: "ABB IRB-1200 Robot + Zimmer GP5010NC-00-A Gripper (Parallel Fingers) on AMRC-Sheffield ReconCell: Cube Kitting use-case."
+    urdf: "r3mcell_amrc_CubeKitting.urdf.xacro"
     rob: "irb1200"
-    ee: "TBD"
+    ee: "gpp5010nc"
   
   - ID: "r3mcell_amrc_12"
     Name: "ABB IRB-1200 Robot + Vacuum Gripper on AMRC-Sheffield ReconCell: Lamination Sheet Pick and Place use-case."
