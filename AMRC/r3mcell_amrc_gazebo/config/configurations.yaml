@@ -2,37 +2,37 @@
 Configurations:
 
   - ID: "r3mcell_amrc_1"
-    Name: "ABB IRB-1200 Robot on AMRC-Sheffield ReconCell."
+    Name: "ABB IRB1200 + N/A: N/A"
     urdf: "r3mcell_amrc_1.urdf.xacro"
     rob: "irb1200"
     ee: "none"
 
   - ID: "r3mcell_amrc_11"
-    Name: "ABB IRB-1200 Robot + Zimmer GP5010NC-00-A Gripper (Parallel Fingers) on AMRC-Sheffield ReconCell: Cube Kitting use-case."
+    Name: "ABB IRB1200 + Zimmer GP5010NC-00-A: Cube Kitting use-case."
     urdf: "r3mcell_amrc_CubeKitting.urdf.xacro"
     rob: "irb1200"
     ee: "gpp5010nc"
   
   - ID: "r3mcell_amrc_12"
-    Name: "ABB IRB-1200 Robot + Vacuum Gripper on AMRC-Sheffield ReconCell: Lamination Sheet Pick and Place use-case."
+    Name: "ABB IRB1200 + LS-Vacuum Gripper: Lamination Sheet Pick-and-Place use-case."
     urdf: "r3mcell_amrc_LamStack.urdf.xacro"
     rob: "irb1200"
     ee: "ls_vgr_amrc"
 
   - ID: "r3mcell_amrc_2"
-    Name: "ABB IRB-6640 Robot on AMRC-Sheffield ReconCell."
+    Name: "ABB IRB6640 + N/A: N/A"
     urdf: "r3mcell_amrc_2.urdf.xacro"
     rob: "irb6640"
     ee: "none"
 
   - ID: "r3mcell_amrc_20"
-    Name: "ABB IRB-6640 Robot on AMRC-Sheffield ReconCell: TESTING"
+    Name: "ABB IRB6640 + N/A: ROS 2 Driver testing pipeline."
     urdf: "r3mcell_amrc_BD.urdf.xacro"
     rob: "irb6640"
     ee: "none"
 
   - ID: "r3mcell_amrc_21"
-    Name: "ABB IRB-6640 Robot + Zimmer GP5010NC-00-A Gripper on AMRC-Sheffield ReconCell: Battery Disassembly use-case."
+    Name: "ABB IRB6640 + Zimmer GP5010NC-00-A: Battery Disassembly use-case."
     urdf: "r3mcell_amrc_BD.urdf.xacro"
     rob: "irb6640"
     ee: "gpp5010nc"
