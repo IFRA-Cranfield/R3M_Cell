@@ -56,6 +56,13 @@
     EE_name="${EE_name}"
   />
 
+  <!-- Include XACRO-MACRO file of the EGP64: -->
+  <xacro:include filename="$(find ros2srrc_endeffectors)/egp64/urdf/egp64_macro.urdf.xacro"/>	
+  <xacro:egp64 
+    bringup="${bringup}"
+    parent_link="tool0"
+  />
+
   <!-- Load ROS 2 Gazebo Plugin -->
   <xacro:unless value="${bringup}">
     
@@ -65,6 +72,9 @@
 
         <!-- IRB120 Controller -->
         <parameters>$(find ros2srrc_robots)/irb120/config/controller.yaml</parameters>
+
+        <!-- End-Effector Controller (if needed) -->
+        <parameters>$(find ros2srrc_endeffectors)/${EE_name}/config/controller.yaml</parameters>
 
       </plugin>
     </gazebo>
@@ -94,6 +104,26 @@
     </inertial>
   </link>
 
+  <!-- Kitting Tray -->
+  <link name="KittingTray">
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/CubeKitting/KittingTray.dae" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/CubeKitting/KittingTray.dae" scale="1 1 1" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="10.0"/>
+      <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
+    </inertial>
+  </link>
+
   <!-- Robot Cell: FIXED JOINT -->
   <joint name="world-cell-fixed" type="fixed">
     <parent link="world"/>
@@ -101,36 +131,18 @@
     <origin xyz="0.926 -0.124 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
+  <!-- Kitting Tray: FIXED JOINT -->
+  <joint name="tray-cell-fixed" type="fixed">
+    <parent link="cell"/>
+    <child link="KittingTray"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
+
   <!-- Robot+Cell JOINT -->
   <joint name="cell-base_link-fixed" type="fixed">
     <parent link="cell"/>
     <child link="base_link"/>
     <origin xyz="-0.6506 0.6489 0.8605" rpy="0.0 0.0 0.0" />
-  </joint>
-
-  <!-- PERCEPTION TESTING: TABLE -->
-  <link name="TestingTable">
-    <visual>
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/PerceptionTest/TestingTable.dae" scale="1 1 1" />
-      </geometry>
-    </visual>
-    <collision>
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/PerceptionTest/TestingTable.dae" scale="1 1 1" />
-      </geometry>
-    </collision>
-    <inertial>
-      <mass value="10.0"/>
-      <inertia ixx="0.0002" ixy="0.0002" ixz="0.0002" iyy="0.0" iyz="0.0" izz="0.0" />
-    </inertial>
-  </link>
-  <joint name="TestingTable_joint" type="fixed">
-    <parent link="cell"/>
-    <child link="TestingTable"/>
-    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
   <!-- CAMERA -->
@@ -162,7 +174,7 @@
     </joint>
 
     <gazebo reference="camera_link">
-      <sensor name="lenovoFHD_gazebo" type="camera">
+      <sensor name="camera" type="camera">
         <update_rate>30</update_rate>
         <camera name="head">
           <horizontal_fov>1.22</horizontal_fov>
@@ -185,7 +197,7 @@
           <robotNamespace/>
           <alwaysOn>true</alwaysOn>
           <updateRate>0.0</updateRate>
-          <cameraName>lenovoFHD_gazebo</cameraName>
+          <cameraName>camera</cameraName>
           <imageTopicName>image_raw</imageTopicName>
           <cameraInfoTopicName>camera_info</cameraInfoTopicName>
           <frameName>camera</frameName>
