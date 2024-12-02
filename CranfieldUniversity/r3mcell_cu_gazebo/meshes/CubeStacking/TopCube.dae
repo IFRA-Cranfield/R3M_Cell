@@ -5,8 +5,8 @@
       <author>Blender User</author>
       <authoring_tool>Blender 4.3.0 commit date:2024-11-19, commit time:08:52, hash:2b18cad88b13</authoring_tool>
     </contributor>
-    <created>2024-11-29T12:40:44</created>
-    <modified>2024-11-29T12:40:44</modified>
+    <created>2024-12-02T11:58:08</created>
+    <modified>2024-12-02T11:58:08</modified>
     <unit name="meter" meter="1"/>
     <up_axis>Z_UP</up_axis>
   </asset>
@@ -82,12 +82,12 @@
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
       <node id="TopCube" name="TopCube" type="NODE">
-        <matrix sid="transform">0.015 0 0 0 0 0.015 0 0 0 0 0.015 0 0 0 0 1</matrix>
+        <matrix sid="transform">0.0125 0 0 0 0 0.0125 0 0 0 0 0.0125 0 0 0 0 1</matrix>
         <instance_geometry url="#Cube_003-mesh" name="TopCube">
           <bind_material>
             <technique_common>
               <instance_material symbol="RED_001-material" target="#RED_001-material">
-                <bind_vertex_input semantic="Cube-mesh-map-0" input_semantic="TEXCOORD" input_set="0"/>
+                <bind_vertex_input semantic="Cube_003-mesh-map-0" input_semantic="TEXCOORD" input_set="0"/>
               </instance_material>
             </technique_common>
           </bind_material>
