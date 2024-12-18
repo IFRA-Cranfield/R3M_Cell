@@ -129,7 +129,7 @@
     <collision>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/BatteryDisassembly/BD_TopBottom.dae.dae" scale="1 1 1" />
+        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/BatteryDisassembly/BD_TopBottom.dae" scale="1 1 1" />
       </geometry>
     </collision>
     <inertial>

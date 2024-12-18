@@ -2,7 +2,7 @@
 
 <robot name="BlueCube" xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <link name="RedCube">
+  <link name="BlueCube">
 
     <inertial>
 

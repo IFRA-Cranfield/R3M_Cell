@@ -135,7 +135,7 @@
   <joint name="tray-cell-fixed" type="fixed">
     <parent link="cell"/>
     <child link="KittingTray"/>
-    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+    <origin xyz="-0.6 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
   <!-- Robot+Cell JOINT -->
