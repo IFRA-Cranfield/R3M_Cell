@@ -56,6 +56,37 @@
     EE_name="${EE_name}"
   />
 
+  <!-- Include: IRB1200/GPP5010NC ADAPTER -->
+  <link name="adapter">
+    <visual>
+      <geometry>
+        <mesh filename="file://$(find ros2srrc_endeffectors)/gpp5010nc/meshes/gpp5010nc_irb1200_Adapter.dae" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="file://$(find ros2srrc_endeffectors)/gpp5010nc/meshes/gpp5010nc_irb1200_Adapter.dae" />
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.001" />
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+    </inertial>
+  </link>
+  <joint name="adapter_joint" type="fixed">
+    <origin xyz="0.0 0.0 0.0125" rpy="0 1.5708 3.1416" />
+    <parent link="tool0"/>
+    <child link="adapter"/>
+  </joint>
+
+  <!-- Include XACRO-MACRO file of the GPP5010NC: --> 
+  <xacro:include filename="$(find ros2srrc_endeffectors)/gpp5010nc/urdf/gpp5010ncv2_macro.urdf.xacro"/>	
+  <xacro:gpp5010nc 
+    bringup="${bringup}"
+    parent_link="adapter"
+  /> 
+
   <!-- Load ROS 2 Gazebo Plugin -->
   <xacro:unless value="${bringup}">
     
@@ -65,6 +96,9 @@
 
         <!-- IRB1200 Controller -->
         <parameters>$(find ros2srrc_robots)/irb1200/config/controller.yaml</parameters>
+
+        <!-- End-Effector Controller (if needed) -->
+        <parameters>$(find ros2srrc_endeffectors)/${EE_name}/config/controller.yaml</parameters>
 
       </plugin>
     </gazebo>
@@ -189,9 +223,9 @@
   <xacro:if value="${hmi}">
     <xacro:include filename="$(find ros2srrc_hmi)/urdf/hmicamera.urdf.xacro"/>	
     <xacro:HMI_camera 
-      x="3.00"
-      y="1.50"
-      z="1.70"
+      x="2.0"
+      y="1.10"
+      z="1.25"
       roll="0.0"
       pitch="0.35"
       yaw="-2.6"
