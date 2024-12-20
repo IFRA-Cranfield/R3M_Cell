@@ -1,16 +1,17 @@
 <?xml version="1.0"?>
-<robot name="LamSheet" xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <link name="LamSheet">
+<robot name="FullAssembly" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <link name="FullAssembly">
 
     <inertial>
 
-      <mass value="0.01"/>
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+      <origin xyz= "0.0 0.0 0.0" rpy="0 0 0"/>
+      <mass value= "1.0" />
       <inertia
-      ixx="0.01" ixy="0.0"  ixz="0.0"
-      iyy="0.01" iyz="0.0"
-      izz="0.00" />
+        ixx="0.01" ixy="0.0"  ixz="0.0"
+        iyy="0.01" iyz="0.0"
+        izz="0.01" />
 
     </inertial>
 
@@ -18,7 +19,7 @@
 
       <origin xyz= "0.0 0.0 0.0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/LamStack/LamSheet.dae"/>
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/CylinderStacking/FullAssembly.dae"/>
       </geometry>
 
     </collision>
@@ -27,15 +28,14 @@
 
       <origin xyz= "0.0 0.0 0.0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/LamStack/LamSheet.dae"/>
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/CylinderStacking/FullAssembly.dae"/>
       </geometry>
 
     </visual>
 
   </link>
 
-  <gazebo reference="LamSheet">
-    <material>Gazebo/Black</material>
+  <gazebo reference="FullAssembly">
     <selfCollide>false</selfCollide>
   </gazebo>
 
@@ -43,7 +43,7 @@
   <gazebo>
     <plugin name="ros2_objectpose_plugin" filename="libros2_objectpose_plugin.so" >
       <ros>
-        <namespace>LamSheet</namespace>
+        <namespace>FullAssembly</namespace>
       </ros>
     </plugin>
   </gazebo>

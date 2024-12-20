@@ -151,13 +151,13 @@
       <visual>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/CylinderStacking/aruco100.dae" scale="1 1 1" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/aruco/aruco100.dae" scale="1 1 1" />
         </geometry>
       </visual>
       <collision>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/CylinderStacking/aruco100.dae" scale="1 1 1" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/aruco/aruco100.dae" scale="1 1 1" />
         </geometry>
       </collision>
       <inertial>
@@ -181,13 +181,13 @@
       <visual>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/CylinderStacking/arucoGrid.dae" scale="1 1 1" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/aruco/arucoGrid.dae" scale="1 1 1" />
         </geometry>
       </visual>
       <collision>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/CylinderStacking/arucoGrid.dae" scale="1 1 1" />
+          <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/aruco/arucoGrid.dae" scale="1 1 1" />
         </geometry>
       </collision>
       <inertial>
