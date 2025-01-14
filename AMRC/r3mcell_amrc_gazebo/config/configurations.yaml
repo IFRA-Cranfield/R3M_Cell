@@ -50,12 +50,18 @@ Configurations:
     ee: "gpp5010nc"
 
   - ID: "r3mcell_amrc_22"
+    Name: "ABB IRB6640 + Zimmer GP5010NC-00-A: Cube Kitting use-case."
+    urdf: "r3mcell_amrc_CK_6640.urdf.xacro"
+    rob: "irb6640"
+    ee: "gpp5010nc"
+
+  - ID: "r3mcell_amrc_23"
     Name: "ABB IRB6640 + Zimmer GP5010NC-00-A: Cylinder Stacking use-case."
     urdf: "r3mcell_amrc_CyS_6640.urdf.xacro"
     rob: "irb6640"
     ee: "gpp5010nc"
   
-  - ID: "r3mcell_amrc_23"
+  - ID: "r3mcell_amrc_24"
     Name: "ABB IRB6640 + Zimmer GP5010NC-00-A: Battery Disassembly use-case."
     urdf: "r3mcell_amrc_BD.urdf.xacro"
     rob: "irb6640"
