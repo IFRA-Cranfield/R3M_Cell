@@ -89,13 +89,13 @@
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/IRB120enclosure/IRB120enclosure.dae" scale="1 1 1" />
+        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/IRB120enclosure/IRB120enclosure_noholes.dae" scale="1 1 1" />
       </geometry>
     </visual>
     <collision>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/IRB120enclosure/IRB120enclosure.dae" scale="1 1 1" />
+        <mesh filename="file://$(find r3mcell_cu_gazebo)/meshes/IRB120enclosure/IRB120enclosure_noholes.dae" scale="1 1 1" />
       </geometry>
     </collision>
     <inertial>
