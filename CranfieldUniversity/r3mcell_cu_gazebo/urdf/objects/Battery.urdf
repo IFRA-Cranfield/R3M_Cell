@@ -1,7 +1,11 @@
 <?xml version="1.0"?>
 <robot name="Battery" xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <link name="Battery">
+  <!-- Input parameters: -->
+  <xacro:arg name="name" default="none"/>
+  <xacro:property name="name" value="$(arg name)"/>
+
+  <link name="${name}">
 
     <inertial>
 
@@ -43,7 +47,7 @@
   <gazebo>
     <plugin name="ros2_objectpose_plugin" filename="libros2_objectpose_plugin.so" >
       <ros>
-        <namespace>Battery</namespace>
+        <namespace>${name}</namespace>
       </ros>
     </plugin>
   </gazebo>
