@@ -57,7 +57,7 @@ Configurations:
   
   - ID: "r3mcell_cu_21"
     Name: "UR3 + Robotiq HandE: Cube Stacking Use-Case."
-    urdf: "r3mcell_cu_2.urdf.xacro"
+    urdf: "r3mcell_cu_CSTur.urdf.xacro"
     rob: "ur3"
     ee: "robotiq_hande"
 
