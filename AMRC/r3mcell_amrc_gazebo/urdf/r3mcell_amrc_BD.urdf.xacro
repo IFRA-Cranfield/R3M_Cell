@@ -243,55 +243,7 @@
   <joint name="CaseBottom-floor-fixed" type="fixed">
     <parent link="floor"/>
     <child link="BD_CaseBottom"/>
-    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
-  </joint>
-
-  <link name="BD_CaseSideL">
-    <visual>
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/BatteryDisassembly/BD_CaseSide.dae" scale="1 1 1" />
-      </geometry>
-    </visual>
-    <collision>
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/BatteryDisassembly/BD_CaseSide.dae" scale="1 1 1" />
-      </geometry>
-    </collision>
-    <inertial>
-      <mass value="1000.0"/>
-      <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
-    </inertial>
-  </link>
-  <joint name="CaseSideL-floor-fixed" type="fixed">
-    <parent link="floor"/>
-    <child link="BD_CaseSideL"/>
-    <origin xyz="2.005 0.0315 0.232" rpy="0.0 0.0 0.0" />
-  </joint>
-
-  <link name="BD_CaseSideR">
-    <visual>
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/BatteryDisassembly/BD_CaseSide.dae" scale="1 1 1" />
-      </geometry>
-    </visual>
-    <collision>
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/BatteryDisassembly/BD_CaseSide.dae" scale="1 1 1" />
-      </geometry>
-    </collision>
-    <inertial>
-      <mass value="1000.0"/>
-      <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
-    </inertial>
-  </link>
-  <joint name="CaseSideR-floor-fixed" type="fixed">
-    <parent link="floor"/>
-    <child link="BD_CaseSideR"/>
-    <origin xyz="2.255 0.1215 0.232" rpy="0.0 0.0 3.1416" />
+    <origin xyz="0.0 0.0 0.005" rpy="0.0 0.0 0.0" />
   </joint>
 
   <gazebo reference="BD_CaseBottom">

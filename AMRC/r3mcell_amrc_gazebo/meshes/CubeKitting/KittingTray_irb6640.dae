@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <asset>
+    <contributor>
+      <author>Blender User</author>
+      <authoring_tool>Blender 4.3.2 commit date:2024-12-16, commit time:21:10, hash:32f5fdce0a0a</authoring_tool>
+    </contributor>
+    <created>2025-01-24T14:02:08</created>
+    <modified>2025-01-24T14:02:08</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_effects>
+    <effect id="Base_Colour-effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <lambert>
+            <emission>
+              <color sid="emission">0 0 0 1</color>
+            </emission>
+            <diffuse>
+              <color sid="diffuse">0.09850398 0.09850398 0.09850398 1</color>
+            </diffuse>
+            <reflectivity>
+              <float sid="specular">0.5</float>
+            </reflectivity>
+            <index_of_refraction>
+              <float sid="ior">1.5</float>
+            </index_of_refraction>
+          </lambert>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_images/>
+  <library_materials>
+    <material id="Base_Colour-material" name="Base Colour">
+      <instance_effect url="#Base_Colour-effect"/>
+    </material>
+  </library_materials>
+  <library_geometries>
+    <geometry id="shape0_026-mesh" name="shape0.026">
+      <mesh>
+        <source id="shape0_026-mesh-positions">
+          <float_array id="shape0_026-mesh-positions-array" count="126">-47.61893 52.38089 -8.642863 52.38107 52.38089 -8.642863 -47.61893 -47.61911 -8.642863 52.38107 -47.61911 -8.642863 -47.61893 -47.61911 6.35714 52.38107 -47.61911 6.35714 -2.618927 -37.61911 6.35714 -37.61893 -37.61911 6.35714 -37.61893 -2.61911 6.35714 -47.61893 52.38089 6.35714 7.381073 42.38089 6.35714 -2.618927 42.38089 6.35714 -2.618927 7.38089 6.35714 42.38107 -2.61911 6.35714 42.38107 -37.61911 6.35714 7.381073 -37.61911 6.35714 7.381073 -2.61911 6.35714 -2.618927 -2.61911 6.35714 52.38107 52.38089 6.35714 42.38107 42.38089 6.35714 42.38107 7.38089 6.35714 7.381073 7.38089 6.35714 -37.61893 7.38089 6.35714 -37.61893 42.38089 6.35714 -47.61893 -47.61911 -8.642863 -47.61893 -47.61911 6.35714 7.381073 42.38089 -5.64286 7.381073 7.38089 -5.64286 42.38107 42.38089 -5.64286 -37.61893 7.38089 -5.64286 -2.618927 7.38089 -5.64286 -37.61893 42.38089 -5.64286 42.38107 -2.61911 -5.64286 7.381073 -2.61911 -5.64286 42.38107 -37.61911 -5.64286 -2.618927 -2.61911 -5.64286 -37.61893 -2.61911 -5.64286 -2.618927 -37.61911 -5.64286 -37.61893 -37.61911 -5.64286 7.381073 -37.61911 -5.64286 -2.618927 42.38089 -5.64286 42.38107 7.38089 -5.64286</float_array>
+          <technique_common>
+            <accessor source="#shape0_026-mesh-positions-array" count="42" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="shape0_026-mesh-normals">
+          <float_array id="shape0_026-mesh-normals-array" count="36">0 0 -1 0 0 1 0 0 1 0 0 1 0 0 1 -1.74386e-7 0 1 3.05176e-7 0 1 0 0 1 0 -1 0 1 0 0 0 1 0 -1 0 0</float_array>
+          <technique_common>
+            <accessor source="#shape0_026-mesh-normals-array" count="12" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="shape0_026-mesh-vertices">
+          <input semantic="POSITION" source="#shape0_026-mesh-positions"/>
+        </vertices>
+        <triangles material="Base_Colour-material" count="76">
+          <input semantic="VERTEX" source="#shape0_026-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#shape0_026-mesh-normals" offset="1"/>
+          <p>0 0 1 0 2 0 2 0 1 0 3 0 4 1 5 1 6 1 6 1 7 1 4 1 4 2 7 2 8 2 4 1 8 1 9 1 10 1 11 1 12 1 13 3 14 3 5 3 5 1 14 1 15 1 5 1 15 1 6 1 6 1 15 1 16 1 6 1 16 1 17 1 18 4 19 4 20 4 5 1 18 1 13 1 13 1 18 1 20 1 13 1 20 1 16 1 16 1 20 1 21 1 16 1 21 1 17 1 21 5 10 5 17 5 17 6 10 6 12 6 17 1 12 1 8 1 8 1 12 1 22 1 8 1 22 1 9 1 22 7 23 7 9 7 9 1 23 1 11 1 9 1 11 1 18 1 18 1 11 1 10 1 18 1 10 1 19 1 5 8 4 8 3 8 3 8 4 8 24 8 18 9 5 9 1 9 1 9 5 9 3 9 9 10 18 10 0 10 0 10 18 10 1 10 25 11 9 11 24 11 24 11 9 11 0 11 22 10 12 10 29 10 29 10 12 10 30 10 23 9 22 9 31 9 31 9 22 9 29 9 12 11 11 11 30 11 30 11 11 11 40 11 11 8 23 8 40 8 40 8 23 8 31 8 40 1 31 1 30 1 30 1 31 1 29 1 10 9 21 9 26 9 26 9 21 9 27 9 19 8 10 8 28 8 28 8 10 8 26 8 21 10 20 10 27 10 27 10 20 10 41 10 20 11 19 11 41 11 41 11 19 11 28 11 41 1 28 1 27 1 27 1 28 1 26 1 17 8 8 8 35 8 35 8 8 8 36 8 6 11 17 11 37 11 37 11 17 11 35 11 8 9 7 9 36 9 36 9 7 9 38 9 7 10 6 10 38 10 38 10 6 10 37 10 38 1 37 1 36 1 36 1 37 1 35 1 13 8 16 8 32 8 32 8 16 8 33 8 14 11 13 11 34 11 34 11 13 11 32 11 16 9 15 9 33 9 33 9 15 9 39 9 15 10 14 10 39 10 39 10 14 10 34 10 39 1 34 1 33 1 33 1 34 1 32 1</p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="node_001" name="node.001" type="NODE">
+        <matrix sid="transform">3.13916e-10 -0.001 0 -0.5000002 0.001 3.13916e-10 0 2.5 0 0 0.001 0.1276429 0 0 0 1</matrix>
+        <instance_geometry url="#shape0_026-mesh" name="node.001">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="Base_Colour-material" target="#Base_Colour-material"/>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>
