@@ -195,7 +195,7 @@
   <joint name="fixture-floor-fixed" type="fixed">
     <parent link="floor"/>
     <child link="BD_fixture"/>
-    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+    <origin xyz="0.0 0.0 0.005" rpy="0.0 0.0 0.0" />
   </joint>
 
   <link name="BD_PlasticBin">
@@ -219,7 +219,7 @@
   <joint name="PlasticBin-floor-fixed" type="fixed">
     <parent link="floor"/>
     <child link="BD_PlasticBin"/>
-    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+    <origin xyz="0.0 0.0 0.005" rpy="0.0 0.0 0.0" />
   </joint>
 
   <link name="BD_CaseBottom">
