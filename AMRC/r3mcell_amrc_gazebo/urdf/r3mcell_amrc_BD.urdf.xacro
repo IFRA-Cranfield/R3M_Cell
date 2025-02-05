@@ -89,6 +89,31 @@
     />
   </xacro:if>
 
+  <!-- Include Link6's extension (CABLE HOLDER): -->
+  <link name="link_6_ext">
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/ReconCell/irb6640_AMRC_link6.dae" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/ReconCell/irb6640_AMRC_link6.dae" scale="1 1 1" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="10.0"/>
+      <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
+    </inertial>
+  </link>
+  <joint name="link6_ext_fixedjoint" type="fixed">
+    <parent link="link_6"/>
+    <child link="link_6_ext"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
+
   <!-- Load ROS 2 Gazebo Plugin -->
   <xacro:unless value="${bringup}">
     

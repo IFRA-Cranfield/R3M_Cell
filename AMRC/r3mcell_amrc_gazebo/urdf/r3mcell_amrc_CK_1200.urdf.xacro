@@ -119,7 +119,7 @@
     <collision>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/ReconCell/floor_irb1200.dae" scale="1 1 1" />
+        <mesh filename="file://$(find r3mcell_amrc_gazebo)/meshes/ReconCell/floor_irb1200_collision.dae" scale="1 1 1" />
       </geometry>
     </collision>
     <inertial>

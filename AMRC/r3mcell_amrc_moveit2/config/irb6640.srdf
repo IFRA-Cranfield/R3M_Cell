@@ -83,4 +83,6 @@
   <disable_collisions link1="link_6" link2="link_cylinder" reason="Never" />
   <disable_collisions link1="link_6" link2="link_piston" reason="Never" />
 
+  <disable_collisions link1="link_6" link2="link_6_ext" reason="Adjacent" />
+
 </robot>
