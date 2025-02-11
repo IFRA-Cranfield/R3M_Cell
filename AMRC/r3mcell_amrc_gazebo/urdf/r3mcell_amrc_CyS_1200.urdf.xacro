@@ -189,7 +189,7 @@
   <joint name="adapter-base_link-fixed" type="fixed">
     <parent link="adapter_plate"/>
     <child link="base_link"/>
-    <origin xyz="0.0 0.0 0.139" rpy="0.0 0.0 0.0" />
+    <origin xyz="0.0 0.0 0.16" rpy="0.0 0.0 0.0" />
   </joint>
 
   <!-- ReconCell: WALLS -->

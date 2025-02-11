@@ -67,6 +67,9 @@
   <disable_collisions link1="link_4" link2="link_6" reason="Default" />
   <disable_collisions link1="link_5" link2="link_6" reason="Adjacent" />
 
+  <disable_collisions link1="ls_vgr_amrc_link" link2="LS_PICK" reason="Never" />
+  <disable_collisions link1="ls_vgr_amrc_link" link2="LS_PLACE" reason="Never" />
+
   <!-- LaminationSheet VACUUM-GRIPPER -->
   <disable_collisions link1="link_5" link2="ls_vgr_amrc_link" reason="Default" />
   <disable_collisions link1="link_6" link2="ls_vgr_amrc_link" reason="Default" />
