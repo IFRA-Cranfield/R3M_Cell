@@ -14,7 +14,7 @@ __Download and install R3M_Cell__
 
 ```sh
 cd ~/dev_ws/src
-git clone https://github.com/R3M-UK/R3M_Cell
+git clone https://github.com/IFRA-Cranfield/R3M_Cell
 cd ~/dev_ws
 colcon build
 ```   

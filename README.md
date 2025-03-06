@@ -49,7 +49,7 @@
 
 # ======= CITE OUR WORK ======= #
 # You can cite our work with the following statement:
-# R3M-Cell (2025) Reconfigurable Robotics for Responsive Manufacture. URL: https://github.com/R3M-UK/R3M_Cell.
+# R3M-Cell (2025) Reconfigurable Robotics for Responsive Manufacture. URL: https://github.com/IFRA-Cranfield/R3M_Cell.
 
 -->
 
@@ -153,9 +153,9 @@ Link to ros2_SimRealRobotControl: https://github.com/IFRA-Cranfield/ros2_SimReal
 
 For detailed information on installation, usage, and requirements, please refer to the following documentation files available in this repository:
 
-- [Installation.md](https://github.com/R3M-UK/R3M_Cell/tree/humble/instructions/Installation.md): Instructions for setting up and installing the required dependencies.
-- [README.md](https://github.com/R3M-UK/R3M_Cell/tree/humble/CranfieldUniversity) inside the /CranfieldUniversity folder: Instructions to launch all the ROS 2-based Gazebo/MoveIt!2/Bringup environments for the R3M Cells at Cranfield University.
-- [README.md](https://github.com/R3M-UK/R3M_Cell/tree/humble/AMRC) inside the /AMRC folder: Instructions to launch all the ROS 2-based Gazebo/MoveIt!2/Bringup environments for the R3M Cells at the AMRC-Sheffield.
+- [Installation.md](https://github.com/IFRA-Cranfield/R3M_Cell/tree/humble/instructions/Installation.md): Instructions for setting up and installing the required dependencies.
+- [README.md](https://github.com/IFRA-Cranfield/R3M_Cell/tree/humble/CranfieldUniversity) inside the /CranfieldUniversity folder: Instructions to launch all the ROS 2-based Gazebo/MoveIt!2/Bringup environments for the R3M Cells at Cranfield University.
+- [README.md](https://github.com/IFRA-Cranfield/R3M_Cell/tree/humble/AMRC) inside the /AMRC folder: Instructions to launch all the ROS 2-based Gazebo/MoveIt!2/Bringup environments for the R3M Cells at the AMRC-Sheffield.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -184,6 +184,8 @@ Conference Papers:
   <br />
   Main Contact: Dr. Seemal Asif (e-mail: s.asif@cranfield.ac.uk) 
   <br />
+  Technical Development (ROS 2): Mikel Bueno Viso (e-mail: Mikel.Bueno-Viso@cranfield.ac.uk) 
+  <br />
   <br />
   Licensed under the Apache-2.0 License.
   <br />
@@ -210,7 +212,7 @@ Conference Papers:
 <p>
   You can cite our work with the following statement:
   <br />
-  R3M-Cell (2025) Reconfigurable Robotics for Responsive Manufacture. URL: https://github.com/R3M-UK/R3M_Cell.
+  R3M-Cell (2025) Reconfigurable Robotics for Responsive Manufacture. URL: https://github.com/IFRA-Cranfield/R3M_Cell.
 </p>
 
 <p align="right">(<a href="#top">back to top</a>)</p>
