@@ -122,3 +122,15 @@ Configurations:
     urdf: "r3mcell_cu_CSur.urdf.xacro"
     rob: "ur3"
     ee: "robotiq_hande"
+
+  - ID: "r3mcell_cu_1test"
+    Name: "ABB IRB120 - R3MTesting"
+    urdf: "r3mcell_cu_1test.urdf.xacro"
+    rob: "irb120"
+    ee: "none"
+
+  - ID: "r3mcell_cu_2test"
+    Name: "UR3 - R3MTesting"
+    urdf: "r3mcell_cu_2test.urdf.xacro"
+    rob: "ur3"
+    ee: "none"
