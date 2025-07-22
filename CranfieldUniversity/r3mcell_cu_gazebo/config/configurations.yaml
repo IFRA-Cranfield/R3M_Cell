@@ -152,9 +152,3 @@ Configurations:
     urdf: "r3mcell_cu_CKur.urdf.xacro"
     rob: "ur3"
     ee: "robotiq_hande"
-
-  - ID: "r3mcell_cu_23test"
-    Name: "UR3 + Robotiq HandE: Cylinder Stacking Use-Case."
-    urdf: "r3mcell_cu_CSur.urdf.xacro"
-    rob: "ur3"
-    ee: "robotiq_hande"
