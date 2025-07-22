@@ -134,3 +134,27 @@ Configurations:
     urdf: "r3mcell_cu_2test.urdf.xacro"
     rob: "ur3"
     ee: "none"
+
+  - ID: "r3mcell_cu_12test"
+    Name: "ABB IRB120 + Schunk EGP64: Coloured Cube Kitting use-case."
+    urdf: "r3mcell_cu_cubekitting.urdf.xacro"
+    rob: "irb120"
+    ee: "egp64"
+
+  - ID: "r3mcell_cu_13test"
+    Name: "ABB IRB120 + Schunk EGP64: Cylinder Stacking use-case."
+    urdf: "r3mcell_cu_cylinderstacking.urdf.xacro"
+    rob: "irb120"
+    ee: "egp64"
+
+  - ID: "r3mcell_cu_22test"
+    Name: "UR3 + Robotiq HandE: Coloured Cube Kitting Use-Case."
+    urdf: "r3mcell_cu_CKur.urdf.xacro"
+    rob: "ur3"
+    ee: "robotiq_hande"
+
+  - ID: "r3mcell_cu_23test"
+    Name: "UR3 + Robotiq HandE: Cylinder Stacking Use-Case."
+    urdf: "r3mcell_cu_CSur.urdf.xacro"
+    rob: "ur3"
+    ee: "robotiq_hande"
