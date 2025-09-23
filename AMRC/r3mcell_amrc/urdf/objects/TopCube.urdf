@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+
+<robot name="TopCube" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <link name="TopCube">
+
+    <inertial>
+
+      <origin xyz= "0.0 0.0 0.0" rpy="0 0 0"/>
+      <mass value= "0.1" />
+      <inertia
+        ixx="0.000015" ixy="0.0"  ixz="0.0"
+        iyy="0.000015" iyz="0.0"
+        izz="0.000015" />
+
+    </inertial>
+
+    <collision name="collision">
+
+      <origin xyz= "0.0 0.0 0.0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file://$(find r3mcell_amrc)/meshes/CubeStacking/TopCube.dae"/>
+      </geometry>
+
+    </collision>
+
+    <visual name="visual">
+
+      <origin xyz= "0.0 0.0 0.0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file://$(find r3mcell_amrc)/meshes/CubeStacking/TopCube.dae"/>
+      </geometry>
+
+    </visual>
+
+  </link>
+
+  <gazebo reference="TopCube">
+    <selfCollide>false</selfCollide>
+  </gazebo>
+
+  <!-- LOAD ObjectPose Gazebo (ROS2) PLUGIN: -->
+  <gazebo>
+    <plugin name="ros2_objectpose_plugin" filename="libros2_objectpose_plugin.so" >
+      <ros>
+        <namespace>TopCube</namespace>
+      </ros>
+    </plugin>
+  </gazebo>
+
+</robot>

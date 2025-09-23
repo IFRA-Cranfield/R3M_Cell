@@ -12,7 +12,7 @@ These packages are based on the [ros2_SimRealRobotControl framework](https://git
 
 ## Cell Configurations & R3M Use-Cases (+ ROS 2 Launch Commands)
 
-More information about the R3M-Cell/CranfieldUni robot cell configurations can be found in the r3mcell_cu_gazebo/config/configurations.yaml file. The following commands launch the Simulation/Sim+MoveIt!2/Bringup+MoveIt!2 ROS 2 Environments for the R3M Cells:
+More information about the R3M-Cell/CranfieldUni robot cell configurations can be found in the r3mcell_cu/config/configurations.yaml file. The following commands launch the Simulation/Sim+MoveIt!2/Bringup+MoveIt!2 ROS 2 Environments for the R3M Cells:
 
 ABB IRB-120 Cell:
 
