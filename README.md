@@ -327,13 +327,11 @@ Conference Papers:
   AMRC-SHEFFIELD:
   <br />
   <br />
-  Dr. Gaugham Ragunathan - Postdoctoral Researcher (AMRC)
+  Dr. Gautham Ragunathan - Postdoctoral Researcher (AMRC)
   <br />
   E-mail: g.ragunathan@amrc.co.uk 
   <br />
   LinkedIn: https://www.linkedin.com/in/gauthamragunathan/
-  <br />
-  Profile: --
   <br />
   <br />
   Dr. Lloyd Tinkler - Senior Technical Fellow, Electrical Materials (AMRC)
