@@ -47,6 +47,9 @@
   <xacro:arg name="EE_name" default="none"/>
   <xacro:property name="EE_name" value="$(arg EE_name)"/>
 
+  <xacro:arg name="prefix" default=""/>
+  <xacro:property name="prefix" value="$(arg prefix)"/>
+
   <!-- Include XACRO-MACRO file of the IRB1200: -->
   <xacro:include filename="$(find ros2srrc_robots)/irb1200/urdf/irb1200_macro.urdf.xacro"/>	
   <xacro:irb1200 
@@ -54,13 +57,15 @@
     robot_ip="${robot_ip}"
     EE="${EE}"
     EE_name="${EE_name}"
+    prefix="${prefix}"
   />
 
   <!-- Include XACRO-MACRO file of the LS-VGR: -->
   <xacro:include filename="$(find ros2srrc_endeffectors)/ls_vgr_amrc/urdf/ls_vgr_amrc_macro.urdf.xacro"/>	
   <xacro:ls_vgr_amrc 
     bringup="${bringup}"
-    parent_link="tool0"
+    parent_link="${prefix}tool0"
+    prefix="${prefix}"
   />
 
   <!-- Load ROS 2 Gazebo Plugin -->
@@ -82,7 +87,7 @@
   <link name="world"/>
   
   <!-- ReconCell: FLOOR -->
-  <link name="floor">
+  <link name="${prefix}floor">
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
@@ -100,14 +105,14 @@
       <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
     </inertial>
   </link>
-  <joint name="world-floor-fixed" type="fixed">
+  <joint name="${prefix}world-floor-fixed" type="fixed">
     <parent link="world"/>
-    <child link="floor"/>
+    <child link="${prefix}floor"/>
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
   <!-- ReconCell: TallMount -->
-  <link name="TallMount">
+  <link name="${prefix}TallMount">
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
@@ -125,14 +130,14 @@
       <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
     </inertial>
   </link>
-  <joint name="world-TallMount-fixed" type="fixed">
+  <joint name="${prefix}world-TallMount-fixed" type="fixed">
     <parent link="world"/>
-    <child link="TallMount"/>
+    <child link="${prefix}TallMount"/>
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
   <!-- ReconCell: WALLS -->
-  <link name="walls">
+  <link name="${prefix}walls">
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
@@ -152,14 +157,14 @@
   </link>
 
   <!-- WALLS: FIXED JOINT -->
-  <joint name="world-walls-fixed" type="fixed">
+  <joint name="${prefix}world-walls-fixed" type="fixed">
     <parent link="world"/>
-    <child link="walls"/>
+    <child link="${prefix}walls"/>
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
   <!-- IRB1200 - Adapter Plate -->
-  <link name="adapter_plate">
+  <link name="${prefix}adapter_plate">
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
@@ -177,14 +182,14 @@
       <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
     </inertial>
   </link>
-  <joint name="floor-adapter-fixed" type="fixed">
-    <parent link="floor"/>
-    <child link="adapter_plate"/>
+  <joint name="${prefix}floor-adapter-fixed" type="fixed">
+    <parent link="${prefix}floor"/>
+    <child link="${prefix}adapter_plate"/>
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
   <!-- LamStack - PICK and PLACE FIXTURES -->
-  <link name="LS_PICK">
+  <link name="${prefix}LS_PICK">
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
@@ -202,12 +207,12 @@
       <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
     </inertial>
   </link>
-  <joint name="floor-LSPick-fixed" type="fixed">
-    <parent link="floor"/>
-    <child link="LS_PICK"/>
+  <joint name="${prefix}floor-LSPick-fixed" type="fixed">
+    <parent link="${prefix}floor"/>
+    <child link="${prefix}LS_PICK"/>
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
-  <link name="LS_PLACE">
+  <link name="${prefix}LS_PLACE">
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
@@ -225,16 +230,16 @@
       <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
     </inertial>
   </link>
-  <joint name="floor-LSPlace-fixed" type="fixed">
-    <parent link="floor"/>
-    <child link="LS_PLACE"/>
+  <joint name="${prefix}floor-LSPlace-fixed" type="fixed">
+    <parent link="${prefix}floor"/>
+    <child link="${prefix}LS_PLACE"/>
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
   <!-- Robot+Adapter JOINT -->
-  <joint name="adapter-base_link-fixed" type="fixed">
-    <parent link="adapter_plate"/>
-    <child link="base_link"/>
+  <joint name="${prefix}adapter-base_link-fixed" type="fixed">
+    <parent link="${prefix}adapter_plate"/>
+    <child link="${prefix}base_link"/>
     <origin xyz="0.0 0.0 0.139" rpy="0.0 0.0 0.0" />
   </joint>
 

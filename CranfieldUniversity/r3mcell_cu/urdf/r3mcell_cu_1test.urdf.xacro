@@ -47,6 +47,9 @@
   <xacro:arg name="EE_name" default="none"/>
   <xacro:property name="EE_name" value="$(arg EE_name)"/>
 
+  <xacro:arg name="prefix" default=""/>
+  <xacro:property name="prefix" value="$(arg prefix)"/>
+
   <!-- Include XACRO-MACRO file of the IRB120: -->
   <xacro:include filename="$(find ros2srrc_robots)/irb120/urdf/irb120_macro.urdf.xacro"/>	
   <xacro:irb120 
@@ -54,6 +57,7 @@
     robot_ip="${robot_ip}"
     EE="${EE}"
     EE_name="${EE_name}"
+    prefix="${prefix}"
   />
 
   <!-- Load ROS 2 Gazebo Plugin -->
@@ -75,7 +79,7 @@
   <link name="world"/>
   
   <!-- ABB IRB-120 ENCLOSURE -->
-  <link name="cell">
+  <link name="${prefix}cell">
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
@@ -95,16 +99,16 @@
   </link>
 
   <!-- Robot Cell: FIXED JOINT -->
-  <joint name="world-cell-fixed" type="fixed">
+  <joint name="${prefix}world-cell-fixed" type="fixed">
     <parent link="world"/>
-    <child link="cell"/>
+    <child link="${prefix}cell"/>
     <origin xyz="0.926 -0.124 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
   <!-- Robot+Cell JOINT -->
-  <joint name="cell-base_link-fixed" type="fixed">
-    <parent link="cell"/>
-    <child link="base_link"/>
+  <joint name="${prefix}cell-base_link-fixed" type="fixed">
+    <parent link="${prefix}cell"/>
+    <child link="${prefix}base_link"/>
     <origin xyz="-0.6506 0.6489 0.8605" rpy="0.0 0.0 0.0" />
   </joint>
 

@@ -47,6 +47,9 @@
   <xacro:arg name="EE_name" default="none"/>
   <xacro:property name="EE_name" value="$(arg EE_name)"/>
 
+  <xacro:arg name="prefix" default=""/>
+  <xacro:property name="prefix" value="$(arg prefix)"/>
+
   <!-- Include XACRO-MACRO file of the IRB6640: -->
   <xacro:include filename="$(find ros2srrc_robots)/irb6640/urdf/irb6640_macro.urdf.xacro"/>	
   <xacro:irb6640 
@@ -54,10 +57,11 @@
     robot_ip="${robot_ip}"
     EE="${EE}"
     EE_name="${EE_name}"
+    prefix="${prefix}"
   />
 
   <!-- Include Link6's extension (CABLE HOLDER): -->
-  <link name="link_6_ext">
+  <link name="${prefix}link_6_ext">
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
@@ -75,14 +79,14 @@
       <inertia ixx="500.0" ixy="500.0" ixz="500.0" iyy="500.0" iyz="500.0" izz="500.0" />
     </inertial>
   </link>
-  <joint name="link6_ext_fixedjoint" type="fixed">
-    <parent link="link_6"/>
-    <child link="link_6_ext"/>
+  <joint name="${prefix}link6_ext_fixedjoint" type="fixed">
+    <parent link="${prefix}link_6"/>
+    <child link="${prefix}link_6_ext"/>
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
   <!-- Include: IRB6640/GPP5010NC ADAPTER -->
-  <link name="adapter">
+  <link name="${prefix}adapter">
     <visual>
       <geometry>
         <mesh filename="file://$(find ros2srrc_endeffectors)/gpp5010nc/meshes/gpp5010nc_irb6640_Adapter.dae" />
@@ -99,10 +103,10 @@
       <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
     </inertial>
   </link>
-  <joint name="adapter_joint" type="fixed">
+  <joint name="${prefix}adapter_joint" type="fixed">
     <origin xyz="0.0 0 0.023" rpy="0 ${pi/2} ${pi}" />
-    <parent link="tool0"/>
-    <child link="adapter"/>
+    <parent link="${prefix}tool0"/>
+    <child link="${prefix}adapter"/>
   </joint>
 
   <!-- Include XACRO-MACRO file of the GPP5010NC: -->
@@ -138,7 +142,7 @@
   <link name="world"/>
   
   <!-- ReconCell: FLOOR -->
-  <link name="floor">
+  <link name="${prefix}floor">
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
@@ -158,21 +162,21 @@
   </link>
 
   <!-- FLOOR: FIXED JOINT -->
-  <joint name="world-floor-fixed" type="fixed">
+  <joint name="${prefix}world-floor-fixed" type="fixed">
     <parent link="world"/>
-    <child link="floor"/>
+    <child link="${prefix}floor"/>
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
   <!-- Robot+Floor JOINT -->
-  <joint name="floor-base_link-fixed" type="fixed">
-    <parent link="floor"/>
-    <child link="base_link"/>
+  <joint name="${prefix}floor-base_link-fixed" type="fixed">
+    <parent link="${prefix}floor"/>
+    <child link="${prefix}base_link"/>
     <origin xyz="0.0 0.0 0.148" rpy="0.0 0.0 0.0" />
   </joint>
 
   <!-- ReconCell: WALLS -->
-  <link name="walls">
+  <link name="${prefix}walls">
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
@@ -192,14 +196,14 @@
   </link>
 
   <!-- WALLS: FIXED JOINT -->
-  <joint name="world-walls-fixed" type="fixed">
+  <joint name="${prefix}world-walls-fixed" type="fixed">
     <parent link="world"/>
-    <child link="walls"/>
+    <child link="${prefix}walls"/>
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
   <!-- R3M AMRC Cell: Cylinder Stacking -> Fixture -->
-  <link name="CS_Fixture">
+  <link name="${prefix}CS_Fixture">
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <geometry>
@@ -217,9 +221,9 @@
       <inertia ixx="0.0002" ixy="0.0002" ixz="0.0002" iyy="0.0" iyz="0.0" izz="0.0" />
     </inertial>
   </link>
-  <joint name="floor-CS_Fixture-fixed" type="fixed">
-    <parent link="floor"/>
-    <child link="CS_Fixture"/>
+  <joint name="${prefix}floor-CS_Fixture-fixed" type="fixed">
+    <parent link="${prefix}floor"/>
+    <child link="${prefix}CS_Fixture"/>
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
